@@ -358,9 +358,21 @@ async function run() {
     // STEP 3: Parse JSON response
     // ========================================================================
 
+    // Strip markdown code fences if present (Claude sometimes wraps JSON in ```json ... ```)
+    let cleanedContent = rawContent.trim();
+    if (cleanedContent.startsWith('```json')) {
+      cleanedContent = cleanedContent.substring(7); // Remove ```json
+    } else if (cleanedContent.startsWith('```')) {
+      cleanedContent = cleanedContent.substring(3); // Remove ```
+    }
+    if (cleanedContent.endsWith('```')) {
+      cleanedContent = cleanedContent.substring(0, cleanedContent.length - 3); // Remove trailing ```
+    }
+    cleanedContent = cleanedContent.trim();
+
     let parsed;
     try {
-      parsed = JSON.parse(rawContent);
+      parsed = JSON.parse(cleanedContent);
     } catch (parseError) {
       // JSON parsing failed - attempt partial content extraction
       core.error('JSON parse error: ' + parseError.message);
