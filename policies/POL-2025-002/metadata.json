@@ -1,0 +1,20 @@
+{
+  "policyId": "POL-2025-002",
+  "title": "[Policy] Customer PII Encryption Policy - Complete Test",
+  "createdAt": "2025-12-27T15:48:12Z",
+  "createdBy": "dcawood30507",
+  "sourceIssue": 11,
+  "status": "in-progress",
+  "currentLayer": "contextual",
+  "requestedReviewer": "",
+  "layerStatus": {
+    "contextual": {"status": "not-started"},
+    "conceptual": {"status": "not-started"},
+    "logical": {"status": "not-started"},
+    "physical": {"status": "not-started"},
+    "component": {"status": "not-started"},
+    "operational": {"status": "not-started"}
+  },
+  "completedAt": null,
+  "releaseTag": null
+}
