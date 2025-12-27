@@ -25,6 +25,10 @@ on:
 jobs:
   initialize:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write      # Allow pushing commits
+      issues: write        # Allow updating issue labels/comments
+      pull-requests: write # Allow creating PRs
     # Only run if triggered manually OR if issue has 'new-policy' label
     if: github.event_name == 'workflow_dispatch' || contains(github.event.issue.labels.*.name, 'new-policy')
 
@@ -196,10 +200,13 @@ jobs:
       - name: Write summary file
         env:
           POLICY_ID: ${{ steps.policy-id.outputs.id }}
-          SUMMARY_TEXT: ${{ steps.summary.outputs.result }}
+          SUMMARY_JSON: ${{ steps.summary.outputs.result }}
         run: |
           BASE_DIR="policies/${POLICY_ID}"
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Extract summary content from JSON
+          SUMMARY_TEXT=$(echo "$SUMMARY_JSON" | jq -r '.sections.summary.content')
 
           # Write to summary.md
           cat > "$BASE_DIR/summary.md" <<EOF

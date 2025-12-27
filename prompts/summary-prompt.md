@@ -34,6 +34,21 @@ The summary should follow this general structure (adapt as needed):
 
 ## Output Format
 
-Return **plain text only** — no JSON wrapper, no markdown formatting, no additional commentary.
+Return a JSON object with this exact structure:
 
-The summary should be a single paragraph, maximum 150 words.
+```json
+{
+  "sections": {
+    "summary": {
+      "title": "Policy Summary",
+      "content": "Your summary text here as a single paragraph, maximum 150 words"
+    }
+  }
+}
+```
+
+**Requirements:**
+- Return ONLY the JSON object - no markdown code fences, no additional commentary
+- The "content" field should contain your summary as a single paragraph
+- Maximum 150 words in the content field
+- No newlines within the content paragraph
