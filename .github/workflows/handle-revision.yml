@@ -43,7 +43,7 @@ jobs:
 
       - name: Fetch review comments
         id: comments
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const prNumber = context.payload.pull_request.number;
@@ -135,7 +135,7 @@ jobs:
 
       - name: Add revision limit reached label
         if: steps.check.outputs.exceeded == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const prNumber = context.payload.pull_request.number;
