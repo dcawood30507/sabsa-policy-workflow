@@ -66,19 +66,19 @@ jobs:
             echo "title=$ISSUE_TITLE" >> $GITHUB_OUTPUT
 
             # Extract policy statement from issue body using form field parsing
-            POLICY_STATEMENT=$(echo "$ISSUE_BODY" | sed -n '/### Policy Statement/,/### /p' | sed '1d;$d')
+            POLICY_STATEMENT=$(echo "$ISSUE_BODY" | sed -n '/## Policy Statement/,/## /p' | sed '1d;$d')
             echo "statement<<EOF" >> $GITHUB_OUTPUT
             echo "$POLICY_STATEMENT" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
 
             # Extract business context (optional field)
-            BUSINESS_CONTEXT=$(echo "$ISSUE_BODY" | sed -n '/### Business Context/,/### /p' | sed '1d;$d')
+            BUSINESS_CONTEXT=$(echo "$ISSUE_BODY" | sed -n '/## Business Context/,/## /p' | sed '1d;$d')
             echo "context<<EOF" >> $GITHUB_OUTPUT
             echo "$BUSINESS_CONTEXT" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
 
             # Extract reviewer from issue body (optional)
-            REVIEWER=$(echo "$ISSUE_BODY" | sed -n '/### Requested Reviewer/,/### /p' | sed '1d;$d' | tr -d '@')
+            REVIEWER=$(echo "$ISSUE_BODY" | sed -n '/## Requested Reviewer/,/## /p' | sed '1d;$d' | tr -d '@')
             echo "reviewer=$REVIEWER" >> $GITHUB_OUTPUT
 
             echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
@@ -258,7 +258,12 @@ jobs:
             });
 
       - name: Trigger Layer 1 generation
-        uses: ./.github/workflows/generate-layer.yml@main
-        with:
-          policy-id: ${{ steps.policy-id.outputs.id }}
-          layer: contextual
+        env:
+          GH_TOKEN: ${{ github.token }}
+          POLICY_ID: ${{ steps.policy-id.outputs.id }}
+        run: |
+          gh workflow run generate-layer.yml \
+            -f policy-id="$POLICY_ID" \
+            -f layer="contextual" \
+            -f revision="0"
+          echo "Layer 1 (Contextual) generation workflow triggered"
