@@ -27,26 +27,5 @@ outputs:
     description: 'Parseable content if partial failure'
 
 runs:
-  using: 'composite'
-  steps:
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-
-    - name: Install dependencies
-      shell: bash
-      run: |
-        cd ${{ github.action_path }}
-        npm install --production
-
-    - name: Run Claude action
-      shell: bash
-      env:
-        INPUT_PROMPT: ${{ inputs.prompt }}
-        INPUT_ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
-        INPUT_MAX_RETRIES: ${{ inputs.max-retries }}
-        INPUT_EXPECTED_SECTIONS: ${{ inputs.expected-sections }}
-      run: |
-        cd ${{ github.action_path }}
-        node index.js
+  using: 'node20'
+  main: 'dist/index.js'

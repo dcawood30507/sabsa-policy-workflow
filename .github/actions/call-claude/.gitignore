@@ -1,0 +1,5 @@
+# Allow dist/ directory for GitHub Action bundle
+!dist/
+
+# Ignore node_modules
+node_modules/
