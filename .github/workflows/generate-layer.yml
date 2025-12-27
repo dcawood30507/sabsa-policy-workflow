@@ -159,34 +159,72 @@ jobs:
           POLICY_ID="${{ inputs.policy-id }}"
           LAYER="${{ inputs.layer }}"
           CLAUDE_SUCCESS="${{ steps.claude.outputs.success }}"
-          CLAUDE_RESULT='${{ steps.claude.outputs.result }}'
-          CLAUDE_PARTIAL='${{ steps.claude.outputs.partial-result }}'
+          CLAUDE_OUTPUT_FILE="${{ steps.claude.outputs.output-file }}"
           CLAUDE_ERROR="${{ steps.claude.outputs.error-message }}"
 
           BASE_DIR="policies/${POLICY_ID}/${LAYER}"
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          WORKFLOW_NAME="generate-layer.yml"
+          JOB_NAME="generate"
 
-          # Determine which result to use
+          # Read Claude output from file (avoids GitHub Actions output size limits)
+          if [ ! -f "$CLAUDE_OUTPUT_FILE" ]; then
+            echo "Error: Claude output file not found: $CLAUDE_OUTPUT_FILE"
+            exit 1
+          fi
+
+          # Determine generation status
           if [ "$CLAUDE_SUCCESS" == "true" ]; then
-            RESULT="$CLAUDE_RESULT"
             GEN_STATUS="complete"
             NEEDS_REVIEW="false"
           else
-            RESULT="$CLAUDE_PARTIAL"
             GEN_STATUS="partial"
             NEEDS_REVIEW="true"
             echo "Warning: Partial generation - $CLAUDE_ERROR"
           fi
 
-          # Parse JSON response into sections.json
-          echo "$RESULT" | jq --arg pid "$POLICY_ID" --arg layer "$LAYER" --arg ts "$TIMESTAMP" --arg status "$GEN_STATUS" \
-            '{policyId: $pid, layer: $layer, version: 1, generatedAt: $ts, generationStatus: $status, sections: .sections, errors: (.errors // [])}' \
-            > "$BASE_DIR/sections.json"
+          # Create sections.json with versioned metadata
+          jq --arg pid "$POLICY_ID" \
+             --arg layer "$LAYER" \
+             --arg ts "$TIMESTAMP" \
+             --arg status "$GEN_STATUS" \
+             --arg workflow "$WORKFLOW_NAME" \
+             --arg job "$JOB_NAME" \
+             '{
+               policyId: $pid,
+               layer: $layer,
+               version: 1,
+               generatedAt: $ts,
+               generationStatus: $status,
+               generatedBy: {
+                 workflow: $workflow,
+                 job: $job,
+                 runId: env.GITHUB_RUN_ID,
+                 runNumber: env.GITHUB_RUN_NUMBER
+               },
+               sections: .sections,
+               errors: (.errors // [])
+             }' "$CLAUDE_OUTPUT_FILE" > "$BASE_DIR/sections.json"
 
-          # Extract traceability references if present
-          echo "$RESULT" | jq '{policyId: $ARGV.named.pid, layer: $ARGV.named.layer, version: 1, generatedAt: $ARGV.named.ts, references: (.traceability // {})}' \
-            --arg pid "$POLICY_ID" --arg layer "$LAYER" --arg ts "$TIMESTAMP" \
-            > "$BASE_DIR/traceability.json"
+          # Create traceability.json with versioned metadata
+          jq --arg pid "$POLICY_ID" \
+             --arg layer "$LAYER" \
+             --arg ts "$TIMESTAMP" \
+             --arg workflow "$WORKFLOW_NAME" \
+             --arg job "$JOB_NAME" \
+             '{
+               policyId: $pid,
+               layer: $layer,
+               version: 1,
+               generatedAt: $ts,
+               generatedBy: {
+                 workflow: $workflow,
+                 job: $job,
+                 runId: env.GITHUB_RUN_ID,
+                 runNumber: env.GITHUB_RUN_NUMBER
+               },
+               references: (.traceability // {})
+             }' "$CLAUDE_OUTPUT_FILE" > "$BASE_DIR/traceability.json"
 
           echo "generation_status=$GEN_STATUS" >> $GITHUB_OUTPUT
           echo "needs_review=$NEEDS_REVIEW" >> $GITHUB_OUTPUT

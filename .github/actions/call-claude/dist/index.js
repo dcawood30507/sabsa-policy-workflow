@@ -38073,6 +38073,7 @@ var __webpack_exports__ = {};
 
 const core = __nccwpck_require__(7484);
 const Anthropic = __nccwpck_require__(121);
+const fs = __nccwpck_require__(9896);
 
 /**
  * Configuration for API retry behavior
@@ -38424,9 +38425,13 @@ async function run() {
 
       const partial = extractPartialContent(rawContent);
 
+      // Write partial result to file (avoid output variable size limits)
+      const partialJson = JSON.stringify(partial, null, 2);
+      fs.writeFileSync('/tmp/claude-output.json', partialJson);
+
       // Set outputs for partial result handling
       core.setOutput('success', 'false');
-      core.setOutput('partial-result', JSON.stringify(partial, null, 2));
+      core.setOutput('output-file', '/tmp/claude-output.json');
       core.setOutput('error-message', 'JSON parse failed: ' + parseError.message);
 
       // Don't fail the action - let workflow handle partial results
@@ -38444,8 +38449,12 @@ async function run() {
       // Partial success - some sections missing or incomplete
       const completedCount = expectedSections.length - missingSections.length;
 
+      // Write partial result to file
+      const partialJson = JSON.stringify(parsed, null, 2);
+      fs.writeFileSync('/tmp/claude-output.json', partialJson);
+
       core.setOutput('success', 'false');
-      core.setOutput('partial-result', JSON.stringify(parsed, null, 2));
+      core.setOutput('output-file', '/tmp/claude-output.json');
       core.setOutput('error-message', 'Missing sections: ' + missingSections.join(', '));
 
       core.warning('Partial generation - ' + completedCount + ' of ' + expectedSections.length + ' sections complete');
@@ -38456,10 +38465,13 @@ async function run() {
     // STEP 5: Full success - all sections generated
     // ========================================================================
 
+    // Write result to file (avoid output variable size limits)
+    const resultJson = JSON.stringify(parsed, null, 2);
+    fs.writeFileSync('/tmp/claude-output.json', resultJson);
+
     core.setOutput('success', 'true');
-    core.setOutput('result', JSON.stringify(parsed, null, 2));
+    core.setOutput('output-file', '/tmp/claude-output.json');
     core.setOutput('error-message', '');
-    core.setOutput('partial-result', '');
 
     core.info('Successfully generated all ' + expectedSections.length + ' sections');
 
@@ -38473,6 +38485,8 @@ async function run() {
 
 // Execute the action
 run();
+
+// Note: Large JSON results are written to /tmp/claude-output.json to avoid GitHub Actions output size limits
 
 module.exports = __webpack_exports__;
 /******/ })()
