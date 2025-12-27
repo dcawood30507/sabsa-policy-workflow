@@ -1,0 +1,183 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sabsa.policy.workflow/schemas/metadata.schema.json",
+  "title": "SABSA Policy Metadata",
+  "description": "Schema for validating SABSA policy workflow metadata including lifecycle status and layer tracking",
+  "type": "object",
+  "required": [
+    "policyId",
+    "title",
+    "createdAt",
+    "createdBy",
+    "sourceIssue",
+    "status",
+    "currentLayer",
+    "layerStatus"
+  ],
+  "properties": {
+    "policyId": {
+      "type": "string",
+      "pattern": "^POL-\\d{4}-\\d{3}$",
+      "description": "Policy identifier in format POL-YYYY-NNN (e.g., POL-2025-001)",
+      "examples": ["POL-2025-001", "POL-2024-042"]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Human-readable policy title"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when policy workflow was initialized"
+    },
+    "createdBy": {
+      "type": "string",
+      "minLength": 1,
+      "description": "GitHub username of policy creator"
+    },
+    "sourceIssue": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "GitHub issue number that triggered this policy workflow"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["in-progress", "completed", "archived"],
+      "description": "Overall policy workflow status"
+    },
+    "currentLayer": {
+      "type": "string",
+      "enum": [
+        "contextual",
+        "conceptual",
+        "logical",
+        "physical",
+        "component",
+        "operational"
+      ],
+      "description": "The layer currently being generated or reviewed"
+    },
+    "layerStatus": {
+      "type": "object",
+      "description": "Status tracking for each SABSA layer",
+      "required": [
+        "contextual",
+        "conceptual",
+        "logical",
+        "physical",
+        "component",
+        "operational"
+      ],
+      "properties": {
+        "contextual": {
+          "$ref": "#/definitions/layerStatusEntry",
+          "description": "Status of Layer 1 (Contextual)"
+        },
+        "conceptual": {
+          "$ref": "#/definitions/layerStatusEntry",
+          "description": "Status of Layer 2 (Conceptual)"
+        },
+        "logical": {
+          "$ref": "#/definitions/layerStatusEntry",
+          "description": "Status of Layer 3 (Logical)"
+        },
+        "physical": {
+          "$ref": "#/definitions/layerStatusEntry",
+          "description": "Status of Layer 4 (Physical)"
+        },
+        "component": {
+          "$ref": "#/definitions/layerStatusEntry",
+          "description": "Status of Layer 5 (Component)"
+        },
+        "operational": {
+          "$ref": "#/definitions/layerStatusEntry",
+          "description": "Status of Layer 6 (Operational)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "completedAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when all layers were approved and merged. Null if not yet complete."
+    },
+    "releaseTag": {
+      "type": ["string", "null"],
+      "pattern": "^policy/POL-\\d{4}-\\d{3}/v\\d+\\.\\d+$",
+      "description": "Git tag for the final release (e.g., policy/POL-2025-001/v1.0). Null if not yet released.",
+      "examples": ["policy/POL-2025-001/v1.0"]
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "layerStatusEntry": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["not-started", "pending-review", "approved"],
+          "description": "Current status of this layer in the workflow"
+        },
+        "prNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "GitHub Pull Request number for this layer's review. Required if status is 'pending-review' or 'approved'."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when PR was created. Required if status is 'pending-review' or 'approved'."
+        },
+        "mergedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when PR was merged. Required if status is 'approved'."
+        }
+      },
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "status": {
+            "const": "approved"
+          }
+        }
+      },
+      "then": {
+        "required": ["prNumber", "createdAt", "mergedAt"]
+      },
+      "else": {
+        "if": {
+          "properties": {
+            "status": {
+              "const": "pending-review"
+            }
+          }
+        },
+        "then": {
+          "required": ["prNumber", "createdAt"]
+        }
+      }
+    }
+  },
+  "if": {
+    "properties": {
+      "status": {
+        "const": "completed"
+      }
+    }
+  },
+  "then": {
+    "required": ["completedAt", "releaseTag"],
+    "properties": {
+      "completedAt": {
+        "type": "string"
+      },
+      "releaseTag": {
+        "type": "string"
+      }
+    }
+  }
+}

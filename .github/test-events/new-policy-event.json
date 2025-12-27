@@ -1,0 +1,78 @@
+{
+  "action": "opened",
+  "issue": {
+    "number": 42,
+    "id": 2123456789,
+    "node_id": "I_kwDOABCDEF5ghijk",
+    "title": "[Policy] Customer PII Encryption Policy",
+    "user": {
+      "login": "security-architect",
+      "id": 12345678,
+      "type": "User"
+    },
+    "labels": [
+      {
+        "id": 987654321,
+        "name": "new-policy",
+        "color": "d73a4a"
+      }
+    ],
+    "state": "open",
+    "locked": false,
+    "assignee": null,
+    "assignees": [],
+    "milestone": null,
+    "comments": 0,
+    "created_at": "2025-01-15T10:30:00Z",
+    "updated_at": "2025-01-15T10:30:00Z",
+    "closed_at": null,
+    "author_association": "CONTRIBUTOR",
+    "body": "## Policy Statement\n\nAll customer personally identifiable information (PII) must be encrypted at rest using AES-256 and in transit using TLS 1.2 or higher. Encryption keys must be rotated every 90 days and stored in a hardware security module. Access to encryption keys requires multi-factor authentication and must be logged for audit purposes.\n\n## Business Context\n\nThis policy supports our SOC 2 Type II certification requirements and GDPR Article 32 compliance obligations. It addresses critical findings from the Q3 2024 penetration test regarding data-at-rest encryption gaps in customer databases.\n\n## Priority\n\nHigh\n\n## Requested Reviewer\n\n@security-lead"
+  },
+  "repository": {
+    "id": 123456789,
+    "node_id": "R_kgDOABCDEF",
+    "name": "sabsa-policy-workflow",
+    "full_name": "test-org/sabsa-policy-workflow",
+    "private": true,
+    "owner": {
+      "login": "test-org",
+      "id": 987654321,
+      "type": "Organization"
+    },
+    "html_url": "https://github.com/test-org/sabsa-policy-workflow",
+    "description": "Automated SABSA policy artifact generation system",
+    "fork": false,
+    "created_at": "2024-12-01T00:00:00Z",
+    "updated_at": "2025-01-15T10:30:00Z",
+    "pushed_at": "2025-01-15T09:00:00Z",
+    "size": 1024,
+    "stargazers_count": 5,
+    "watchers_count": 5,
+    "language": "JavaScript",
+    "has_issues": true,
+    "has_projects": true,
+    "has_downloads": true,
+    "has_wiki": false,
+    "has_pages": false,
+    "forks_count": 0,
+    "archived": false,
+    "disabled": false,
+    "open_issues_count": 3,
+    "license": null,
+    "allow_forking": false,
+    "is_template": false,
+    "topics": [
+      "sabsa",
+      "security-architecture",
+      "policy-automation"
+    ],
+    "visibility": "private",
+    "default_branch": "main"
+  },
+  "sender": {
+    "login": "security-architect",
+    "id": 12345678,
+    "type": "User"
+  }
+}

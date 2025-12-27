@@ -1,0 +1,172 @@
+name: Handle Revision
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  handle-revision:
+    runs-on: ubuntu-latest
+    # Only trigger if review requests changes AND PR matches policy branch pattern
+    if: |
+      github.event.review.state == 'changes_requested' &&
+      startsWith(github.event.pull_request.head.ref, 'policy/')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Parse branch name for policy context
+        id: parse
+        env:
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+        run: |
+          # Branch format: policy/POL-YYYY-NNN/layer-N-layername
+          # Extract policy ID and layer (with validation)
+
+          # Validate branch format
+          if [[ ! "$BRANCH_NAME" =~ ^policy/POL-[0-9]{4}-[0-9]{3}/layer-[1-6]-(contextual|conceptual|logical|physical|component|operational)$ ]]; then
+            echo "ERROR: Invalid branch name format: $BRANCH_NAME"
+            exit 1
+          fi
+
+          POLICY_ID=$(echo "$BRANCH_NAME" | cut -d'/' -f2)
+          LAYER_PART=$(echo "$BRANCH_NAME" | cut -d'/' -f3)
+          LAYER_NAME=$(echo "$LAYER_PART" | cut -d'-' -f3)
+
+          echo "policy_id=$POLICY_ID" >> $GITHUB_OUTPUT
+          echo "layer=$LAYER_NAME" >> $GITHUB_OUTPUT
+
+          echo "Parsed: Policy=$POLICY_ID, Layer=$LAYER_NAME"
+
+      - name: Fetch review comments
+        id: comments
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+
+            // Get general review comments
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            const generalComments = reviews
+              .filter(r => r.state === 'CHANGES_REQUESTED' && r.body)
+              .map(r => r.body);
+
+            // Get inline review comments
+            const { data: reviewComments } = await github.rest.pulls.listReviewComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            // Group inline comments by section
+            const sectionFeedback = {};
+            reviewComments.forEach(comment => {
+              // Extract section ID from file path (e.g., contextual/sections.json)
+              const match = comment.path.match(/(\w+)\/sections\.json/);
+              if (match && comment.body) {
+                const section = match[1];
+                if (!sectionFeedback[section]) {
+                  sectionFeedback[section] = [];
+                }
+                sectionFeedback[section].push(`Line ${comment.line}: ${comment.body}`);
+              }
+            });
+
+            return {
+              generalFeedback: generalComments,
+              sectionFeedback: sectionFeedback
+            };
+
+      - name: Build revision context
+        id: revision
+        env:
+          COMMENTS_JSON: ${{ steps.comments.outputs.result }}
+        run: |
+          # Structure revision feedback as JSON
+          REVISION_CONTEXT=$(echo "$COMMENTS_JSON" | jq -c '.')
+
+          echo "revision_context<<EOF" >> $GITHUB_OUTPUT
+          echo "$REVISION_CONTEXT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "Built revision context:"
+          echo "$REVISION_CONTEXT" | jq .
+
+      - name: Check revision count
+        id: check
+        env:
+          POLICY_ID: ${{ steps.parse.outputs.policy_id }}
+          LAYER: ${{ steps.parse.outputs.layer }}
+        run: |
+          METADATA_FILE="policies/${POLICY_ID}/metadata.json"
+
+          # Get current revision count (if exists)
+          REVISION_COUNT=$(jq -r ".layerStatus.${LAYER}.revisionCount // 0" "$METADATA_FILE")
+
+          echo "Current revision count: $REVISION_COUNT"
+
+          if [ "$REVISION_COUNT" -ge 3 ]; then
+            echo "exceeded=true" >> $GITHUB_OUTPUT
+            echo "ERROR: Maximum revision limit (3) reached for layer $LAYER"
+          else
+            echo "exceeded=false" >> $GITHUB_OUTPUT
+
+            # Increment revision count
+            NEW_COUNT=$((REVISION_COUNT + 1))
+            jq ".layerStatus.${LAYER}.revisionCount = $NEW_COUNT" "$METADATA_FILE" > "${METADATA_FILE}.tmp"
+            mv "${METADATA_FILE}.tmp" "$METADATA_FILE"
+
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add "$METADATA_FILE"
+            git commit -m "[$POLICY_ID] Increment revision count for $LAYER"
+            git push origin main
+
+            echo "Incremented revision count to $NEW_COUNT"
+          fi
+
+      - name: Add revision limit reached label
+        if: steps.check.outputs.exceeded == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              labels: ['revision-limit-reached']
+            });
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: `## ⚠️ Revision Limit Reached
+
+              This layer has reached the maximum number of automated revision attempts (3).
+
+              **Next Steps:**
+              1. Review the feedback and manually edit the artifacts in this PR branch
+              2. Commit your changes to this branch
+              3. Re-request review when ready
+
+              Automated regeneration is no longer available for this layer.`
+            });
+
+      - name: Trigger regeneration
+        if: steps.check.outputs.exceeded == 'false'
+        uses: ./.github/workflows/generate-layer.yml@main
+        with:
+          policy-id: ${{ steps.parse.outputs.policy_id }}
+          layer: ${{ steps.parse.outputs.layer }}
+          revision-context: ${{ steps.revision.outputs.revision_context }}

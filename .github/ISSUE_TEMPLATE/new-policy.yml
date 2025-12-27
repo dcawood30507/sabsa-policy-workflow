@@ -1,0 +1,67 @@
+name: New Security Policy
+description: Submit a new security policy for SABSA artifact generation
+title: "[Policy] "
+labels: ["new-policy"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## New Security Policy Submission
+
+        This form initiates the automated SABSA policy workflow. Your policy statement will be processed through all six SABSA layers with human review at each stage.
+
+  - type: input
+    id: policy-title
+    attributes:
+      label: Policy Title
+      description: A concise title for this policy
+      placeholder: e.g., Customer PII Encryption Policy
+    validations:
+      required: true
+
+  - type: textarea
+    id: policy-statement
+    attributes:
+      label: Policy Statement
+      description: |
+        The complete policy statement. Include:
+        - What must be protected
+        - Required security controls
+        - Compliance requirements
+        - Any specific technical requirements
+      placeholder: |
+        All customer PII must be encrypted at rest using AES-256 and in transit using TLS 1.2 or higher...
+    validations:
+      required: true
+
+  - type: textarea
+    id: business-context
+    attributes:
+      label: Business Context (Optional)
+      description: Additional context about why this policy is needed
+      placeholder: |
+        This policy supports our SOC 2 certification requirements and addresses findings from the Q3 security assessment...
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent is this policy implementation?
+      options:
+        - Normal
+        - High
+        - Critical
+    validations:
+      required: true
+
+  - type: input
+    id: reviewer
+    attributes:
+      label: Requested Reviewer (Optional)
+      description: GitHub username of preferred reviewer
+      placeholder: "@username"
+    validations:
+      required: false

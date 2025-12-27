@@ -1,0 +1,257 @@
+name: Initialize Policy
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      policy-title:
+        description: 'Policy title'
+        required: true
+        type: string
+      policy-text:
+        description: 'Full policy statement'
+        required: true
+        type: string
+      business-context:
+        description: 'Business context (optional)'
+        required: false
+        type: string
+      reviewer:
+        description: 'GitHub username of requested reviewer (optional)'
+        required: false
+        type: string
+
+jobs:
+  initialize:
+    runs-on: ubuntu-latest
+    # Only run if triggered manually OR if issue has 'new-policy' label
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.issue.labels.*.name, 'new-policy')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history to find existing policy IDs
+
+      - name: Extract policy inputs
+        id: inputs
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_TITLE: ${{ inputs.policy-title }}
+          DISPATCH_TEXT: ${{ inputs.policy-text }}
+          DISPATCH_CONTEXT: ${{ inputs.business-context }}
+          DISPATCH_REVIEWER: ${{ inputs.reviewer }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            # Manual trigger - use workflow inputs
+            echo "title=$DISPATCH_TITLE" >> $GITHUB_OUTPUT
+            echo "statement<<EOF" >> $GITHUB_OUTPUT
+            echo "$DISPATCH_TEXT" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "context<<EOF" >> $GITHUB_OUTPUT
+            echo "$DISPATCH_CONTEXT" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "reviewer=$DISPATCH_REVIEWER" >> $GITHUB_OUTPUT
+            echo "issue_number=" >> $GITHUB_OUTPUT
+          else
+            # Issue trigger - parse issue body
+            echo "title=$ISSUE_TITLE" >> $GITHUB_OUTPUT
+
+            # Extract policy statement from issue body using form field parsing
+            POLICY_STATEMENT=$(echo "$ISSUE_BODY" | sed -n '/### Policy Statement/,/### /p' | sed '1d;$d')
+            echo "statement<<EOF" >> $GITHUB_OUTPUT
+            echo "$POLICY_STATEMENT" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+
+            # Extract business context (optional field)
+            BUSINESS_CONTEXT=$(echo "$ISSUE_BODY" | sed -n '/### Business Context/,/### /p' | sed '1d;$d')
+            echo "context<<EOF" >> $GITHUB_OUTPUT
+            echo "$BUSINESS_CONTEXT" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+
+            # Extract reviewer from issue body (optional)
+            REVIEWER=$(echo "$ISSUE_BODY" | sed -n '/### Requested Reviewer/,/### /p' | sed '1d;$d' | tr -d '@')
+            echo "reviewer=$REVIEWER" >> $GITHUB_OUTPUT
+
+            echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate Policy ID
+        id: policy-id
+        run: |
+          # Get current year
+          YEAR=$(date +%Y)
+
+          # Find highest existing policy number for this year
+          HIGHEST=0
+          if [ -d "policies" ]; then
+            for dir in policies/POL-${YEAR}-*; do
+              if [ -d "$dir" ]; then
+                NUM=$(basename "$dir" | cut -d'-' -f3)
+                if [ "$NUM" -gt "$HIGHEST" ]; then
+                  HIGHEST=$NUM
+                fi
+              fi
+            done
+          fi
+
+          # Increment and format with zero-padding
+          NEXT=$((HIGHEST + 1))
+          POLICY_ID=$(printf "POL-%s-%03d" "$YEAR" "$NEXT")
+
+          echo "id=$POLICY_ID" >> $GITHUB_OUTPUT
+          echo "Generated Policy ID: $POLICY_ID"
+
+      - name: Create folder structure
+        env:
+          POLICY_ID: ${{ steps.policy-id.outputs.id }}
+          POLICY_TITLE: ${{ steps.inputs.outputs.title }}
+          POLICY_STATEMENT: ${{ steps.inputs.outputs.statement }}
+          BUSINESS_CONTEXT: ${{ steps.inputs.outputs.context }}
+          ISSUE_NUM: ${{ steps.inputs.outputs.issue_number }}
+          REVIEWER: ${{ steps.inputs.outputs.reviewer }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          BASE_DIR="policies/${POLICY_ID}"
+
+          # Create directory structure
+          mkdir -p "$BASE_DIR"/{input,contextual,conceptual,logical,physical,component,operational}
+
+          # Write policy statement to input folder
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          cat > "$BASE_DIR/input/policy-statement.md" <<EOF
+          # Policy Statement
+
+          **Title:** $POLICY_TITLE
+          **Created:** $TIMESTAMP
+          **Source Issue:** ${ISSUE_NUM:-N/A}
+
+          ## Policy Statement
+
+          $POLICY_STATEMENT
+
+          ## Business Context
+
+          $BUSINESS_CONTEXT
+          EOF
+
+          # Initialize metadata.json
+          cat > "$BASE_DIR/metadata.json" <<EOF
+          {
+            "policyId": "$POLICY_ID",
+            "title": "$POLICY_TITLE",
+            "createdAt": "$TIMESTAMP",
+            "createdBy": "$ACTOR",
+            "sourceIssue": ${ISSUE_NUM:-null},
+            "status": "in-progress",
+            "currentLayer": "contextual",
+            "requestedReviewer": "$REVIEWER",
+            "layerStatus": {
+              "contextual": {"status": "not-started"},
+              "conceptual": {"status": "not-started"},
+              "logical": {"status": "not-started"},
+              "physical": {"status": "not-started"},
+              "component": {"status": "not-started"},
+              "operational": {"status": "not-started"}
+            },
+            "completedAt": null,
+            "releaseTag": null
+          }
+          EOF
+
+          echo "Created folder structure for $POLICY_ID"
+
+      - name: Build summary generation prompt
+        id: summary-prompt
+        env:
+          POLICY_STATEMENT: ${{ steps.inputs.outputs.statement }}
+          BUSINESS_CONTEXT: ${{ steps.inputs.outputs.context }}
+        run: |
+          # Read summary prompt template
+          TEMPLATE=$(cat prompts/summary-prompt.md)
+
+          # Substitute placeholders using environment variables
+          PROMPT="$TEMPLATE"
+          PROMPT="${PROMPT//\{\{policy_statement\}\}/$POLICY_STATEMENT}"
+          PROMPT="${PROMPT//\{\{business_context\}\}/$BUSINESS_CONTEXT}"
+
+          # Output multiline prompt
+          echo "prompt<<EOF" >> $GITHUB_OUTPUT
+          echo "$PROMPT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Generate policy summary
+        id: summary
+        uses: ./.github/actions/call-claude
+        with:
+          prompt: ${{ steps.summary-prompt.outputs.prompt }}
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          expected-sections: '["summary"]'
+          max-retries: '2'
+
+      - name: Write summary file
+        env:
+          POLICY_ID: ${{ steps.policy-id.outputs.id }}
+          SUMMARY_TEXT: ${{ steps.summary.outputs.result }}
+        run: |
+          BASE_DIR="policies/${POLICY_ID}"
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Write to summary.md
+          cat > "$BASE_DIR/summary.md" <<EOF
+          # Policy Summary
+
+          **Policy ID:** $POLICY_ID
+          **Generated:** $TIMESTAMP
+
+          $SUMMARY_TEXT
+          EOF
+
+          echo "Summary written to $BASE_DIR/summary.md"
+
+      - name: Commit initialization to main
+        env:
+          POLICY_ID: ${{ steps.policy-id.outputs.id }}
+          POLICY_TITLE: ${{ steps.inputs.outputs.title }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add "policies/${POLICY_ID}"
+          git commit -m "[$POLICY_ID] Initialize policy: $POLICY_TITLE"
+          git push origin main
+
+          echo "Committed initialization to main branch"
+
+      - name: Comment on issue (if applicable)
+        if: steps.inputs.outputs.issue_number != ''
+        uses: actions/github-script@v7
+        env:
+          POLICY_ID: ${{ steps.policy-id.outputs.id }}
+          ISSUE_NUM: ${{ steps.inputs.outputs.issue_number }}
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parseInt(process.env.ISSUE_NUM),
+              body: `## Policy Initialized
+
+              **Policy ID:** \`${process.env.POLICY_ID}\`
+
+              Your policy has been initialized and the first layer (Contextual) will be generated shortly.
+
+              You can track progress by watching for Pull Requests with the \`sabsa-artifact\` label.
+
+              **Next Step:** Layer 1 (Contextual) generation in progress...`
+            });
+
+      - name: Trigger Layer 1 generation
+        uses: ./.github/workflows/generate-layer.yml@main
+        with:
+          policy-id: ${{ steps.policy-id.outputs.id }}
+          layer: contextual

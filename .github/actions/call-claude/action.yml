@@ -1,0 +1,31 @@
+name: 'Call Claude API'
+description: 'Generate SABSA artifacts using Anthropic Claude'
+
+inputs:
+  prompt:
+    description: 'Assembled prompt text'
+    required: true
+  anthropic-api-key:
+    description: 'Anthropic API key'
+    required: true
+  max-retries:
+    description: 'Maximum retry attempts on failure'
+    required: false
+    default: '2'
+  expected-sections:
+    description: 'JSON array of expected section IDs'
+    required: true
+
+outputs:
+  result:
+    description: 'Parsed JSON response'
+  success:
+    description: 'Whether generation fully succeeded'
+  error-message:
+    description: 'Error details if failed'
+  partial-result:
+    description: 'Parseable content if partial failure'
+
+runs:
+  using: 'node20'
+  main: 'index.js'

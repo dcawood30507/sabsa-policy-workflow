@@ -1,0 +1,104 @@
+{
+  "action": "submitted",
+  "review": {
+    "id": 1234567891,
+    "node_id": "PRR_kwDOABCDEF5ghijl",
+    "user": {
+      "login": "security-lead",
+      "id": 87654321,
+      "type": "User"
+    },
+    "body": "Good start on Layer 2, but needs some refinements before approval:\n\n1. Section 2-3 should include a principle about key separation (generation vs. usage)\n2. The trust model (2-4) needs more detail on HSM trust boundaries\n3. Please add a reference to NIST SP 800-57 for key management best practices",
+    "state": "changes_requested",
+    "html_url": "https://github.com/test-org/sabsa-policy-workflow/pull/102#pullrequestreview-1234567891",
+    "pull_request_url": "https://api.github.com/repos/test-org/sabsa-policy-workflow/pulls/102",
+    "submitted_at": "2025-01-16T10:30:00Z",
+    "commit_id": "b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1",
+    "author_association": "MEMBER"
+  },
+  "pull_request": {
+    "number": 102,
+    "id": 2123456791,
+    "node_id": "PR_kwDOABCDEF5ghijl",
+    "state": "open",
+    "locked": false,
+    "title": "[POL-2025-001] Layer 2: Conceptual",
+    "user": {
+      "login": "github-actions[bot]",
+      "id": 41898282,
+      "type": "Bot"
+    },
+    "body": "## SABSA Artifact: Conceptual Layer\n\n**Policy ID:** POL-2025-001\n**Layer:** 2 of 6 — Conceptual\n**Generated:** 2025-01-16T09:00:00Z\n**Status:** complete\n\n---\n\n### Policy Summary\n\n> This policy mandates comprehensive encryption for customer personally identifiable information (PII). Key requirements include AES-256 encryption at rest, TLS 1.2+ in transit, HSM-based key storage, 90-day key rotation, MFA for key access, and complete audit logging. The policy supports SOC 2 and GDPR compliance obligations.\n\n---\n\n### Layer Progress\n\n- [x] **Contextual** ([PR #101](https://github.com/test-org/sabsa-policy-workflow/pull/101))\n- [x] **Conceptual** ([PR #102](https://github.com/test-org/sabsa-policy-workflow/pull/102)) ← **This PR**\n- [ ] **Logical**\n- [ ] **Physical**\n- [ ] **Component**\n- [ ] **Operational**\n\n---\n\n### Sections Generated\n\n| Section | Title | Status | Traces To |\n|---------|-------|--------|--------|\n| 2-1 | Security Objectives | complete | 1-2, 1-3 |\n| 2-2 | Security Services | complete | 1-2, 1-4 |\n| 2-3 | Security Principles | complete | 1-3 |\n| 2-4 | Trust Model | complete | 1-2, 1-5 |\n| 2-5 | Security Domains | complete | 1-1, 1-3 |",
+    "created_at": "2025-01-16T09:00:00Z",
+    "updated_at": "2025-01-16T10:30:00Z",
+    "closed_at": null,
+    "merged_at": null,
+    "merge_commit_sha": null,
+    "assignee": {
+      "login": "security-lead",
+      "id": 87654321,
+      "type": "User"
+    },
+    "assignees": [
+      {
+        "login": "security-lead",
+        "id": 87654321,
+        "type": "User"
+      }
+    ],
+    "requested_reviewers": [],
+    "requested_teams": [],
+    "labels": [
+      {
+        "id": 987654322,
+        "name": "sabsa-artifact",
+        "color": "0075ca"
+      },
+      {
+        "id": 987654324,
+        "name": "layer-2",
+        "color": "1d76db"
+      }
+    ],
+    "draft": false,
+    "head": {
+      "label": "test-org:policy/POL-2025-001/layer-2-conceptual",
+      "ref": "policy/POL-2025-001/layer-2-conceptual",
+      "sha": "b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1"
+    },
+    "base": {
+      "label": "test-org:main",
+      "ref": "main",
+      "sha": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"
+    },
+    "merged": false,
+    "mergeable": true,
+    "mergeable_state": "clean",
+    "merged_by": null,
+    "comments": 3,
+    "review_comments": 5,
+    "commits": 1,
+    "additions": 178,
+    "deletions": 0,
+    "changed_files": 2
+  },
+  "changes": {},
+  "repository": {
+    "id": 123456789,
+    "node_id": "R_kgDOABCDEF",
+    "name": "sabsa-policy-workflow",
+    "full_name": "test-org/sabsa-policy-workflow",
+    "private": true,
+    "owner": {
+      "login": "test-org",
+      "id": 987654321,
+      "type": "Organization"
+    },
+    "default_branch": "main"
+  },
+  "sender": {
+    "login": "security-lead",
+    "id": 87654321,
+    "type": "User"
+  }
+}

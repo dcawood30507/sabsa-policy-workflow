@@ -1,0 +1,130 @@
+name: Cascade Next Layer
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  cascade:
+    runs-on: ubuntu-latest
+    # Only trigger if PR was merged AND branch matches policy pattern
+    if: |
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'policy/')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Parse branch name
+        id: parse
+        env:
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          # Validate branch format: policy/POL-YYYY-NNN/layer-N-layername
+          if [[ ! "$BRANCH_NAME" =~ ^policy/POL-[0-9]{4}-[0-9]{3}/layer-[1-6]-(contextual|conceptual|logical|physical|component|operational)$ ]]; then
+            echo "ERROR: Invalid branch name format: $BRANCH_NAME"
+            exit 1
+          fi
+
+          # Verify merge target was main (using sanitized input)
+          if [ "$BASE_REF" != "main" ]; then
+            echo "ERROR: PR was not merged to main branch (target was: $BASE_REF)"
+            exit 1
+          fi
+
+          # Extract policy ID and layer
+          POLICY_ID=$(echo "$BRANCH_NAME" | cut -d'/' -f2)
+          LAYER_PART=$(echo "$BRANCH_NAME" | cut -d'/' -f3)
+          LAYER_NUM=$(echo "$LAYER_PART" | cut -d'-' -f2)
+          LAYER_NAME=$(echo "$LAYER_PART" | cut -d'-' -f3)
+
+          echo "policy_id=$POLICY_ID" >> $GITHUB_OUTPUT
+          echo "layer_num=$LAYER_NUM" >> $GITHUB_OUTPUT
+          echo "layer_name=$LAYER_NAME" >> $GITHUB_OUTPUT
+
+          echo "Parsed: Policy=$POLICY_ID, Layer=$LAYER_NUM ($LAYER_NAME)"
+
+      - name: Determine next layer
+        id: next
+        run: |
+          CURRENT_LAYER="${{ steps.parse.outputs.layer_name }}"
+
+          # Layer progression mapping
+          case "$CURRENT_LAYER" in
+            contextual)
+              NEXT_LAYER="conceptual"
+              IS_FINAL="false"
+              ;;
+            conceptual)
+              NEXT_LAYER="logical"
+              IS_FINAL="false"
+              ;;
+            logical)
+              NEXT_LAYER="physical"
+              IS_FINAL="false"
+              ;;
+            physical)
+              NEXT_LAYER="component"
+              IS_FINAL="false"
+              ;;
+            component)
+              NEXT_LAYER="operational"
+              IS_FINAL="false"
+              ;;
+            operational)
+              NEXT_LAYER=""
+              IS_FINAL="true"
+              ;;
+            *)
+              echo "ERROR: Unknown layer: $CURRENT_LAYER"
+              exit 1
+              ;;
+          esac
+
+          echo "next_layer=$NEXT_LAYER" >> $GITHUB_OUTPUT
+          echo "is_final=$IS_FINAL" >> $GITHUB_OUTPUT
+
+          if [ "$IS_FINAL" == "true" ]; then
+            echo "Final layer (operational) completed - will trigger finalization"
+          else
+            echo "Next layer to generate: $NEXT_LAYER"
+          fi
+
+      - name: Update metadata for completed layer
+        run: |
+          POLICY_ID="${{ steps.parse.outputs.policy_id }}"
+          LAYER_NAME="${{ steps.parse.outputs.layer_name }}"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          METADATA_FILE="policies/${POLICY_ID}/metadata.json"
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Update completed layer status
+          jq ".layerStatus.${LAYER_NAME}.status = \"approved\" | \
+              .layerStatus.${LAYER_NAME}.prNumber = ${PR_NUMBER} | \
+              .layerStatus.${LAYER_NAME}.mergedAt = \"${TIMESTAMP}\"" \
+            "$METADATA_FILE" > "${METADATA_FILE}.tmp"
+
+          mv "${METADATA_FILE}.tmp" "$METADATA_FILE"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "$METADATA_FILE"
+          git commit -m "[$POLICY_ID] Mark $LAYER_NAME layer as approved (PR #${PR_NUMBER})"
+          git push origin main
+
+          echo "Updated metadata: $LAYER_NAME marked as approved"
+
+      - name: Trigger next layer generation
+        if: steps.next.outputs.is_final == 'false'
+        uses: ./.github/workflows/generate-layer.yml@main
+        with:
+          policy-id: ${{ steps.parse.outputs.policy_id }}
+          layer: ${{ steps.next.outputs.next_layer }}
+
+      - name: Trigger finalization
+        if: steps.next.outputs.is_final == 'true'
+        uses: ./.github/workflows/finalize-policy.yml@main
+        with:
+          policy-id: ${{ steps.parse.outputs.policy_id }}

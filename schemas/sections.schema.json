@@ -1,0 +1,138 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sabsa.policy.workflow/schemas/sections.schema.json",
+  "title": "SABSA Policy Layer Sections",
+  "description": "Schema for validating SABSA policy layer sections with content, rationale, and error tracking",
+  "type": "object",
+  "required": [
+    "policyId",
+    "layer",
+    "version",
+    "generatedAt",
+    "generationStatus",
+    "sections"
+  ],
+  "properties": {
+    "policyId": {
+      "type": "string",
+      "pattern": "^POL-\\d{4}-\\d{3}$",
+      "description": "Policy identifier in format POL-YYYY-NNN (e.g., POL-2025-001)",
+      "examples": ["POL-2025-001", "POL-2024-042"]
+    },
+    "layer": {
+      "type": "string",
+      "enum": [
+        "contextual",
+        "conceptual",
+        "logical",
+        "physical",
+        "component",
+        "operational"
+      ],
+      "description": "SABSA architectural layer for this artifact"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Version number of this layer artifact, increments on regeneration"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this artifact was generated"
+    },
+    "generationStatus": {
+      "type": "string",
+      "enum": ["complete", "partial"],
+      "description": "Indicates whether all sections were successfully generated (complete) or if errors occurred (partial)"
+    },
+    "sections": {
+      "type": "object",
+      "description": "Collection of section artifacts, keyed by section ID (e.g., '1-1', '2-3', '3-1')",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[1-6]-[1-6]$": {
+          "type": "object",
+          "required": ["title"],
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Section title as defined in SABSA layer specification"
+            },
+            "content": {
+              "type": ["string", "null"],
+              "description": "Markdown-formatted section content. Null if generation failed for this section."
+            },
+            "rationale_why": {
+              "type": ["string", "null"],
+              "description": "Framework references (NIST, ISO, CIS) explaining why this section was suggested. Null if generation failed."
+            },
+            "rationale_condition": {
+              "type": ["string", "null"],
+              "description": "Explicit statement of which upstream requirement this section satisfies. Null if generation failed."
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "description": "Array of errors encountered during generation. Empty if generationStatus is 'complete'.",
+      "items": {
+        "type": "object",
+        "required": ["section", "errorType", "message"],
+        "properties": {
+          "section": {
+            "type": "string",
+            "pattern": "^[1-6]-[1-6]$",
+            "description": "Section ID where error occurred"
+          },
+          "errorType": {
+            "type": "string",
+            "enum": [
+              "parse_failure",
+              "api_error",
+              "validation_error",
+              "incomplete_generation"
+            ],
+            "description": "Category of error encountered"
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Human-readable error message"
+          },
+          "rawContent": {
+            "type": "string",
+            "description": "Raw output before parsing failure, for manual recovery"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "if": {
+    "properties": {
+      "generationStatus": {
+        "const": "partial"
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "errors": {
+        "minItems": 1
+      }
+    }
+  },
+  "else": {
+    "properties": {
+      "errors": {
+        "maxItems": 0
+      }
+    }
+  }
+}

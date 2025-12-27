@@ -1,0 +1,54 @@
+{
+  "relationships": [
+    {
+      "id": "implements",
+      "label": "Implements",
+      "definition": "Directly realizes or fulfills an upstream requirement",
+      "typicalDirection": "downstream → upstream",
+      "examples": [
+        "Logical control implements Conceptual objective",
+        "Component config implements Physical specification"
+      ]
+    },
+    {
+      "id": "derives_from",
+      "label": "Derives From",
+      "definition": "Logically follows from or is based on upstream element",
+      "typicalDirection": "any downstream → any upstream",
+      "examples": [
+        "Physical procedure derives from Logical standard",
+        "Operational runbook derives from Component deployment"
+      ]
+    },
+    {
+      "id": "constrained_by",
+      "label": "Constrained By",
+      "definition": "Bounded or limited by upstream constraint or boundary",
+      "typicalDirection": "downstream → upstream",
+      "examples": [
+        "Physical implementation constrained by Logical policy",
+        "Component config constrained by trust boundary"
+      ]
+    },
+    {
+      "id": "refines",
+      "label": "Refines",
+      "definition": "Adds implementation detail to upstream element",
+      "typicalDirection": "downstream → immediate upstream",
+      "examples": [
+        "Component script refines Physical procedure",
+        "Physical spec refines Logical control"
+      ]
+    },
+    {
+      "id": "validates",
+      "label": "Validates",
+      "definition": "Provides verification or proof of upstream element",
+      "typicalDirection": "downstream → upstream",
+      "examples": [
+        "Component test validates Physical specification",
+        "Operational metric validates Control effectiveness"
+      ]
+    }
+  ]
+}

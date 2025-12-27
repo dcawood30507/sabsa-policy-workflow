@@ -1,0 +1,366 @@
+name: Finalize Policy
+
+on:
+  workflow_call:
+    inputs:
+      policy-id:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      policy-id:
+        description: 'Policy ID to finalize (e.g., POL-2025-001)'
+        required: true
+        type: string
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate policy ID format
+        run: |
+          POLICY_ID="${{ inputs.policy-id }}"
+
+          # Validate format: POL-YYYY-NNN
+          if [[ ! "$POLICY_ID" =~ ^POL-[0-9]{4}-[0-9]{3}$ ]]; then
+            echo "ERROR: Invalid policy ID format: $POLICY_ID"
+            exit 1
+          fi
+
+          # Verify policy directory exists
+          if [ ! -d "policies/${POLICY_ID}" ]; then
+            echo "ERROR: Policy directory not found: policies/${POLICY_ID}"
+            exit 1
+          fi
+
+          echo "Policy ID validated: $POLICY_ID"
+
+      - name: Verify all layers completed
+        id: verify
+        run: |
+          POLICY_ID="${{ inputs.policy-id }}"
+          METADATA_FILE="policies/${POLICY_ID}/metadata.json"
+
+          # Check all 6 layers are approved
+          LAYERS=("contextual" "conceptual" "logical" "physical" "component" "operational")
+          ALL_APPROVED=true
+
+          for layer in "${LAYERS[@]}"; do
+            STATUS=$(jq -r ".layerStatus.${layer}.status" "$METADATA_FILE")
+            if [ "$STATUS" != "approved" ]; then
+              echo "ERROR: Layer $layer is not approved (status: $STATUS)"
+              ALL_APPROVED=false
+            fi
+          done
+
+          if [ "$ALL_APPROVED" != "true" ]; then
+            echo "ERROR: Not all layers are approved. Cannot finalize policy."
+            exit 1
+          fi
+
+          echo "All layers verified as approved"
+          echo "all_approved=true" >> $GITHUB_OUTPUT
+
+      - name: Update metadata to completed status
+        id: update
+        run: |
+          POLICY_ID="${{ inputs.policy-id }}"
+          METADATA_FILE="policies/${POLICY_ID}/metadata.json"
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Update policy status to completed
+          jq ".status = \"completed\" | .completedAt = \"${TIMESTAMP}\"" \
+            "$METADATA_FILE" > "${METADATA_FILE}.tmp"
+
+          mv "${METADATA_FILE}.tmp" "$METADATA_FILE"
+
+          # Extract policy title for later use (will be sanitized in github-script)
+          POLICY_TITLE=$(jq -r '.title' "$METADATA_FILE")
+          echo "policy_title=$POLICY_TITLE" >> $GITHUB_OUTPUT
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "$METADATA_FILE"
+          git commit -m "[$POLICY_ID] Finalize policy: All layers completed"
+          git push origin main
+
+          echo "Updated metadata to completed status"
+
+      - name: Create Git tag
+        id: tag
+        run: |
+          POLICY_ID="${{ inputs.policy-id }}"
+          TAG_NAME="policy/${POLICY_ID}/v1.0"
+
+          git tag -a "$TAG_NAME" -m "Release: $POLICY_ID - All SABSA layers completed"
+          git push origin "$TAG_NAME"
+
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "Created and pushed tag: $TAG_NAME"
+
+      - name: Generate release notes
+        id: release-notes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const policyId = '${{ inputs.policy-id }}';
+            const fs = require('fs');
+
+            // Read metadata
+            const metadata = JSON.parse(fs.readFileSync(`policies/${policyId}/metadata.json`, 'utf8'));
+
+            // Read summary
+            const summary = fs.readFileSync(`policies/${policyId}/summary.md`, 'utf8');
+
+            // Build PR links table
+            const layers = ['contextual', 'conceptual', 'logical', 'physical', 'component', 'operational'];
+            let prTable = '| Layer | PR Number | Merged At |\n|-------|-----------|------------|\n';
+
+            layers.forEach((layer, index) => {
+              const layerData = metadata.layerStatus[layer];
+              const layerNum = index + 1;
+              const displayName = layer.charAt(0).toUpperCase() + layer.slice(1);
+
+              if (layerData.prNumber) {
+                const prLink = `#${layerData.prNumber}`;
+                const mergedDate = new Date(layerData.mergedAt).toLocaleDateString();
+                prTable += `| ${layerNum}. ${displayName} | ${prLink} | ${mergedDate} |\n`;
+              }
+            });
+
+            // Build release body
+            const releaseBody = `# ${metadata.title}
+
+            **Policy ID:** \`${policyId}\`
+            **Status:** ✅ Complete
+            **Created:** ${new Date(metadata.createdAt).toLocaleDateString()}
+            **Completed:** ${new Date(metadata.completedAt).toLocaleDateString()}
+
+            ---
+
+            ## Summary
+
+            ${summary}
+
+            ---
+
+            ## Layer Completion Timeline
+
+            ${prTable}
+
+            ---
+
+            ## Artifacts
+
+            All SABSA layer artifacts are available in the \`policies/${policyId}/\` directory:
+
+            - **Contextual Layer** — Business context, drivers, risks, success criteria
+            - **Conceptual Layer** — Security objectives, services, principles, trust model
+            - **Logical Layer** — Policies, standards, control specifications
+            - **Physical Layer** — Implementation specifications, procedures, technical standards
+            - **Component Layer** — Tool configurations, scripts, validation tests
+            - **Operational Layer** — Monitoring, runbooks, incident response, metrics
+
+            Each layer includes:
+            - \`sections.json\` — Detailed artifact content with rationale
+            - \`traceability.json\` — Relationships to upstream requirements
+
+            ---
+
+            ## Traceability
+
+            Complete traceability from business requirements to operational runbooks is maintained across all layers. Use the \`traceability.json\` files to trace any operational control back to its originating business requirement.
+
+            ---
+
+            *Generated by SABSA Agentic Policy Workflow*
+            `;
+
+            return releaseBody;
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tagName = '${{ steps.tag.outputs.tag_name }}';
+            const policyId = '${{ inputs.policy-id }}';
+            const releaseBody = ${{ steps.release-notes.outputs.result }};
+            const fs = require('fs');
+
+            // Read policy title from metadata (sanitized by github-script)
+            const metadata = JSON.parse(fs.readFileSync(`policies/${policyId}/metadata.json`, 'utf8'));
+            const policyTitle = metadata.title;
+
+            const { data: release } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tagName,
+              name: `${policyId}: ${policyTitle}`,
+              body: releaseBody,
+              draft: false,
+              prerelease: false
+            });
+
+            console.log(`Created release: ${release.html_url}`);
+            core.setOutput('release_url', release.html_url);
+
+      - name: Update metadata with release tag
+        run: |
+          POLICY_ID="${{ inputs.policy-id }}"
+          TAG_NAME="${{ steps.tag.outputs.tag_name }}"
+          METADATA_FILE="policies/${POLICY_ID}/metadata.json"
+
+          # Add release tag to metadata
+          jq ".releaseTag = \"${TAG_NAME}\"" "$METADATA_FILE" > "${METADATA_FILE}.tmp"
+          mv "${METADATA_FILE}.tmp" "$METADATA_FILE"
+
+          git add "$METADATA_FILE"
+          git commit -m "[$POLICY_ID] Add release tag to metadata"
+          git push origin main
+
+          echo "Added release tag to metadata"
+
+      - name: Close source issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const policyId = '${{ inputs.policy-id }}';
+            const tagName = '${{ steps.tag.outputs.tag_name }}';
+            const fs = require('fs');
+
+            // Read metadata to get source issue
+            const metadata = JSON.parse(fs.readFileSync(`policies/${policyId}/metadata.json`, 'utf8'));
+
+            if (metadata.sourceIssue) {
+              // Get the release (just created)
+              const { data: releases } = await github.rest.repos.listReleases({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 10
+              });
+
+              const release = releases.find(r => r.tag_name === tagName);
+              const releaseLink = release ? release.html_url : '';
+
+              // Comment on issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: metadata.sourceIssue,
+                body: `## ✅ Policy Complete
+
+                **Policy ID:** \`${policyId}\`
+                **Status:** All 6 SABSA layers completed and approved
+
+                ---
+
+                ### Completion Summary
+
+                All layers have been successfully generated, reviewed, and merged:
+                - ✅ Layer 1: Contextual
+                - ✅ Layer 2: Conceptual
+                - ✅ Layer 3: Logical
+                - ✅ Layer 4: Physical
+                - ✅ Layer 5: Component
+                - ✅ Layer 6: Operational
+
+                ---
+
+                ### Release
+
+                📦 **Release:** [${tagName}](${releaseLink})
+
+                View the complete policy artifacts in the release notes.
+
+                ---
+
+                *Policy workflow completed successfully.*`
+              });
+
+              // Close issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: metadata.sourceIssue,
+                state: 'closed',
+                state_reason: 'completed'
+              });
+
+              console.log(`Closed source issue #${metadata.sourceIssue}`);
+            } else {
+              console.log('No source issue to close (policy created via workflow_dispatch)');
+            }
+
+      - name: Generate consolidated artifact (optional)
+        id: consolidated
+        run: |
+          POLICY_ID="${{ inputs.policy-id }}"
+          OUTPUT_DIR="policies/${POLICY_ID}"
+          CONSOLIDATED_FILE="${OUTPUT_DIR}/CONSOLIDATED_POLICY.md"
+
+          # Read policy title safely from metadata
+          POLICY_TITLE=$(jq -r '.title' "${OUTPUT_DIR}/metadata.json")
+
+          # Start consolidated document
+          cat > "$CONSOLIDATED_FILE" <<EOF
+          # Consolidated Policy: ${POLICY_TITLE}
+
+          **Policy ID:** ${POLICY_ID}
+          **Status:** Complete
+          **Generated:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+          ---
+
+          EOF
+
+          # Append summary
+          cat "${OUTPUT_DIR}/summary.md" >> "$CONSOLIDATED_FILE"
+          echo -e "\n\n---\n\n" >> "$CONSOLIDATED_FILE"
+
+          # Append each layer's content
+          LAYERS=("contextual" "conceptual" "logical" "physical" "component" "operational")
+          LAYER_NAMES=("Contextual" "Conceptual" "Logical" "Physical" "Component" "Operational")
+
+          for i in "${!LAYERS[@]}"; do
+            layer="${LAYERS[$i]}"
+            name="${LAYER_NAMES[$i]}"
+
+            echo "# Layer $((i+1)): ${name}" >> "$CONSOLIDATED_FILE"
+            echo "" >> "$CONSOLIDATED_FILE"
+
+            # Extract all sections from sections.json and convert to markdown
+            jq -r '.sections | to_entries[] | "## \(.value.title)\n\n\(.value.content)\n\n### Rationale\n\n**Why Suggested:** \(.value.rationale_why)\n\n**Condition Satisfied:** \(.value.rationale_condition)\n\n---\n"' \
+              "${OUTPUT_DIR}/${layer}/sections.json" >> "$CONSOLIDATED_FILE"
+
+            echo -e "\n\n" >> "$CONSOLIDATED_FILE"
+          done
+
+          echo "Generated consolidated artifact: $CONSOLIDATED_FILE"
+          echo "consolidated_file=$CONSOLIDATED_FILE" >> $GITHUB_OUTPUT
+
+      - name: Commit consolidated artifact
+        run: |
+          POLICY_ID="${{ inputs.policy-id }}"
+
+          git add "policies/${POLICY_ID}/CONSOLIDATED_POLICY.md"
+          git commit -m "[$POLICY_ID] Generate consolidated policy artifact"
+          git push origin main
+
+          echo "Committed consolidated artifact"
+
+      - name: Finalization summary
+        run: |
+          POLICY_ID="${{ inputs.policy-id }}"
+          TAG_NAME="${{ steps.tag.outputs.tag_name }}"
+
+          echo "================================"
+          echo "Policy Finalization Complete"
+          echo "================================"
+          echo "Policy ID: ${POLICY_ID}"
+          echo "Tag: ${TAG_NAME}"
+          echo "Status: ✅ Complete"
+          echo "================================"

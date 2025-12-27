@@ -1,0 +1,80 @@
+{
+  "layers": {
+    "contextual": {
+      "displayName": "Contextual",
+      "number": 1,
+      "receives": {
+        "summary": true,
+        "sections": []
+      },
+      "outputs": ["1-1", "1-2", "1-3", "1-4", "1-5"]
+    },
+    "conceptual": {
+      "displayName": "Conceptual",
+      "number": 2,
+      "receives": {
+        "summary": true,
+        "sections": [
+          {"layer": "contextual", "section": "1-2"},
+          {"layer": "contextual", "section": "1-3"},
+          {"layer": "contextual", "section": "1-4"}
+        ]
+      },
+      "outputs": ["2-1", "2-2", "2-3", "2-4", "2-5"]
+    },
+    "logical": {
+      "displayName": "Logical",
+      "number": 3,
+      "receives": {
+        "summary": true,
+        "sections": [
+          {"layer": "conceptual", "section": "2-1"},
+          {"layer": "conceptual", "section": "2-2"},
+          {"layer": "conceptual", "section": "2-3"}
+        ]
+      },
+      "outputs": ["3-1", "3-2", "3-3", "3-4", "3-5"]
+    },
+    "physical": {
+      "displayName": "Physical",
+      "number": 4,
+      "receives": {
+        "summary": true,
+        "sections": [
+          {"layer": "logical", "section": "3-1"},
+          {"layer": "logical", "section": "3-2"},
+          {"layer": "logical", "section": "3-3"},
+          {"layer": "conceptual", "section": "2-4"}
+        ]
+      },
+      "outputs": ["4-1", "4-2", "4-3", "4-4", "4-5"]
+    },
+    "component": {
+      "displayName": "Component",
+      "number": 5,
+      "receives": {
+        "summary": true,
+        "sections": [
+          {"layer": "physical", "section": "4-1"},
+          {"layer": "physical", "section": "4-2"},
+          {"layer": "physical", "section": "4-3"}
+        ]
+      },
+      "outputs": ["5-1", "5-2", "5-3", "5-4", "5-5"]
+    },
+    "operational": {
+      "displayName": "Operational",
+      "number": 6,
+      "receives": {
+        "summary": true,
+        "sections": [
+          {"layer": "component", "section": "5-1"},
+          {"layer": "component", "section": "5-3"},
+          {"layer": "component", "section": "5-4"},
+          {"layer": "physical", "section": "4-5"}
+        ]
+      },
+      "outputs": ["6-1", "6-2", "6-3", "6-4", "6-5", "6-6"]
+    }
+  }
+}

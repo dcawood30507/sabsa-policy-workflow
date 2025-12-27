@@ -1,0 +1,374 @@
+name: Generate Layer
+
+on:
+  workflow_call:
+    inputs:
+      policy-id:
+        required: true
+        type: string
+      layer:
+        required: true
+        type: string
+      revision-context:
+        required: false
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      policy-id:
+        description: 'Policy ID (e.g., POL-2025-001)'
+        required: true
+        type: string
+      layer:
+        description: 'Layer to generate'
+        required: true
+        type: choice
+        options:
+          - contextual
+          - conceptual
+          - logical
+          - physical
+          - component
+          - operational
+      revision-context:
+        description: 'Revision feedback JSON (optional)'
+        required: false
+        type: string
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js for JSON processing
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Load layer configuration
+        id: config
+        run: |
+          LAYER="${{ inputs.layer }}"
+
+          # Read layer-dependencies.json
+          DEPS=$(cat config/layer-dependencies.json)
+
+          # Extract layer number and display name
+          LAYER_NUM=$(echo "$DEPS" | jq -r ".layers.${LAYER}.number")
+          LAYER_DISPLAY=$(echo "$DEPS" | jq -r ".layers.${LAYER}.displayName")
+
+          # Extract expected output sections
+          EXPECTED_SECTIONS=$(echo "$DEPS" | jq -c ".layers.${LAYER}.outputs")
+
+          # Extract required upstream sections
+          UPSTREAM_SECTIONS=$(echo "$DEPS" | jq -c ".layers.${LAYER}.receives.sections")
+
+          echo "layer_num=$LAYER_NUM" >> $GITHUB_OUTPUT
+          echo "layer_display=$LAYER_DISPLAY" >> $GITHUB_OUTPUT
+          echo "expected_sections=$EXPECTED_SECTIONS" >> $GITHUB_OUTPUT
+          echo "upstream_sections=$UPSTREAM_SECTIONS" >> $GITHUB_OUTPUT
+
+          echo "Layer $LAYER_NUM: $LAYER_DISPLAY"
+          echo "Expected sections: $EXPECTED_SECTIONS"
+
+      - name: Assemble upstream context
+        id: context
+        run: |
+          POLICY_ID="${{ inputs.policy-id }}"
+          LAYER="${{ inputs.layer }}"
+          UPSTREAM_SECTIONS='${{ steps.config.outputs.upstream_sections }}'
+
+          # Load policy summary (always included)
+          SUMMARY=$(cat "policies/${POLICY_ID}/summary.md")
+
+          # Initialize context with summary
+          CONTEXT="## Policy Summary\n\n${SUMMARY}\n\n"
+
+          # Add upstream sections
+          echo "$UPSTREAM_SECTIONS" | jq -r '.[] | "\(.layer)|\(.section)"' | while IFS='|' read -r upstream_layer section_id; do
+            SECTION_FILE="policies/${POLICY_ID}/${upstream_layer}/sections.json"
+
+            if [ -f "$SECTION_FILE" ]; then
+              # Extract section content and metadata
+              SECTION_TITLE=$(jq -r ".sections.\"${section_id}\".title" "$SECTION_FILE")
+              SECTION_CONTENT=$(jq -r ".sections.\"${section_id}\".content" "$SECTION_FILE")
+
+              CONTEXT="${CONTEXT}---\n\n### Upstream Section: ${section_id} - ${SECTION_TITLE}\n\n${SECTION_CONTENT}\n\n"
+            else
+              echo "Warning: Expected upstream file not found: $SECTION_FILE"
+            fi
+          done
+
+          # Output assembled context
+          echo "context<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$CONTEXT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "Assembled context from summary + upstream sections"
+
+      - name: Build generation prompt
+        id: prompt
+        run: |
+          LAYER="${{ inputs.layer }}"
+          CONTEXT='${{ steps.context.outputs.context }}'
+          EXPECTED_SECTIONS='${{ steps.config.outputs.expected_sections }}'
+          REVISION_CONTEXT="${{ inputs.revision-context }}"
+
+          # Read system prompt
+          SYSTEM_PROMPT=$(cat prompts/system-prompt.md)
+
+          # Read layer-specific prompt
+          LAYER_PROMPT=$(cat "prompts/${LAYER}-prompt.md")
+
+          # Build complete prompt
+          FULL_PROMPT="${SYSTEM_PROMPT}\n\n---\n\n${CONTEXT}\n\n---\n\n${LAYER_PROMPT}\n\n"
+
+          # Add expected sections schema
+          FULL_PROMPT="${FULL_PROMPT}\n\n## Expected Output Sections\n\n"
+          FULL_PROMPT="${FULL_PROMPT}You must generate the following sections:\n${EXPECTED_SECTIONS}\n\n"
+
+          # Add revision feedback if present
+          if [ -n "$REVISION_CONTEXT" ]; then
+            FULL_PROMPT="${FULL_PROMPT}\n\n---\n\n## Revision Feedback\n\n"
+            FULL_PROMPT="${FULL_PROMPT}The following feedback was provided on the previous version. Please address these comments:\n\n"
+            FULL_PROMPT="${FULL_PROMPT}${REVISION_CONTEXT}\n\n"
+          fi
+
+          # Output prompt
+          echo "prompt<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$FULL_PROMPT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "Built generation prompt for layer: $LAYER"
+
+      - name: Call Claude API
+        id: claude
+        uses: ./.github/actions/call-claude
+        with:
+          prompt: ${{ steps.prompt.outputs.prompt }}
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          expected-sections: ${{ steps.config.outputs.expected_sections }}
+          max-retries: '2'
+
+      - name: Process Claude response
+        id: process
+        run: |
+          POLICY_ID="${{ inputs.policy-id }}"
+          LAYER="${{ inputs.layer }}"
+          CLAUDE_SUCCESS="${{ steps.claude.outputs.success }}"
+          CLAUDE_RESULT='${{ steps.claude.outputs.result }}'
+          CLAUDE_PARTIAL='${{ steps.claude.outputs.partial-result }}'
+          CLAUDE_ERROR="${{ steps.claude.outputs.error-message }}"
+
+          BASE_DIR="policies/${POLICY_ID}/${LAYER}"
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Determine which result to use
+          if [ "$CLAUDE_SUCCESS" == "true" ]; then
+            RESULT="$CLAUDE_RESULT"
+            GEN_STATUS="complete"
+            NEEDS_REVIEW="false"
+          else
+            RESULT="$CLAUDE_PARTIAL"
+            GEN_STATUS="partial"
+            NEEDS_REVIEW="true"
+            echo "Warning: Partial generation - $CLAUDE_ERROR"
+          fi
+
+          # Parse JSON response into sections.json
+          echo "$RESULT" | jq --arg pid "$POLICY_ID" --arg layer "$LAYER" --arg ts "$TIMESTAMP" --arg status "$GEN_STATUS" \
+            '{policyId: $pid, layer: $layer, version: 1, generatedAt: $ts, generationStatus: $status, sections: .sections, errors: (.errors // [])}' \
+            > "$BASE_DIR/sections.json"
+
+          # Extract traceability references if present
+          echo "$RESULT" | jq '{policyId: $ARGV.named.pid, layer: $ARGV.named.layer, version: 1, generatedAt: $ARGV.named.ts, references: (.traceability // {})}' \
+            --arg pid "$POLICY_ID" --arg layer "$LAYER" --arg ts "$TIMESTAMP" \
+            > "$BASE_DIR/traceability.json"
+
+          echo "generation_status=$GEN_STATUS" >> $GITHUB_OUTPUT
+          echo "needs_review=$NEEDS_REVIEW" >> $GITHUB_OUTPUT
+          echo "error_message=$CLAUDE_ERROR" >> $GITHUB_OUTPUT
+
+      - name: Update metadata
+        run: |
+          POLICY_ID="${{ inputs.policy-id }}"
+          LAYER="${{ inputs.layer }}"
+          METADATA_FILE="policies/${POLICY_ID}/metadata.json"
+
+          # Update layer status to pending-review
+          jq ".layerStatus.${LAYER}.status = \"pending-review\" | .layerStatus.${LAYER}.generatedAt = \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"" \
+            "$METADATA_FILE" > "${METADATA_FILE}.tmp"
+
+          mv "${METADATA_FILE}.tmp" "$METADATA_FILE"
+
+          echo "Updated metadata for layer: $LAYER"
+
+      - name: Create feature branch
+        id: branch
+        run: |
+          POLICY_ID="${{ inputs.policy-id }}"
+          LAYER="${{ inputs.layer }}"
+          LAYER_NUM="${{ steps.config.outputs.layer_num }}"
+          BRANCH_NAME="policy/${POLICY_ID}/layer-${LAYER_NUM}-${LAYER}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Check if branch exists (for revisions)
+          if git rev-parse --verify "origin/${BRANCH_NAME}" >/dev/null 2>&1; then
+            echo "Branch exists - checking out for revision"
+            git checkout "$BRANCH_NAME"
+            git pull origin "$BRANCH_NAME"
+          else
+            echo "Creating new branch: $BRANCH_NAME"
+            git checkout -b "$BRANCH_NAME"
+          fi
+
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Commit layer artifacts
+        run: |
+          POLICY_ID="${{ inputs.policy-id }}"
+          LAYER="${{ inputs.layer }}"
+          LAYER_DISPLAY="${{ steps.config.outputs.layer_display }}"
+          BRANCH_NAME="${{ steps.branch.outputs.branch_name }}"
+          REVISION_CONTEXT="${{ inputs.revision-context }}"
+
+          git add "policies/${POLICY_ID}/${LAYER}"
+          git add "policies/${POLICY_ID}/metadata.json"
+
+          # Different commit message for revisions
+          if [ -n "$REVISION_CONTEXT" ]; then
+            git commit -m "[$POLICY_ID] Layer ${LAYER_DISPLAY}: Revision based on feedback"
+          else
+            git commit -m "[$POLICY_ID] Generate Layer ${LAYER_DISPLAY}"
+          fi
+
+          # Force push for revisions, normal push for new
+          if [ -n "$REVISION_CONTEXT" ]; then
+            git push -f origin "$BRANCH_NAME"
+          else
+            git push -u origin "$BRANCH_NAME"
+          fi
+
+          echo "Committed and pushed artifacts"
+
+      - name: Create or update Pull Request
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const policyId = '${{ inputs.policy-id }}';
+            const layer = '${{ inputs.layer }}';
+            const layerNum = '${{ steps.config.outputs.layer_num }}';
+            const layerDisplay = '${{ steps.config.outputs.layer_display }}';
+            const branchName = '${{ steps.branch.outputs.branch_name }}';
+            const needsReview = '${{ steps.process.outputs.needs_review }}';
+            const genStatus = '${{ steps.process.outputs.generation_status }}';
+            const errorMsg = '${{ steps.process.outputs.error_message }}';
+            const revisionContext = '${{ inputs.revision-context }}';
+
+            // Check if PR already exists (for revisions)
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${branchName}`,
+              state: 'open'
+            });
+
+            const prTitle = `[${policyId}] Layer ${layerNum}: ${layerDisplay}`;
+
+            const prBody = `## SABSA Artifact: ${layerDisplay} Layer
+
+            **Policy ID:** \`${policyId}\`
+            **Layer:** ${layerNum} of 6 — ${layerDisplay}
+            **Status:** ${genStatus}
+
+            ---
+
+            ### Review Checklist
+
+            - [ ] All sections are complete and coherent
+            - [ ] Rationale references appropriate frameworks
+            - [ ] Traceability links to correct upstream elements
+            - [ ] Content aligns with organizational context
+            - [ ] Technical accuracy verified
+
+            ---
+
+            ${needsReview === 'true' ? `### ⚠️ Generation Issues\n\n**Error:** ${errorMsg}\n\nManual review required.\n\n---\n\n` : ''}
+
+            ### Review Actions
+
+            | Action | Result |
+            |--------|--------|
+            | **Approve & Merge** | Triggers generation of next layer |
+            | **Request Changes** | Triggers automated revision with your feedback |
+            | **Close PR** | Halts policy workflow (requires manual restart) |
+            `;
+
+            if (prs.length > 0) {
+              // Update existing PR
+              const pr = prs[0];
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                body: prBody
+              });
+
+              // Add comment about revision
+              if (revisionContext) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  body: '✅ **Revision Complete**\n\nThe layer has been regenerated based on your feedback. Please review the updated artifacts.'
+                });
+              }
+
+              console.log(`Updated existing PR #${pr.number}`);
+            } else {
+              // Create new PR
+              const { data: pr } = await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: prTitle,
+                head: branchName,
+                base: 'main',
+                body: prBody
+              });
+
+              // Add labels
+              const labels = ['sabsa-artifact', `layer-${layerNum}`];
+              if (needsReview === 'true') {
+                labels.push('needs-manual-review');
+              }
+
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                labels: labels
+              });
+
+              // Assign reviewer if specified in metadata
+              const fs = require('fs');
+              const metadata = JSON.parse(fs.readFileSync(`policies/${policyId}/metadata.json`, 'utf8'));
+              if (metadata.requestedReviewer) {
+                try {
+                  await github.rest.pulls.requestReviewers({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    pull_number: pr.number,
+                    reviewers: [metadata.requestedReviewer]
+                  });
+                } catch (error) {
+                  console.log(`Could not assign reviewer: ${error.message}`);
+                }
+              }
+
+              console.log(`Created new PR #${pr.number}`);
+            }

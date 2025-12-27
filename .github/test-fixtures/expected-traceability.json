@@ -1,0 +1,73 @@
+{
+  "policyId": "POL-2025-001",
+  "layer": "contextual",
+  "version": 1,
+  "generatedAt": "2025-01-15T11:00:00Z",
+  "references": {
+    "1-1": [
+      {
+        "source": "POL-2025-001.summary",
+        "relationship": "implements",
+        "description": "Establishes business process scope for customer PII protection as stated in policy summary"
+      }
+    ],
+    "1-2": [
+      {
+        "source": "POL-2025-001.summary",
+        "relationship": "implements",
+        "description": "Details regulatory drivers (SOC 2, GDPR, PCI DSS) mentioned in policy summary"
+      },
+      {
+        "source": "POL-2025-001.input.policy-statement",
+        "relationship": "derives_from",
+        "description": "Business context provided in original policy submission regarding SOC 2 and GDPR compliance"
+      }
+    ],
+    "1-3": [
+      {
+        "source": "POL-2025-001.summary",
+        "relationship": "implements",
+        "description": "Addresses Q3 penetration test findings regarding encryption gaps mentioned in policy summary"
+      },
+      {
+        "source": "POL-2025-001.input.policy-statement",
+        "relationship": "derives_from",
+        "description": "Risk context from original policy statement regarding data-at-rest encryption vulnerabilities"
+      }
+    ],
+    "1-4": [
+      {
+        "source": "POL-2025-001.summary",
+        "relationship": "implements",
+        "description": "Defines measurable success criteria for AES-256 encryption, 90-day key rotation, MFA, and audit logging requirements from policy summary"
+      },
+      {
+        "source": "POL-2025-001.contextual.1-2",
+        "relationship": "derives_from",
+        "description": "Success criteria align with SOC 2, GDPR, and PCI DSS compliance requirements from business drivers"
+      },
+      {
+        "source": "POL-2025-001.contextual.1-3",
+        "relationship": "validates",
+        "description": "Success metrics provide validation of risk mitigation for threats and vulnerabilities identified"
+      }
+    ],
+    "1-5": [
+      {
+        "source": "POL-2025-001.summary",
+        "relationship": "constrained_by",
+        "description": "Implementation constrained by FIPS 140-2 Level 2 HSM requirement from policy summary"
+      },
+      {
+        "source": "POL-2025-001.contextual.1-2",
+        "relationship": "constrained_by",
+        "description": "Organizational constraints shaped by 90-day penetration test remediation timeline from business drivers"
+      },
+      {
+        "source": "POL-2025-001.contextual.1-4",
+        "relationship": "constrained_by",
+        "description": "Technical constraints affect achievability of success criteria (performance, availability)"
+      }
+    ]
+  }
+}

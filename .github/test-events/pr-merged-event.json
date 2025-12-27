@@ -1,0 +1,120 @@
+{
+  "action": "closed",
+  "number": 101,
+  "pull_request": {
+    "number": 101,
+    "id": 2123456790,
+    "node_id": "PR_kwDOABCDEF5ghijk",
+    "state": "closed",
+    "locked": false,
+    "title": "[POL-2025-001] Layer 1: Contextual",
+    "user": {
+      "login": "github-actions[bot]",
+      "id": 41898282,
+      "type": "Bot"
+    },
+    "body": "## SABSA Artifact: Contextual Layer\n\n**Policy ID:** POL-2025-001\n**Layer:** 1 of 6 — Contextual\n**Generated:** 2025-01-15T11:00:00Z\n**Status:** complete",
+    "created_at": "2025-01-15T11:00:00Z",
+    "updated_at": "2025-01-15T14:30:00Z",
+    "closed_at": "2025-01-15T14:30:00Z",
+    "merged_at": "2025-01-15T14:30:00Z",
+    "merge_commit_sha": "c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2",
+    "assignee": {
+      "login": "security-lead",
+      "id": 87654321,
+      "type": "User"
+    },
+    "assignees": [
+      {
+        "login": "security-lead",
+        "id": 87654321,
+        "type": "User"
+      }
+    ],
+    "requested_reviewers": [],
+    "requested_teams": [],
+    "labels": [
+      {
+        "id": 987654322,
+        "name": "sabsa-artifact",
+        "color": "0075ca"
+      },
+      {
+        "id": 987654323,
+        "name": "layer-1",
+        "color": "1d76db"
+      }
+    ],
+    "draft": false,
+    "head": {
+      "label": "test-org:policy/POL-2025-001/layer-1-contextual",
+      "ref": "policy/POL-2025-001/layer-1-contextual",
+      "sha": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0",
+      "user": {
+        "login": "test-org",
+        "id": 987654321,
+        "type": "Organization"
+      },
+      "repo": {
+        "id": 123456789,
+        "name": "sabsa-policy-workflow",
+        "full_name": "test-org/sabsa-policy-workflow"
+      }
+    },
+    "base": {
+      "label": "test-org:main",
+      "ref": "main",
+      "sha": "z9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g0",
+      "user": {
+        "login": "test-org",
+        "id": 987654321,
+        "type": "Organization"
+      },
+      "repo": {
+        "id": 123456789,
+        "name": "sabsa-policy-workflow",
+        "full_name": "test-org/sabsa-policy-workflow"
+      }
+    },
+    "merged": true,
+    "mergeable": null,
+    "mergeable_state": "unknown",
+    "merged_by": {
+      "login": "security-lead",
+      "id": 87654321,
+      "type": "User"
+    },
+    "comments": 2,
+    "review_comments": 0,
+    "commits": 1,
+    "additions": 156,
+    "deletions": 0,
+    "changed_files": 2,
+    "auto_merge": null
+  },
+  "repository": {
+    "id": 123456789,
+    "node_id": "R_kgDOABCDEF",
+    "name": "sabsa-policy-workflow",
+    "full_name": "test-org/sabsa-policy-workflow",
+    "private": true,
+    "owner": {
+      "login": "test-org",
+      "id": 987654321,
+      "type": "Organization"
+    },
+    "html_url": "https://github.com/test-org/sabsa-policy-workflow",
+    "description": "Automated SABSA policy artifact generation system",
+    "fork": false,
+    "created_at": "2024-12-01T00:00:00Z",
+    "updated_at": "2025-01-15T14:30:00Z",
+    "pushed_at": "2025-01-15T14:30:00Z",
+    "size": 1024,
+    "default_branch": "main"
+  },
+  "sender": {
+    "login": "security-lead",
+    "id": 87654321,
+    "type": "User"
+  }
+}

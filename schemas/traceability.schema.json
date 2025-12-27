@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sabsa.policy.workflow/schemas/traceability.schema.json",
+  "title": "SABSA Policy Traceability References",
+  "description": "Schema for validating traceability relationships between SABSA policy sections across layers",
+  "type": "object",
+  "required": [
+    "policyId",
+    "layer",
+    "version",
+    "generatedAt",
+    "references"
+  ],
+  "properties": {
+    "policyId": {
+      "type": "string",
+      "pattern": "^POL-\\d{4}-\\d{3}$",
+      "description": "Policy identifier in format POL-YYYY-NNN (e.g., POL-2025-001)",
+      "examples": ["POL-2025-001", "POL-2024-042"]
+    },
+    "layer": {
+      "type": "string",
+      "enum": [
+        "contextual",
+        "conceptual",
+        "logical",
+        "physical",
+        "component",
+        "operational"
+      ],
+      "description": "SABSA architectural layer for this traceability artifact"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Version number matching the corresponding sections.json version"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this artifact was generated"
+    },
+    "references": {
+      "type": "object",
+      "description": "Collection of traceability references, keyed by section ID (e.g., '3-1', '4-2')",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[1-6]-[1-6]$": {
+          "type": "array",
+          "description": "Array of upstream references for this section",
+          "minItems": 0,
+          "items": {
+            "type": "object",
+            "required": ["source", "relationship"],
+            "properties": {
+              "source": {
+                "type": "string",
+                "pattern": "^POL-\\d{4}-\\d{3}\\.(contextual|conceptual|logical|physical|component|operational)\\.[1-6]-[1-6]$",
+                "description": "Fully qualified reference to upstream section in format: POL-YYYY-NNN.layer.section (e.g., POL-2025-001.conceptual.2-1)",
+                "examples": [
+                  "POL-2025-001.contextual.1-2",
+                  "POL-2025-001.conceptual.2-1",
+                  "POL-2025-001.logical.3-3"
+                ]
+              },
+              "relationship": {
+                "type": "string",
+                "enum": [
+                  "implements",
+                  "derives_from",
+                  "constrained_by",
+                  "refines",
+                  "validates"
+                ],
+                "description": "Type of relationship to upstream element. Must match vocabulary defined in config/relationship-vocabulary.json"
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Optional human-readable explanation of the relationship"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

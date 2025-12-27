@@ -1,0 +1,207 @@
+{
+  "layers": {
+    "contextual": {
+      "displayName": "Contextual",
+      "number": 1,
+      "view": "Business",
+      "coreQuestion": "What does the business need?",
+      "sections": {
+        "1-1": {
+          "id": "1-1",
+          "title": "Business Process Overview",
+          "description": "Describes the business process this policy protects"
+        },
+        "1-2": {
+          "id": "1-2",
+          "title": "Business Drivers",
+          "description": "Strategic and operational drivers requiring this policy"
+        },
+        "1-3": {
+          "id": "1-3",
+          "title": "Risk Context",
+          "description": "Threats, vulnerabilities, and risk appetite"
+        },
+        "1-4": {
+          "id": "1-4",
+          "title": "Success Criteria",
+          "description": "Measurable outcomes defining policy success"
+        },
+        "1-5": {
+          "id": "1-5",
+          "title": "Constraints & Assumptions",
+          "description": "Boundaries and dependencies"
+        }
+      }
+    },
+    "conceptual": {
+      "displayName": "Conceptual",
+      "number": 2,
+      "view": "Architect",
+      "coreQuestion": "What security capabilities?",
+      "sections": {
+        "2-1": {
+          "id": "2-1",
+          "title": "Security Objectives",
+          "description": "What security must achieve"
+        },
+        "2-2": {
+          "id": "2-2",
+          "title": "Security Services",
+          "description": "Capabilities required (e.g., confidentiality, integrity)"
+        },
+        "2-3": {
+          "id": "2-3",
+          "title": "Security Principles",
+          "description": "Guiding tenets for design decisions"
+        },
+        "2-4": {
+          "id": "2-4",
+          "title": "Trust Model",
+          "description": "Trust boundaries and relationships"
+        },
+        "2-5": {
+          "id": "2-5",
+          "title": "Security Domains",
+          "description": "Logical groupings of protected assets"
+        }
+      }
+    },
+    "logical": {
+      "displayName": "Logical",
+      "number": 3,
+      "view": "Designer",
+      "coreQuestion": "What are the security rules?",
+      "sections": {
+        "3-1": {
+          "id": "3-1",
+          "title": "Security Policies",
+          "description": "Formal policy statements"
+        },
+        "3-2": {
+          "id": "3-2",
+          "title": "Security Standards",
+          "description": "Mandatory requirements"
+        },
+        "3-3": {
+          "id": "3-3",
+          "title": "Logical Control Specifications",
+          "description": "Control requirements without implementation detail"
+        },
+        "3-4": {
+          "id": "3-4",
+          "title": "Information Classification",
+          "description": "Data categorization scheme"
+        },
+        "3-5": {
+          "id": "3-5",
+          "title": "Logical Access Model",
+          "description": "Who can access what under which conditions"
+        }
+      }
+    },
+    "physical": {
+      "displayName": "Physical",
+      "number": 4,
+      "view": "Builder",
+      "coreQuestion": "How will it be implemented?",
+      "sections": {
+        "4-1": {
+          "id": "4-1",
+          "title": "Control Implementation Specifications",
+          "description": "How controls will be technically implemented"
+        },
+        "4-2": {
+          "id": "4-2",
+          "title": "Security Procedures",
+          "description": "Step-by-step operational procedures"
+        },
+        "4-3": {
+          "id": "4-3",
+          "title": "Technical Standards",
+          "description": "Technology-specific requirements"
+        },
+        "4-4": {
+          "id": "4-4",
+          "title": "Integration Architecture",
+          "description": "How components connect"
+        },
+        "4-5": {
+          "id": "4-5",
+          "title": "Exception Handling",
+          "description": "Process for managing policy exceptions"
+        }
+      }
+    },
+    "component": {
+      "displayName": "Component",
+      "number": 5,
+      "view": "Tradesman",
+      "coreQuestion": "What specific tools/configs?",
+      "sections": {
+        "5-1": {
+          "id": "5-1",
+          "title": "Tool Configuration Specifications",
+          "description": "Specific tool settings and parameters"
+        },
+        "5-2": {
+          "id": "5-2",
+          "title": "Implementation Scripts",
+          "description": "IaC, automation scripts"
+        },
+        "5-3": {
+          "id": "5-3",
+          "title": "Validation Tests",
+          "description": "Test cases proving correct implementation"
+        },
+        "5-4": {
+          "id": "5-4",
+          "title": "Deployment Checklist",
+          "description": "Pre/post deployment verification"
+        },
+        "5-5": {
+          "id": "5-5",
+          "title": "Rollback Procedures",
+          "description": "How to revert if implementation fails"
+        }
+      }
+    },
+    "operational": {
+      "displayName": "Operational",
+      "number": 6,
+      "view": "Operations",
+      "coreQuestion": "How will it be maintained?",
+      "sections": {
+        "6-1": {
+          "id": "6-1",
+          "title": "Monitoring & Alerting",
+          "description": "What to monitor, alert thresholds"
+        },
+        "6-2": {
+          "id": "6-2",
+          "title": "Operational Runbooks",
+          "description": "Day-to-day operational procedures"
+        },
+        "6-3": {
+          "id": "6-3",
+          "title": "Incident Response Playbooks",
+          "description": "How to respond to security events"
+        },
+        "6-4": {
+          "id": "6-4",
+          "title": "Maintenance Procedures",
+          "description": "Scheduled maintenance tasks"
+        },
+        "6-5": {
+          "id": "6-5",
+          "title": "Metrics & Reporting",
+          "description": "KPIs and reporting requirements"
+        },
+        "6-6": {
+          "id": "6-6",
+          "title": "Continuous Improvement",
+          "description": "Feedback loops and improvement process"
+        }
+      }
+    }
+  }
+}
