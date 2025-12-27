@@ -29,6 +29,7 @@ jobs:
       contents: write      # Allow pushing commits
       issues: write        # Allow updating issue labels/comments
       pull-requests: write # Allow creating PRs
+      actions: write       # Allow triggering workflows
     # Only run if triggered manually OR if issue has 'new-policy' label
     if: github.event_name == 'workflow_dispatch' || contains(github.event.issue.labels.*.name, 'new-policy')
 
