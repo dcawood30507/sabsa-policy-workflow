@@ -167,6 +167,9 @@ jobs:
           WORKFLOW_NAME="generate-layer.yml"
           JOB_NAME="generate"
 
+          # Ensure output directory exists
+          mkdir -p "$BASE_DIR"
+
           # Read Claude output from file (avoids GitHub Actions output size limits)
           if [ ! -f "$CLAUDE_OUTPUT_FILE" ]; then
             echo "Error: Claude output file not found: $CLAUDE_OUTPUT_FILE"
