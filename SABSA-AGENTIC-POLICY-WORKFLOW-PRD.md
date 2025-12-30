@@ -1,9 +1,9 @@
 # SABSA Agentic Policy Workflow — Product Requirements Document
 
-**Version:** 1.0  
-**Date:** December 27, 2024  
-**Author:** Don Wood  
-**Status:** Draft for Implementation
+**Version:** 1.1
+**Date:** December 30, 2024
+**Author:** Don Wood
+**Status:** Implemented with Compliance Validation (Phase 4 Future)
 
 ---
 
@@ -116,7 +116,13 @@ An automated workflow system that:
 - GitHub.com deployment
 - Claude Sonnet model
 
+**Implemented (v1.1):**
+- ✅ Hybrid compliance validation architecture (Wiz/ICS automated checks + JIRA manual evidence)
+- ✅ Layer 5 Component generates validationChecks array with Wiz policies, ICS checks, and JIRA specifications
+
 **Out of Scope (Future):**
+- Compliance automation workflows (deploy Wiz policies, configure ICS checks, create JIRA tickets)
+- Compliance dashboard (aggregate results, track evidence, generate audit reports)
 - SABSA Information, Application, and Infrastructure domains
 - Parallel policy processing
 - GitHub Enterprise integration
@@ -180,7 +186,7 @@ An automated workflow system that:
 |---------|-------|---------|
 | 5-1 | Tool Configuration Specifications | Specific tool settings and parameters |
 | 5-2 | Implementation Scripts | IaC, automation scripts |
-| 5-3 | Validation Tests | Test cases proving correct implementation |
+| 5-3 | Validation Tests | **Automated compliance checks (Wiz/ICS), manual evidence requests (JIRA), traditional test cases** |
 | 5-4 | Deployment Checklist | Pre/post deployment verification |
 | 5-5 | Rollback Procedures | How to revert if implementation fails |
 
@@ -1292,6 +1298,147 @@ The following upstream sections were provided as context for this generation:
 
 ---
 
+### 8.6 Compliance Validation Architecture (v1.1)
+
+**Purpose:** Generate hybrid compliance validation specifications that combine automated tool checks with manual evidence collection workflows.
+
+**Location:** Embedded in Layer 5 Component prompt (`prompts/component-prompt.md`)
+
+**Implementation:** Section 5-3 (Validation Tests) generates a `validationChecks` array containing both automated and manual validation specifications.
+
+**Schema:**
+
+```typescript
+interface ValidationCheck {
+  checkId: string;                    // Unique check identifier (e.g., "ENC-AWS-001")
+  requirement: string;                // What is being validated
+  validationType: "automated" | "manual";
+
+  // For automated checks
+  tools?: string[];                   // ["wiz", "ics"]
+  wizPolicy?: WizPolicy;              // Wiz platform specification
+  icsCheck?: ICSCheck;                // ICS platform specification
+
+  // For manual checks
+  evidenceRequired?: EvidenceRequirement;  // JIRA and evidence specifications
+}
+
+interface WizPolicy {
+  policyName: string;                 // Human-readable policy name
+  queryLanguage: "wiz-ql";            // Query language type
+  query: string;                      // WizQL query to detect non-compliance
+  severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+  remediation: string;                // Remediation guidance
+  complianceFrameworks: string[];     // ["SOC2-CC6.1", "NIST-800-53-SC-28"]
+}
+
+interface ICSCheck {
+  checkName: string;                  // ICS check identifier
+  cloudProvider: "aws" | "gcp" | "azure";
+  service: string;                    // Service name (e.g., "rds", "cloud-sql")
+  checkType: "security" | "compliance" | "configuration";
+  expectedResult: "PASS" | "FAIL";
+}
+
+interface EvidenceRequirement {
+  type: "document" | "screenshot" | "log" | "attestation";
+  formats: string[];                  // ["pdf", "docx", "jpg", "png"]
+  description: string;                // What evidence is required
+  frequency: "daily" | "weekly" | "monthly" | "quarterly" | "annual";
+  nextDueDate: string;                // ISO 8601 date
+  owner: string;                      // Role or person responsible
+  jiraTicket: {
+    project: string;                  // JIRA project key
+    issueType: string;                // "Evidence Request"
+    template: string;                 // Template name
+    labels: string[];                 // ["compliance", "encryption"]
+  };
+}
+```
+
+**Example Generated Output (Layer 5, Section 5-3):**
+
+```json
+{
+  "sections": {
+    "5-3": {
+      "title": "Validation Tests",
+      "content": "## 5.3 Validation Tests\n\n### 5.3.1 Automated Compliance Validation...",
+      "rationale_why": "NIST SP 800-53A, Wiz policy language documentation...",
+      "rationale_condition": "Validates implementation specifications from 4-1",
+      "validationChecks": [
+        {
+          "checkId": "ENC-AWS-001",
+          "requirement": "All RDS instances must use KMS encryption at rest",
+          "validationType": "automated",
+          "tools": ["wiz", "ics"],
+          "wizPolicy": {
+            "policyName": "RDS KMS Encryption Required",
+            "queryLanguage": "wiz-ql",
+            "query": "cloudResource where type='AWS RDS Instance' and encryptionEnabled=false",
+            "severity": "HIGH",
+            "remediation": "Enable KMS encryption on RDS instance: aws rds modify-db-instance --db-instance-identifier <id> --storage-encrypted --kms-key-id <key-arn>",
+            "complianceFrameworks": ["SOC2-CC6.1", "NIST-800-53-SC-28"]
+          },
+          "icsCheck": {
+            "checkName": "aws-rds-encryption-at-rest",
+            "cloudProvider": "aws",
+            "service": "rds",
+            "checkType": "security",
+            "expectedResult": "PASS"
+          }
+        },
+        {
+          "checkId": "ENC-HSM-001",
+          "requirement": "Physical HSM key rotation performed quarterly",
+          "validationType": "manual",
+          "evidenceRequired": {
+            "type": "document",
+            "formats": ["pdf", "docx", "jpg", "png"],
+            "description": "Signed key rotation certificate from HSM vendor with rotation date and operator signature",
+            "frequency": "quarterly",
+            "nextDueDate": "2025-03-31",
+            "owner": "Security Operations Manager",
+            "jiraTicket": {
+              "project": "SEC",
+              "issueType": "Evidence Request",
+              "template": "hsm-rotation-evidence",
+              "labels": ["compliance", "encryption", "hsm"]
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+**Integration Points:**
+
+| Integration | Status | Description |
+|-------------|--------|-------------|
+| **Wiz Platform** | Future (Phase 4) | Extract Wiz policies, deploy via API/UI |
+| **ICS Platform** | Future (Phase 4) | Extract ICS checks, configure via API |
+| **JIRA** | Future (Phase 4) | Create evidence request tickets automatically |
+| **Evidence Storage** | Future (Phase 4) | S3/Azure Blob for uploaded evidence files |
+| **AI Validation** | Future (Phase 4) | Parse uploaded evidence, validate against requirements |
+| **Compliance Dashboard** | Future (Phase 4) | Aggregate automated results + manual evidence status |
+
+**Documentation:**
+- Architecture Design: `docs/COMPLIANCE-VALIDATION-ARCHITECTURE.md`
+- Implementation Guide: `docs/COMPONENT-LAYER-COMPLIANCE-ENHANCEMENT.md`
+- Component Layer Prompt: `prompts/component-prompt.md` (Section 5-3)
+
+**Benefits:**
+
+1. **Continuous Compliance Monitoring**: Automated Wiz/ICS checks detect drift immediately
+2. **Audit Readiness**: Structured evidence collection with clear requirements
+3. **Reduced Manual Effort**: Automated checks eliminate repetitive manual verification
+4. **Traceability**: Direct link from policy requirement → validation check → compliance result
+5. **Framework Mapping**: Explicit mapping to SOC2, NIST, GDPR, etc.
+
+---
+
 ## 9. Context Assembly & Token Optimization
 
 ### 9.1 Design Rationale
@@ -1559,6 +1706,35 @@ To prevent infinite revision loops:
 - End-to-end test: issue → release
 - Error injection testing
 - Multiple concurrent policies
+
+### Phase 4: Compliance Automation (Future)
+
+**Deliverables:**
+- [ ] Wiz policy generator workflow (extract and deploy Wiz policies from Layer 5-3)
+- [ ] ICS check generator workflow (extract and configure ICS checks from Layer 5-3)
+- [ ] JIRA evidence workflow (create tickets for manual evidence collection)
+- [ ] Compliance dashboard (aggregate check results, track evidence status)
+- [ ] Evidence upload and AI validation (parse uploaded evidence, validate against standards)
+
+**Exit Criteria:**
+- validationChecks array consumed by automated workflows
+- Wiz policies deployed automatically to Wiz platform
+- ICS checks configured in ICS platform
+- JIRA tickets created with evidence requirements
+- Dashboard shows real-time compliance status
+
+**Testing:**
+- End-to-end test: policy → Layer 5 → Wiz/ICS/JIRA deployment
+- Verify Wiz queries detect non-compliant resources
+- Verify ICS checks execute successfully
+- Verify JIRA tickets contain complete requirements
+- Test evidence upload and validation workflow
+
+**Dependencies:**
+- Wiz API access and credentials
+- ICS platform configuration
+- JIRA API access and project setup
+- Storage for evidence files (S3/Azure Blob)
 
 ---
 

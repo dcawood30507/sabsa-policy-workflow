@@ -15,6 +15,7 @@ Traditional security architecture development is manual, time-consuming, and inc
 - **Ensure consistency**: 100% template compliance across all generated artifacts
 - **Maintain traceability**: Complete automated lineage from business requirements to operational runbooks
 - **Enable collaboration**: Familiar GitHub Pull Request workflow for human review at each layer
+- **Automate compliance validation**: Generate Wiz policies, ICS checks, and JIRA evidence requests for continuous compliance monitoring
 
 ## What is SABSA?
 
@@ -26,7 +27,7 @@ SABSA (Sherwood Applied Business Security Architecture) is an enterprise securit
 | **2. Conceptual** | Architect | What security capabilities? | Security objectives, services, principles, trust model |
 | **3. Logical** | Designer | What are the security rules? | Policies, standards, control specifications |
 | **4. Physical** | Builder | How will it be implemented? | Procedures, technical standards, integration specs |
-| **5. Component** | Tradesman | What specific tools/configs? | Tool configurations, IaC templates, validation tests |
+| **5. Component** | Tradesman | What specific tools/configs? | Tool configurations, IaC templates, **automated compliance checks (Wiz/ICS), manual evidence requests (JIRA)** |
 | **6. Operational** | Operations | How will it be maintained? | Runbooks, monitoring, incident response playbooks |
 
 ## Quick Start
@@ -221,6 +222,52 @@ To request changes:
 
 The AI will regenerate the layer incorporating your feedback.
 
+### Compliance Validation Features
+
+**New in v1.1**: The Component layer (Layer 5) now automatically generates hybrid compliance validation specifications:
+
+**Automated Compliance Checks** (Section 5-3):
+- **Wiz Policies**: WizQL queries to detect non-compliant cloud resources
+- **ICS Checks**: Cloud security posture checks for AWS/GCP/Azure
+- **Continuous Monitoring**: Automated detection of configuration drift
+
+**Manual Evidence Collection** (Section 5-3):
+- **JIRA Ticket Specifications**: For controls requiring human verification
+- **Evidence Requirements**: File formats, collection frequency, responsible owners
+- **Audit Readiness**: Structured evidence tracking for compliance audits
+
+**Example Output** (Layer 5, Section 5-3):
+```json
+{
+  "validationChecks": [
+    {
+      "checkId": "ENC-AWS-001",
+      "requirement": "All RDS instances must use KMS encryption",
+      "validationType": "automated",
+      "wizPolicy": {
+        "query": "cloudResource where type='AWS RDS Instance' and encryptionEnabled=false",
+        "severity": "HIGH"
+      }
+    },
+    {
+      "checkId": "ENC-HSM-001",
+      "requirement": "Physical HSM key rotation quarterly",
+      "validationType": "manual",
+      "evidenceRequired": {
+        "jiraTicket": {
+          "project": "SEC",
+          "template": "hsm-rotation-evidence"
+        }
+      }
+    }
+  ]
+}
+```
+
+**Documentation:**
+- **Architecture Design**: `docs/COMPLIANCE-VALIDATION-ARCHITECTURE.md`
+- **Implementation Guide**: `docs/COMPONENT-LAYER-COMPLIANCE-ENHANCEMENT.md`
+
 ### Manual Intervention
 
 If the AI generates partial results or encounters errors:
@@ -329,11 +376,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [x] Core workflow implementation (Layers 1-6)
 - [x] Human review integration
 - [x] Automated cascade and finalization
+- [x] **Hybrid compliance validation architecture** (Wiz/ICS automated checks + JIRA manual evidence)
+- [ ] **Compliance automation workflows** (Deploy Wiz policies, configure ICS checks, create JIRA tickets)
+- [ ] **Compliance dashboard** (Aggregate check results, track evidence collection, generate audit reports)
 - [ ] Multi-domain support (Information, Application, Infrastructure)
 - [ ] Parallel policy processing
 - [ ] Custom framework integrations
 - [ ] Policy comparison and versioning
-- [ ] Audit report generation
 - [ ] GitHub Enterprise support
 
 ---
