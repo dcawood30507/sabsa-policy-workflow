@@ -141,26 +141,124 @@ aws kms describe-key --key-id alias/customer-pii-encryption-key
 ### 5-3: Validation Tests
 
 **Content to include:**
-- **Unit tests** for scripts and configurations
-- **Integration tests** for multi-component interactions
-- **Security tests** to verify control effectiveness:
-  - Encryption validation (is data actually encrypted?)
-  - Access control testing (can unauthorized users access?)
-  - Key rotation testing (does rotation work without breaking applications?)
-  - Monitoring and alerting tests (do alerts fire when expected?)
 
-**For each test:**
-- **Test ID:** Unique identifier
-- **Test objective:** What is being validated
-- **Test type:** Unit, integration, security, compliance
-- **Prerequisites:** Required setup before running test
-- **Test steps:** Detailed procedure
-- **Expected result:** What should happen if test passes
-- **Pass/fail criteria:** Objective determination
+**Part A: Automated Compliance Validation Checks**
 
-**Example format:**
+For controls that can be validated using automated tools (Wiz, ICS), generate a **validationChecks array** with specifications for:
+
+- **Wiz Policy Specifications** (for cloud resource compliance):
+  - Policy name and description
+  - WizQL query to detect non-compliant resources
+  - Remediation guidance
+  - Severity level
+  - Compliance framework mapping
+
+- **ICS Check Specifications** (for cloud security posture):
+  - Check name and identifier
+  - Cloud provider and service
+  - Expected result (PASS/FAIL criteria)
+  - Remediation steps
+
+**Part B: Manual Evidence Collection**
+
+For controls that require manual validation (physical systems, processes, vendor attestations), specify:
+
+- **JIRA Evidence Requests**:
+  - Evidence type and description
+  - Accepted file formats
+  - Collection frequency
+  - Responsible owner
+  - JIRA project and ticket template
+
+**Part C: Traditional Test Cases**
+
+For operational testing during implementation, include traditional test cases with:
+- Test ID, objective, type
+- Prerequisites, test steps, expected results
+- Pass/fail criteria
+
+**Validation Checks Array Format:**
+
+```json
+"validationChecks": [
+  {
+    "checkId": "ENC-AWS-001",
+    "requirement": "All RDS instances must use KMS encryption at rest",
+    "validationType": "automated",
+    "tools": ["wiz", "ics"],
+    "wizPolicy": {
+      "policyName": "RDS KMS Encryption Required",
+      "queryLanguage": "wiz-ql",
+      "query": "cloudResource where type='AWS RDS Instance' and encryptionEnabled=false",
+      "severity": "HIGH",
+      "remediation": "Enable KMS encryption on RDS instance: aws rds modify-db-instance --db-instance-identifier <id> --storage-encrypted --kms-key-id <key-arn>",
+      "complianceFrameworks": ["SOC2-CC6.1", "NIST-800-53-SC-28"]
+    },
+    "icsCheck": {
+      "checkName": "aws-rds-encryption-at-rest",
+      "cloudProvider": "aws",
+      "service": "rds",
+      "checkType": "security",
+      "expectedResult": "PASS"
+    }
+  },
+  {
+    "checkId": "ENC-HSM-001",
+    "requirement": "Physical HSM key rotation performed quarterly",
+    "validationType": "manual",
+    "evidenceRequired": {
+      "type": "document",
+      "formats": ["pdf", "docx", "jpg", "png"],
+      "description": "Signed key rotation certificate from HSM vendor with rotation date and operator signature",
+      "frequency": "quarterly",
+      "nextDueDate": "2025-03-31",
+      "owner": "Security Operations Manager",
+      "jiraTicket": {
+        "project": "SEC",
+        "issueType": "Evidence Request",
+        "template": "hsm-rotation-evidence",
+        "labels": ["compliance", "encryption", "hsm"]
+      }
+    }
+  }
+]
+```
+
+**Example markdown format (combining all three parts):**
+
 ```markdown
-### 5.3.1 Encryption at Rest Validation
+### 5.3 Validation Tests
+
+#### 5.3.1 Automated Compliance Validation
+
+**Validation Checks:**
+
+**ENC-AWS-001: RDS KMS Encryption Required**
+- **Type:** Automated (Wiz + ICS)
+- **Requirement:** All RDS instances must use KMS encryption at rest
+- **Wiz Policy Query:** `cloudResource where type='AWS RDS Instance' and encryptionEnabled=false`
+- **Severity:** HIGH
+- **Remediation:** Enable KMS encryption on RDS instance
+- **Compliance Mapping:** SOC2-CC6.1, NIST-800-53-SC-28
+
+**ENC-GCP-001: Cloud SQL Encryption Required**
+- **Type:** Automated (Wiz + ICS)
+- **Requirement:** All Cloud SQL instances must use customer-managed encryption keys
+- **Wiz Policy Query:** `cloudResource where type='GCP Cloud SQL Instance' and customerManagedEncryption=false`
+- **Severity:** HIGH
+
+#### 5.3.2 Manual Evidence Collection
+
+**ENC-HSM-001: Physical HSM Key Rotation**
+- **Type:** Manual evidence request
+- **Requirement:** Physical HSM key rotation performed quarterly
+- **Evidence:** Signed rotation certificate from HSM vendor
+- **Formats:** PDF, DOCX, JPG, PNG
+- **Frequency:** Quarterly (next due: 2025-03-31)
+- **Owner:** Security Operations Manager
+- **JIRA Ticket:** Project SEC, template "hsm-rotation-evidence"
+
+#### 5.3.3 Operational Test Cases
 
 **Test ID:** ENC-001
 
@@ -196,10 +294,14 @@ aws kms describe-key --key-id alias/customer-pii-encryption-key
 - No plaintext PII accessible via direct storage access
 ```
 
+**IMPORTANT:** The validationChecks array should be included in your JSON output for section 5-3, alongside the markdown content. This enables automated compliance workflows.
+
 **Framework references:**
 - NIST SP 800-53A (Assessment Procedures)
 - OWASP Testing Guide
 - Cloud provider security testing guidance
+- Wiz Policy Language documentation
+- ICS Check specifications
 
 **Traceability:** Link to **4-1 (Control Implementation Specifications)** — tests validate implementations
 
@@ -405,9 +507,51 @@ Typical relationships for this layer:
     },
     "5-3": {
       "title": "Validation Tests",
-      "content": "## 5.3 Validation Tests\n\n[Markdown with test cases, procedures, criteria]",
-      "rationale_why": "NIST SP 800-53A assessment procedures, OWASP testing guide...",
-      "rationale_condition": "Validates implementation specifications from 4-1"
+      "content": "## 5.3 Validation Tests\n\n[Markdown with automated checks, manual evidence requests, and test cases]",
+      "rationale_why": "NIST SP 800-53A assessment procedures, OWASP testing guide, Wiz policy language...",
+      "rationale_condition": "Validates implementation specifications from 4-1",
+      "validationChecks": [
+        {
+          "checkId": "ENC-AWS-001",
+          "requirement": "Specific validation requirement",
+          "validationType": "automated",
+          "tools": ["wiz", "ics"],
+          "wizPolicy": {
+            "policyName": "Policy name",
+            "queryLanguage": "wiz-ql",
+            "query": "WizQL query string",
+            "severity": "HIGH|MEDIUM|LOW",
+            "remediation": "Remediation steps",
+            "complianceFrameworks": ["SOC2-CC6.1", "NIST-800-53-SC-28"]
+          },
+          "icsCheck": {
+            "checkName": "check-identifier",
+            "cloudProvider": "aws|gcp|azure",
+            "service": "service-name",
+            "checkType": "security",
+            "expectedResult": "PASS"
+          }
+        },
+        {
+          "checkId": "ENC-HSM-001",
+          "requirement": "Manual validation requirement",
+          "validationType": "manual",
+          "evidenceRequired": {
+            "type": "document",
+            "formats": ["pdf", "docx", "jpg", "png"],
+            "description": "Evidence description",
+            "frequency": "quarterly|monthly|annual",
+            "nextDueDate": "YYYY-MM-DD",
+            "owner": "Role or person responsible",
+            "jiraTicket": {
+              "project": "PROJECT-KEY",
+              "issueType": "Evidence Request",
+              "template": "template-name",
+              "labels": ["compliance", "encryption"]
+            }
+          }
+        }
+      ]
     },
     "5-4": {
       "title": "Deployment Checklist",
@@ -433,6 +577,9 @@ Before finalizing your response, verify:
 - [ ] Each section has complete markdown content
 - [ ] Tool configurations specify exact product names and settings
 - [ ] Implementation scripts include actual code (Terraform, CloudFormation, Bash, Python)
+- [ ] **Section 5-3 includes validationChecks array with both automated and manual checks**
+- [ ] **Automated checks specify Wiz policies (WizQL queries) and ICS check identifiers**
+- [ ] **Manual checks specify JIRA ticket requirements and evidence formats**
 - [ ] Validation tests have clear pass/fail criteria
 - [ ] Deployment checklist includes pre/deployment/post sections with checkboxes
 - [ ] Rollback procedures define triggers and step-by-step recovery
