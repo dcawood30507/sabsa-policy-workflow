@@ -1,0 +1,89 @@
+{
+  "sectionId": "1-1",
+  "layerId": "contextual",
+  "templateVersion": "1.0.0",
+  "title": "Business Process Overview",
+  "purpose": "Establishes the business context for the security policy by describing the business process being protected",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Set context for the business process and policy scope",
+      "elements": ["process_name", "scope_statement", "criticality_level"],
+      "wordCount": {"min": 50, "max": 100},
+      "example": "This policy governs the **Customer Data Lifecycle Management** process, which encompasses the collection, processing, storage, transmission, and disposal of personally identifiable information (PII) across all organizational touchpoints."
+    },
+    "coreBusinessProcess": {
+      "purpose": "Describe the business process in detail",
+      "elements": ["process_description", "process_stages", "data_flows", "systems_involved"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "What business process does this policy support or protect?",
+        "What are the key stages of this process?",
+        "What data flows through this process?",
+        "What systems are involved in this process?"
+      ],
+      "example": "The process spans from initial customer onboarding through service delivery to data retention and secure disposal. Key stages include: (1) Data Collection during customer registration, (2) Data Processing for service delivery, (3) Data Storage in production databases, (4) Data Transmission via API endpoints, and (5) Data Disposal following retention policies."
+    },
+    "stakeholderIdentification": {
+      "purpose": "Identify all stakeholders affected by or responsible for this policy",
+      "elements": ["internal_stakeholders", "external_stakeholders", "roles_responsibilities"],
+      "wordCount": {"min": 100, "max": 150},
+      "guidingQuestions": [
+        "Who are the internal stakeholders (teams, roles)?",
+        "Who are the external stakeholders (customers, partners)?",
+        "What are their responsibilities regarding this policy?"
+      ],
+      "example": "**Internal Stakeholders**: Customer Experience Teams (PII collection), Engineering Teams (encryption implementation), Data Protection Officers (compliance oversight), Security Operations (monitoring), Compliance Teams (audit validation). **External Stakeholders**: Customers whose PII requires protection throughout the lifecycle."
+    },
+    "assetInventory": {
+      "purpose": "Catalog assets in scope for this policy",
+      "elements": ["data_assets", "system_assets", "infrastructure_assets"],
+      "wordCount": {"min": 100, "max": 150},
+      "guidingQuestions": [
+        "What data assets are in scope?",
+        "What system assets are involved?",
+        "What infrastructure assets support this process?"
+      ],
+      "example": "**Data Assets**: Customer PII (names, addresses, contact info, payment data), encryption keys, audit logs. **System Assets**: Customer-facing applications, production databases, API endpoints, key management infrastructure. **Infrastructure Assets**: Hardware security modules, backup systems, disaster recovery infrastructure."
+    },
+    "currentVsDesiredState": {
+      "purpose": "Articulate the gap between current and desired state",
+      "elements": ["current_state_assessment", "desired_state_vision", "gap_analysis"],
+      "wordCount": {"min": 50, "max": 150},
+      "guidingQuestions": [
+        "What is the current state of controls?",
+        "What is the desired state after policy implementation?",
+        "What are the key gaps to address?"
+      ],
+      "example": "**Current State**: Inconsistent encryption implementation with gaps in data-at-rest protection (23% of repositories unencrypted) and ad-hoc key management practices. **Desired State**: Comprehensive AES-256 encryption coverage with centralized key management, automated rotation, and full audit trail across all environments."
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST Privacy Framework",
+      "control": "Identify-P",
+      "relevance": "Understanding data processing activities"
+    },
+    {
+      "framework": "ISO 27001",
+      "control": "Clause 4.1",
+      "relevance": "Understanding organizational context and stakeholder needs"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All five structural elements present (introduction, core process, stakeholders, assets, current vs desired)",
+      "Minimum word count met for each element",
+      "All guiding questions addressed"
+    ],
+    "clarity": [
+      "Business process described in non-technical language",
+      "Stakeholders clearly identified with roles",
+      "Assets categorized appropriately (data, system, infrastructure)"
+    ],
+    "traceability": [
+      "References policy summary",
+      "Framework citations present (minimum 2)",
+      "Rationale explains business context"
+    ]
+  }
+}

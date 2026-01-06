@@ -1,0 +1,137 @@
+{
+  "sectionId": "3-4",
+  "layerId": "logical",
+  "templateVersion": "1.0.0",
+  "title": "Information Classification",
+  "purpose": "Defines the information classification scheme with classification levels, criteria, handling requirements, and lifecycle management rules to ensure appropriate protection based on data sensitivity",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish the purpose and scope of the information classification scheme",
+      "elements": ["classification_purpose", "classification_scope", "policy_alignment"],
+      "wordCount": {"min": 75, "max": 125},
+      "example": "This section establishes the information classification scheme that categorizes data assets based on confidentiality, integrity, and availability requirements. Classification determines appropriate security controls, access restrictions, handling procedures, and retention policies. The classification scheme applies to all information assets throughout their lifecycle from creation/collection through secure disposal. This scheme supports the Data Protection Policy (Section 3-1) and enables risk-based security control implementation aligned with business impact and regulatory requirements (GDPR Article 32, PCI DSS Requirement 3)."
+    },
+    "classificationLevels": {
+      "purpose": "Define the classification levels and their security requirements",
+      "elements": ["level_definitions", "classification_criteria", "protection_requirements", "example_data_types"],
+      "wordCount": {"min": 150, "max": 250},
+      "guidingQuestions": [
+        "What are the classification levels (e.g., Public, Internal, Confidential, Restricted)?",
+        "What criteria determine classification level?",
+        "What protection requirements apply to each level?",
+        "What are concrete examples of data in each classification?"
+      ],
+      "example": "**Level 1: Public** - Information approved for public disclosure with no confidentiality requirements. **Criteria**: No business or customer impact from unauthorized disclosure. **Protection**: No encryption required, standard backups. **Examples**: Published marketing materials, public website content, press releases. **Level 2: Internal** - Information for internal use only with limited confidentiality requirements. **Criteria**: Minor business impact from unauthorized disclosure, no regulatory restrictions. **Protection**: Encryption in transit (TLS 1.2+), standard access controls, 3-year retention. **Examples**: Internal policies, employee directories, general business communications. **Level 3: Confidential - Customer PII** - Personally identifiable information subject to regulatory protection. **Criteria**: Contains GDPR-defined personal data, PCI cardholder data, or HIPAA protected health information. Significant legal/financial impact from unauthorized disclosure. **Protection**: AES-256 encryption at rest, TLS 1.2+ in transit, MFA for access, HSM-based key management, 7-year retention with audit trail. **Examples**: Customer names, addresses, email, phone numbers, payment card data, transaction history. **Level 4: Restricted - Cryptographic Keys** - Highly sensitive cryptographic material requiring maximum protection. **Criteria**: Compromise would undermine entire encryption architecture. Critical business impact from unauthorized disclosure. **Protection**: FIPS 140-2 Level 3 HSM storage, dual-control access, all operations logged, 90-day rotation, immediate revocation capability. **Examples**: Master encryption keys, key-encryption-keys (KEKs), HSM authentication credentials."
+    },
+    "classificationCriteria": {
+      "purpose": "Define criteria for determining appropriate classification level",
+      "elements": ["regulatory_criteria", "business_impact_criteria", "data_sensitivity_criteria"],
+      "wordCount": {"min": 100, "max": 175},
+      "guidingQuestions": [
+        "What regulatory requirements affect classification?",
+        "How does business impact determine classification?",
+        "What data sensitivity attributes drive classification decisions?",
+        "Who is responsible for classifying information?"
+      ],
+      "example": "**Regulatory Criteria**: Information SHALL be classified as Confidential if subject to GDPR (personal data), PCI DSS (cardholder data), HIPAA (protected health information), or SOX (financial records). **Business Impact Criteria**: Classification SHALL consider: (1) Financial impact of unauthorized disclosure (>$100K = Confidential), (2) Reputational damage potential (high media attention = Confidential), (3) Competitive advantage loss (trade secrets = Restricted), (4) Legal liability exposure (regulatory fines = Confidential). **Data Sensitivity Attributes**: PII identifiability (directly identifies individual = Confidential), authentication credentials (passwords, API keys = Restricted), cryptographic material (encryption keys = Restricted), aggregated analytics (de-identified = Internal). **Classification Authority**: Data owners (business unit leaders) SHALL classify information upon creation with validation by Data Protection Officer for Confidential/Restricted classifications. Classification SHALL be reviewed annually or upon significant business/regulatory changes."
+    },
+    "handlingRequirements": {
+      "purpose": "Define handling, transmission, and storage requirements for each classification level",
+      "elements": ["encryption_requirements", "transmission_requirements", "storage_requirements", "sharing_requirements"],
+      "wordCount": {"min": 125, "max": 200},
+      "guidingQuestions": [
+        "What encryption requirements apply to each classification?",
+        "What are the transmission and sharing restrictions?",
+        "What storage and backup requirements apply?",
+        "What access control requirements apply?"
+      ],
+      "example": "**Public Handling**: No encryption required. MAY be transmitted over unencrypted channels. MAY be stored on any approved IT infrastructure. MAY be shared with external parties without restriction. **Internal Handling**: SHALL be encrypted in transit using TLS 1.2+. MAY be stored unencrypted on approved internal systems with standard access controls. SHALL NOT be transmitted via personal email or consumer file-sharing services. **Confidential (PII) Handling**: SHALL be encrypted at rest using AES-256-GCM and in transit using TLS 1.2+. SHALL be stored only on approved production systems with role-based access control and MFA. Transmission to external parties SHALL require data processing agreements and encryption. Backups SHALL be encrypted using same standards as production data. SHALL NOT be stored on laptops, mobile devices, or non-production environments without explicit DPO approval and equivalent controls. **Restricted (Cryptographic Keys) Handling**: SHALL be stored exclusively in FIPS 140-2 Level 2+ HSMs, never in plaintext form outside HSMs. SHALL NOT be transmitted except when encrypted (wrapped) by higher-level keys during HSM-to-HSM transfers. Access SHALL require dual-control (two-person rule) with MFA. All access SHALL be logged with tamper-evident audit trail."
+    },
+    "labelingAndMarking": {
+      "purpose": "Define requirements for labeling and marking classified information",
+      "elements": ["document_labeling", "data_labeling", "metadata_tagging", "visual_indicators"],
+      "wordCount": {"min": 75, "max": 150},
+      "guidingQuestions": [
+        "How SHALL classified information be labeled?",
+        "What metadata tags are required?",
+        "What visual indicators identify classification?",
+        "How are electronic records marked vs. physical documents?"
+      ],
+      "example": "**Document Labeling**: Physical documents SHALL display classification level in header/footer on each page (e.g., 'CONFIDENTIAL - CUSTOMER PII'). **Electronic Record Labeling**: Files SHALL include classification in filename prefix (e.g., '[CONFIDENTIAL] Customer_Report.pdf') and metadata tags. **Database Labeling**: Database tables/columns containing classified data SHALL be tagged with classification metadata and documented in data catalog. **Visual Indicators**: Internal collaboration platforms SHALL display classification badges on documents, chat channels, and wiki pages. Email SHALL include classification in subject line prefix for Confidential/Restricted content. **Cloud Storage Tagging**: S3 buckets and objects SHALL use classification tags (e.g., 'DataClassification=Confidential-PII') to enable automated policy enforcement and access controls."
+    },
+    "lifecycleManagement": {
+      "purpose": "Define classification-specific lifecycle requirements from creation through disposal",
+      "elements": ["retention_requirements", "disposal_requirements", "reclassification_criteria", "lifecycle_exceptions"],
+      "wordCount": {"min": 100, "max": 175},
+      "guidingQuestions": [
+        "What are the retention requirements for each classification?",
+        "How SHALL classified information be securely disposed?",
+        "Under what conditions can classification change?",
+        "What lifecycle management exceptions are permitted?"
+      ],
+      "example": "**Retention Requirements**: Public: No minimum retention. Internal: 3 years from creation. Confidential (PII): 7 years from last customer interaction or as required by regulation (GDPR Article 17 right to erasure consideration). Restricted (Cryptographic Keys): Active keys retained until rotation, retired keys retained for 7 years for data decryption, then securely destroyed. **Disposal Requirements**: Public: Standard deletion. Internal: Secure deletion (overwrite). Confidential: Cryptographic erasure (destroy encryption keys rendering data unrecoverable) or NIST SP 800-88 3-pass overwrite with verification. Restricted: FIPS 140-2 cryptographic zeroization of HSM memory. **Reclassification**: Information MAY be reclassified to higher level if business/regulatory requirements change (requires data owner approval). Downgrade from Confidential/Restricted SHALL require Data Protection Officer approval and documented justification. **End-of-Retention Disposal**: Automated disposal SHALL occur within 30 days of retention period expiration with audit trail of disposal action."
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "ISO 27001:2022",
+      "controls": ["A.5.12 (Classification of information)", "A.5.13 (Labelling of information)", "A.5.14 (Information transfer)", "A.8.10 (Information deletion)", "A.8.11 (Data masking)"],
+      "relevance": "Information classification and handling standards"
+    },
+    {
+      "framework": "NIST SP 800-60 Vol 1 Rev 1",
+      "controls": ["Information Categorization (FIPS 199 Security Categories)"],
+      "relevance": "Federal information type identification and security categorization"
+    },
+    {
+      "framework": "GDPR",
+      "controls": ["Article 5(1)(f) (Integrity and confidentiality)", "Article 17 (Right to erasure)", "Article 32 (Security of processing)"],
+      "relevance": "Personal data protection and lifecycle requirements"
+    },
+    {
+      "framework": "PCI DSS 4.0",
+      "controls": ["Requirement 3.3.1 (Cardholder data retention)", "Requirement 3.2.1 (Data retention policies)", "Requirement 9.8 (Media destruction)"],
+      "relevance": "Payment card data classification and disposal"
+    },
+    {
+      "framework": "NIST SP 800-88 Rev 1",
+      "controls": ["Guidelines for Media Sanitization"],
+      "relevance": "Secure disposal and sanitization methods"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All five structural elements present (introduction, classification levels, criteria, handling requirements, labeling/marking, lifecycle management)",
+      "Minimum word count met for each element",
+      "All guiding questions addressed",
+      "Minimum 3 classification levels defined (typically 4: Public, Internal, Confidential, Restricted)"
+    ],
+    "classificationScheme": [
+      "Each classification level has clear definition and criteria",
+      "Protection requirements specified for each level (encryption, access control, retention)",
+      "Concrete examples provided for each classification level",
+      "Handling requirements cover encryption, transmission, storage, and sharing",
+      "Retention and disposal requirements specified for each level"
+    ],
+    "traceability": [
+      "References Data Protection Policy (Section 3-1)",
+      "References Security Objectives (Section 2-1)",
+      "Cites minimum 3 compliance frameworks (ISO 27001, GDPR, PCI DSS, NIST SP 800-60)",
+      "Rationale explains WHY classification scheme is designed this way"
+    ],
+    "usability": [
+      "Classification criteria are objective and measurable where possible",
+      "Classification levels are mutually exclusive (no ambiguity about which level applies)",
+      "Labeling requirements are practical and enforceable",
+      "Lifecycle management is automated where feasible"
+    ]
+  },
+  "commonPitfalls": [
+    "Creating too many classification levels (>5 creates confusion)",
+    "Using subjective criteria ('sensitive', 'important') instead of objective criteria",
+    "Omitting concrete examples of data in each classification",
+    "Failing to specify retention and disposal requirements",
+    "Not addressing reclassification procedures",
+    "Creating labeling requirements that are impractical to enforce"
+  ]
+}

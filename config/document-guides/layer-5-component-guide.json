@@ -1,0 +1,238 @@
+{
+  "layerId": "component",
+  "layerName": "Component",
+  "layerNumber": 5,
+  "version": "1.1.0",
+  "purpose": "Defines specific tool configurations, implementation scripts, and validation tests from the tradesman's perspective - vendor-specific, executable, and compliance-validation ready",
+  "formatting": {
+    "fonts": {
+      "headings": {"family": "Arial", "sizes": {"h1": 18, "h2": 14, "h3": 12}},
+      "body": {"family": "Calibri", "size": 11},
+      "code": {"family": "Courier New", "size": 10}
+    },
+    "colors": {
+      "primary": "#1E3A8A",
+      "accent": "#10B981",
+      "headings": {"h1": "#1E3A8A", "h2": "#059669", "h3": "#047857"}
+    },
+    "spacing": {"paragraphBefore": 6, "paragraphAfter": 6, "lineSpacing": 1.15}
+  },
+  "sections": {
+    "5-1": {
+      "id": "5-1",
+      "title": "Tool Configuration Specifications",
+      "layout": {
+        "structure": ["introduction", "tool_configurations", "parameter_specifications", "validation_settings"],
+        "requiredElements": ["toolIdentification", "configurationParameters", "validationCriteria"],
+        "optionalElements": ["configurationTemplates", "migrationScripts"]
+      },
+      "contentGuidelines": {
+        "tone": "technical, tool-specific, configuration-focused",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {"min": 500, "max": 1200},
+        "requiredTopics": [
+          "What specific tools are configured?",
+          "What are the exact configuration parameters?",
+          "How are configurations validated?",
+          "What are tool-specific requirements?"
+        ],
+        "examples": [
+          "**AWS KMS CMK Configuration**: KeySpec: SYMMETRIC_DEFAULT, CustomerMasterKeySpec: AES_256, KeyRotationEnabled: true, RotationPeriodInDays: 90...",
+          "**CloudHSM Cluster**: Instance Type: hsm1.medium, Cluster ID: cluster-abc123, HSM Type: hsm1.medium, ENI Configuration: subnet-xyz456...",
+          "**Wiz Encryption Policy**: name: 'Customer PII Encryption Validation', severity: HIGH, enabled: true..."
+        ]
+      }
+    },
+    "5-2": {
+      "id": "5-2",
+      "title": "Implementation Scripts",
+      "layout": {
+        "structure": ["introduction", "infrastructure_as_code", "automation_scripts", "deployment_scripts"],
+        "requiredElements": ["executableCode", "parameterization", "errorHandling"],
+        "optionalElements": ["testScripts", "rollbackScripts"]
+      },
+      "contentGuidelines": {
+        "tone": "technical, code-focused, automation-oriented",
+        "perspective": "imperative/instructional",
+        "tense": "present",
+        "lengthRange": {"min": 500, "max": 1200},
+        "requiredTopics": [
+          "What IaC templates are required?",
+          "What automation scripts implement controls?",
+          "What deployment scripts are needed?",
+          "How are scripts parameterized and error-handled?"
+        ],
+        "examples": [
+          "**Terraform KMS Module**: resource 'aws_kms_key' 'pii_encryption' { description = 'Customer PII encryption key', enable_key_rotation = true, rotation_period_in_days = 90 }",
+          "**Python Key Rotation Script**: def rotate_kms_key(key_id): client = boto3.client('kms'); response = client.rotate_key_on_demand(KeyId=key_id)...",
+          "**CloudFormation HSM Stack**: Resources: HSMCluster: Type: AWS::CloudHSMV2::Cluster, Properties: SubnetIds: [!Ref PrivateSubnet1]..."
+        ]
+      }
+    },
+    "5-3": {
+      "id": "5-3",
+      "title": "Validation Tests",
+      "layout": {
+        "structure": [
+          "introduction",
+          "automated_compliance_validation",
+          "manual_evidence_collection",
+          "traditional_test_cases"
+        ],
+        "requiredElements": [
+          "validationChecks",
+          "wizPolicies",
+          "icsChecks",
+          "jiraEvidenceRequirements",
+          "testCases"
+        ],
+        "optionalElements": ["performanceTests", "securityTests"]
+      },
+      "contentGuidelines": {
+        "tone": "validation-focused, test-oriented, compliance-centric",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {"min": 800, "max": 1500},
+        "requiredTopics": [
+          "What automated compliance checks are configured (Wiz, ICS)?",
+          "What manual evidence is required (JIRA specifications)?",
+          "What traditional test cases validate implementation?",
+          "How do validation results map to compliance frameworks?"
+        ],
+        "examples": [
+          "**Wiz Policy - RDS Encryption**: query: 'cloudResource where type=\"AWS RDS Instance\" and encryptionEnabled=false', severity: HIGH...",
+          "**ICS Check - aws-rds-encryption-at-rest**: cloudProvider: aws, service: rds, checkType: security, expectedResult: PASS...",
+          "**JIRA Evidence - HSM Key Rotation**: evidenceRequired: {type: 'document', formats: ['pdf', 'docx'], description: 'Signed key rotation certificate...'}",
+          "**Test Case - Encryption Verification**: Verify AES-256-GCM encryption applied to RDS instances using describe-db-instances API..."
+        ]
+      },
+      "complianceValidationV1_1": {
+        "wizPolicyStructure": {
+          "requiredFields": ["checkId", "requirement", "validationType", "tools", "wizPolicy"],
+          "wizPolicyFields": ["policyName", "queryLanguage", "query", "severity", "remediation", "complianceFrameworks"],
+          "severityLevels": ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
+          "queryLanguage": "wiz-ql",
+          "exampleQuery": "cloudResource where type='AWS RDS Instance' and encryptionEnabled=false"
+        },
+        "icsCheckStructure": {
+          "requiredFields": ["checkName", "cloudProvider", "service", "checkType", "expectedResult"],
+          "cloudProviders": ["aws", "gcp", "azure"],
+          "checkTypes": ["security", "compliance", "configuration"],
+          "expectedResults": ["PASS", "FAIL"]
+        },
+        "jiraTemplateStructure": {
+          "requiredFields": [
+            "checkId",
+            "requirement",
+            "validationType",
+            "evidenceRequired.type",
+            "evidenceRequired.formats",
+            "evidenceRequired.description",
+            "evidenceRequired.frequency",
+            "evidenceRequired.nextDueDate",
+            "evidenceRequired.owner",
+            "evidenceRequired.jiraTicket.project",
+            "evidenceRequired.jiraTicket.issueType",
+            "evidenceRequired.jiraTicket.template",
+            "evidenceRequired.jiraTicket.labels"
+          ],
+          "evidenceTypes": ["document", "screenshot", "log", "attestation"],
+          "frequencies": ["daily", "weekly", "monthly", "quarterly", "annual"],
+          "issueType": "Evidence Request"
+        }
+      }
+    },
+    "5-4": {
+      "id": "5-4",
+      "title": "Deployment Checklist",
+      "layout": {
+        "structure": ["introduction", "pre_deployment", "deployment_steps", "post_deployment"],
+        "requiredElements": ["checklistItems", "verificationSteps", "rollbackCriteria"],
+        "optionalElements": ["smokeTe sts", "rollbackProcedure"]
+      },
+      "contentGuidelines": {
+        "tone": "checklist-oriented, verification-focused, deployment-centric",
+        "perspective": "second-person or imperative",
+        "tense": "present",
+        "lengthRange": {"min": 400, "max": 900},
+        "requiredTopics": [
+          "What pre-deployment checks are required?",
+          "What are the deployment steps?",
+          "What post-deployment verification is needed?",
+          "What rollback criteria apply?"
+        ],
+        "examples": [
+          "**Pre-Deployment**: [ ] Backup existing encryption configurations [ ] Verify IAM permissions [ ] Test KMS key accessibility...",
+          "**Deployment**: [ ] Deploy KMS CMKs via Terraform [ ] Update database encryption settings [ ] Configure application key references...",
+          "**Post-Deployment**: [ ] Verify encryption at rest enabled [ ] Confirm key rotation schedule [ ] Execute validation tests..."
+        ]
+      }
+    },
+    "5-5": {
+      "id": "5-5",
+      "title": "Rollback Procedures",
+      "layout": {
+        "structure": ["introduction", "rollback_triggers", "rollback_steps", "recovery_verification"],
+        "requiredElements": ["rollbackCriteria", "rollbackProcedure", "recoveryValidation"],
+        "optionalElements": ["rollbackDecisionTree", "emergencyContacts"]
+      },
+      "contentGuidelines": {
+        "tone": "emergency-focused, step-by-step, recovery-oriented",
+        "perspective": "second-person or imperative",
+        "tense": "present",
+        "lengthRange": {"min": 400, "max": 900},
+        "requiredTopics": [
+          "What conditions trigger rollback?",
+          "What are the rollback steps?",
+          "How is recovery verified?",
+          "What are the communication requirements?"
+        ],
+        "examples": [
+          "**Rollback Triggers**: Data access failures, encryption/decryption errors exceeding 1% of operations, service availability < 99.9%...",
+          "**Rollback Steps**: 1. Halt deployment immediately 2. Restore previous KMS configuration 3. Revert database encryption settings...",
+          "**Recovery Verification**: Execute validation test suite, verify application functionality, confirm data accessibility..."
+        ]
+      }
+    }
+  },
+  "contentQuality": {
+    "traceability": {
+      "upstreamReferences": {
+        "required": true,
+        "minimumCount": 2,
+        "format": "Section references must use format: {policy-id}.physical.{section}"
+      }
+    },
+    "frameworkAlignment": {
+      "required": ["NIST SP 800-53A", "CIS Controls"],
+      "optional": ["AWS Security Best Practices", "Azure Security Benchmark", "GCP Security Best Practices", "Wiz Policy Language", "ICS Check Specifications"],
+      "citationFormat": "Framework Name + Control ID (e.g., NIST SP 800-53A SC-28, CIS Control 3.11)"
+    },
+    "technicalDepth": {
+      "level": "implementation",
+      "avoidance": ["hardcoded secrets", "organization-specific IP addresses", "personally identifying information"],
+      "inclusion": ["vendor-specific configurations", "executable code", "tool parameters", "validation tests", "compliance automation specifications", "IaC templates"]
+    }
+  },
+  "validation": {
+    "structure": {
+      "requiredSections": ["5-1", "5-2", "5-3", "5-4", "5-5"],
+      "sectionOrder": "sequential",
+      "allowSkip": false
+    },
+    "content": {
+      "checks": [
+        {"type": "wordCount", "min": 400, "max": 1500, "appliesTo": "each section"},
+        {"type": "traceability", "minReferences": 2, "appliesTo": "sections 5-1, 5-2, 5-3"},
+        {"type": "framework", "minCitations": 2, "appliesTo": "all sections"},
+        {"type": "complianceValidation", "requiredStructures": ["wizPolicy", "icsCheck", "jiraTemplate"], "appliesTo": "section 5-3"}
+      ]
+    },
+    "rationale": {
+      "required": true,
+      "minLength": 100,
+      "purpose": "Explain WHY this tool/script/configuration implements upstream physical specifications and satisfies compliance requirements"
+    }
+  }
+}

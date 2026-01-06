@@ -1,0 +1,167 @@
+{
+  "sectionId": "2-2",
+  "layerId": "conceptual",
+  "templateVersion": "1.0.0",
+  "title": "Security Services",
+  "purpose": "Defines the required security capabilities (authentication, encryption, monitoring, incident response) that deliver security objectives through technology-agnostic service specifications",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish the role of security services in delivering security objectives",
+      "elements": ["services_overview", "relationship_to_objectives", "service_categories"],
+      "wordCount": {"min": 50, "max": 100},
+      "example": "This section defines **Security Services**—the architectural capabilities required to deliver Security Objectives (2-1). Services are organized by function: **Identity Services** (authentication, authorization), **Data Protection Services** (encryption, key management), **Monitoring Services** (audit logging, threat detection), and **Incident Response Services** (alerting, remediation). Each service specification is technology-agnostic, focusing on required capabilities rather than specific implementations."
+    },
+    "identityServices": {
+      "purpose": "Define authentication, authorization, and identity management capabilities",
+      "elements": ["authentication_services", "authorization_services", "identity_lifecycle"],
+      "wordCount": {"min": 80, "max": 150},
+      "guidingQuestions": [
+        "What authentication mechanisms are required?",
+        "How will users and systems be authorized?",
+        "What identity lifecycle management is needed?",
+        "How do identity services support security objectives?"
+      ],
+      "example": "**Authentication Services**: Provide multi-factor authentication for all access to encryption key management systems, supporting Accountability Objectives (2-1). Require hardware token or biometric authentication for administrative access to hardware security modules. **Authorization Services**: Implement role-based access control (RBAC) for cryptographic operations, enforcing least-privilege access aligned with Security Principles (2-3). Maintain separation of duties between key administrators, auditors, and operators. **Identity Lifecycle**: Automate provisioning and deprovisioning of cryptographic access permissions synchronized with HR system to prevent orphaned accounts."
+    },
+    "dataProtectionServices": {
+      "purpose": "Define encryption, key management, and data security capabilities",
+      "elements": ["encryption_services", "key_management_services", "data_masking_services"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "What encryption capabilities are required?",
+        "How will encryption keys be managed?",
+        "What data protection mechanisms support objectives?",
+        "What service level expectations apply?"
+      ],
+      "example": "**Encryption Services**: Provide strong encryption capabilities for customer PII at rest and in transit, implementing Confidentiality Objectives (2-1). Support AES-256 for data-at-rest protection and TLS 1.2+ for data-in-transit, aligned with NIST SP 800-53 SC-28 requirements. Deliver 99.9% uptime for encryption operations per Availability Objectives (2-1). **Key Management Services**: Secure generation, storage, rotation, and destruction of cryptographic keys throughout their lifecycle. Provide automated key rotation every 90 days to meet compliance requirements from Business Drivers (1-2). Maintain keys in FIPS 140-2 Level 3 certified hardware security modules to satisfy Integrity Objectives (2-1). **Data Masking Services**: Provide dynamic data masking for non-production environments to prevent PII exposure during development and testing activities."
+    },
+    "monitoringServices": {
+      "purpose": "Define audit logging, threat detection, and monitoring capabilities",
+      "elements": ["audit_logging", "threat_detection", "compliance_monitoring"],
+      "wordCount": {"min": 80, "max": 150},
+      "guidingQuestions": [
+        "What logging capabilities are required?",
+        "How will security events be detected?",
+        "What monitoring supports compliance requirements?",
+        "How do monitoring services enable accountability objectives?"
+      ],
+      "example": "**Audit Logging Services**: Comprehensive logging of all cryptographic operations (encryption, decryption, key access, key rotation) to support Accountability Objectives (2-1) and SOC 2 CC7.2 audit requirements from Business Drivers (1-2). Maintain tamper-evident audit logs with cryptographic integrity protection for 7-year retention period. **Threat Detection Services**: Real-time monitoring for anomalous encryption activity (unusual access patterns, failed authentication attempts, unauthorized key access) aligned with Success Criteria (1-4) requirement for mean-time-to-detect < 15 minutes. **Compliance Monitoring Services**: Automated validation of encryption coverage and key rotation compliance, generating evidence for SOC 2 Type II audits."
+    },
+    "incidentResponseServices": {
+      "purpose": "Define incident detection, alerting, and remediation capabilities",
+      "elements": ["detection_services", "alerting_services", "remediation_services"],
+      "wordCount": {"min": 80, "max": 150},
+      "guidingQuestions": [
+        "How will security incidents be detected?",
+        "What alerting mechanisms are required?",
+        "What remediation capabilities are needed?",
+        "How do incident response services support objectives?"
+      ],
+      "example": "**Detection Services**: Real-time detection of encryption failures, key compromise indicators, and unauthorized cryptographic operations. Provide automated anomaly detection using baseline behavior analysis. **Alerting Services**: Immediate notification to security operations team for critical events (key compromise, encryption service outage, unauthorized HSM access) supporting Success Criteria (1-4) response time targets. Integrate with incident management platform for automated ticket creation. **Remediation Services**: Automated containment capabilities for suspected key compromise (immediate key rotation, access revocation). Provide automated rollback for failed encryption deployments to maintain service availability per Availability Objectives (2-1)."
+    },
+    "serviceInteractions": {
+      "purpose": "Define how security services interact and depend on each other",
+      "elements": ["service_dependencies", "integration_requirements", "service_orchestration"],
+      "wordCount": {"min": 50, "max": 100},
+      "guidingQuestions": [
+        "How do services interact with each other?",
+        "What dependencies exist between services?",
+        "How will services be orchestrated?",
+        "What integration points are required?"
+      ],
+      "example": "**Service Dependencies**: Data Protection Services depend on Identity Services for authentication before granting cryptographic access. Monitoring Services consume audit events from all other services to provide comprehensive visibility. Incident Response Services integrate with Monitoring Services for threat detection and with Data Protection Services for automated remediation. **Integration Requirements**: All services must support standard protocols (LDAP for identity, KMIP for key management, Syslog/CEF for logging) to enable vendor-neutral implementations aligned with Security Principles (2-3)."
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST CSF",
+      "control": "PR.AC-1",
+      "relevance": "Identity and access management services"
+    },
+    {
+      "framework": "NIST CSF",
+      "control": "PR.DS-1",
+      "relevance": "Data protection services for data-at-rest"
+    },
+    {
+      "framework": "NIST CSF",
+      "control": "DE.CM-1",
+      "relevance": "Monitoring services for security event detection"
+    },
+    {
+      "framework": "ISO 27001",
+      "control": "A.12.4.1",
+      "relevance": "Event logging services"
+    },
+    {
+      "framework": "NIST SP 800-53",
+      "control": "AU-2",
+      "relevance": "Audit logging services"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All five structural elements present (introduction, identity services, data protection, monitoring, incident response, service interactions)",
+      "Minimum word count met for each element (450-950 total)",
+      "All guiding questions addressed",
+      "Each service category includes specific capabilities",
+      "Service level expectations defined where applicable"
+    ],
+    "clarity": [
+      "Services described in terms of capabilities, not technologies",
+      "No vendor names or specific products mentioned",
+      "Clear distinction between service types (identity, data protection, monitoring, incident response)",
+      "Service interactions and dependencies explicitly stated",
+      "Measurable service level expectations included"
+    ],
+    "traceability": [
+      "References to Section 2-1 (Security Objectives)",
+      "References to upstream sections 1-2 (Business Drivers), 1-4 (Success Criteria) where relevant",
+      "Framework citations present (minimum 2 from NIST CSF, ISO 27001, or NIST SP 800-53)",
+      "Rationale explains HOW services deliver security objectives",
+      "Relationship types used correctly: implements (objectives), supports (requirements)"
+    ],
+    "frameworkAlignment": [
+      "At least 2 framework citations per service category",
+      "Citations use correct format: Framework + Control ID",
+      "Services align with cited framework controls"
+    ]
+  },
+  "commonPitfalls": [
+    "Specifying implementation technologies instead of capabilities (e.g., 'AWS KMS' instead of 'key management service')",
+    "Missing service level expectations (uptime, performance, response time)",
+    "Incomplete service interaction mapping (missing dependencies)",
+    "Services not clearly linked to security objectives",
+    "Mixing service specification with operational procedures (belongs in Layer 6)"
+  ],
+  "exampleServices": [
+    {
+      "category": "Identity Services",
+      "service": "Multi-factor authentication for cryptographic access",
+      "capabilities": ["Hardware token authentication", "Biometric authentication", "Risk-based authentication"],
+      "serviceLevel": "99.9% availability, < 500ms authentication latency",
+      "upstream": "Supports Accountability Objectives (2-1)"
+    },
+    {
+      "category": "Data Protection Services",
+      "service": "Encryption key management",
+      "capabilities": ["Automated key generation", "Secure key storage in HSM", "Automated 90-day rotation", "Secure key destruction"],
+      "serviceLevel": "99.9% availability, FIPS 140-2 Level 3 compliance",
+      "upstream": "Implements Confidentiality and Integrity Objectives (2-1)"
+    },
+    {
+      "category": "Monitoring Services",
+      "service": "Cryptographic audit logging",
+      "capabilities": ["Complete operation logging", "Tamper-evident storage", "7-year retention", "Real-time monitoring"],
+      "serviceLevel": "100% log capture rate, < 1 minute event-to-log latency",
+      "upstream": "Implements Accountability Objectives (2-1), supports SOC 2 CC7.2"
+    },
+    {
+      "category": "Incident Response Services",
+      "service": "Automated key compromise remediation",
+      "capabilities": ["Immediate key rotation", "Automated access revocation", "Incident ticket creation", "Automated rollback"],
+      "serviceLevel": "< 5 minute response time from detection to remediation",
+      "upstream": "Supports Success Criteria (1-4) MTTD < 15 minutes target"
+    }
+  ]
+}

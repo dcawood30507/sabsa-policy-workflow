@@ -1,0 +1,190 @@
+{
+  "layerId": "physical",
+  "layerName": "Physical",
+  "layerNumber": 4,
+  "version": "1.0.0",
+  "purpose": "Defines how security controls will be technically implemented from the builder's perspective - technology-specific but vendor-agnostic where possible",
+  "formatting": {
+    "fonts": {
+      "headings": {"family": "Arial", "sizes": {"h1": 18, "h2": 14, "h3": 12}},
+      "body": {"family": "Calibri", "size": 11},
+      "code": {"family": "Courier New", "size": 10}
+    },
+    "colors": {
+      "primary": "#1E3A8A",
+      "accent": "#10B981",
+      "headings": {"h1": "#1E3A8A", "h2": "#059669", "h3": "#047857"}
+    },
+    "spacing": {"paragraphBefore": 6, "paragraphAfter": 6, "lineSpacing": 1.15}
+  },
+  "sections": {
+    "4-1": {
+      "id": "4-1",
+      "title": "Control Implementation Specifications",
+      "layout": {
+        "structure": ["introduction", "implementation_approach", "technology_selection", "integration_points"],
+        "requiredElements": ["implementationDetails", "technologyRequirements", "integrationSpecifications"],
+        "optionalElements": ["vendorOptions", "migrationApproach"]
+      },
+      "contentGuidelines": {
+        "tone": "technical, implementation-focused, architecture-oriented",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {"min": 500, "max": 1100},
+        "requiredTopics": [
+          "How will logical controls be technically implemented?",
+          "What technologies and platforms will be used?",
+          "How will controls integrate with existing infrastructure?",
+          "What are the implementation dependencies?"
+        ],
+        "examples": [
+          "**AWS KMS Implementation**: Utilize AWS Key Management Service for centralized encryption key management with CloudHSM backing...",
+          "**Database Encryption**: Implement transparent data encryption (TDE) for RDS instances with customer-managed CMKs...",
+          "**TLS Termination**: Configure Application Load Balancers with TLS 1.2+ using AWS Certificate Manager..."
+        ]
+      }
+    },
+    "4-2": {
+      "id": "4-2",
+      "title": "Security Procedures",
+      "layout": {
+        "structure": ["introduction", "operational_procedures", "administrative_procedures", "emergency_procedures"],
+        "requiredElements": ["stepByStepInstructions", "roleResponsibilities", "verificationSteps"],
+        "optionalElements": ["flowcharts", "decisionTrees"]
+      },
+      "contentGuidelines": {
+        "tone": "procedural, step-by-step, operations-oriented",
+        "perspective": "second-person or imperative",
+        "tense": "present",
+        "lengthRange": {"min": 500, "max": 1100},
+        "requiredTopics": [
+          "What are the step-by-step procedures for control operations?",
+          "Who is responsible for each procedure?",
+          "What verification steps ensure procedure completion?",
+          "What are the emergency procedures?"
+        ],
+        "examples": [
+          "**Key Rotation Procedure**: 1. Generate new CMK in AWS KMS... 2. Update application configuration... 3. Verify encryption operations...",
+          "**HSM Backup Procedure**: 1. Schedule backup window... 2. Execute cryptographic backup... 3. Transfer to secure offline storage...",
+          "**Emergency Key Revocation**: 1. Identify compromised key... 2. Disable key in KMS... 3. Initiate incident response..."
+        ]
+      }
+    },
+    "4-3": {
+      "id": "4-3",
+      "title": "Technical Standards",
+      "layout": {
+        "structure": ["introduction", "configuration_standards", "hardening_standards", "integration_standards"],
+        "requiredElements": ["configurationBaselines", "hardeningRequirements", "complianceMapping"],
+        "optionalElements": ["automationScripts", "validationTools"]
+      },
+      "contentGuidelines": {
+        "tone": "technical, prescriptive, standards-based",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {"min": 500, "max": 1100},
+        "requiredTopics": [
+          "What are the technical configuration standards?",
+          "What hardening requirements apply?",
+          "How do standards map to compliance requirements?",
+          "What validation mechanisms ensure compliance?"
+        ],
+        "examples": [
+          "**KMS CMK Configuration Standard**: Key rotation enabled (90 days), multi-region disabled unless required...",
+          "**TLS Configuration**: TLS 1.2 minimum, TLS 1.3 preferred, disable SSLv3/TLS 1.0/1.1...",
+          "**HSM Configuration**: FIPS 140-2 Level 3 required, M of N authentication (3 of 5)..."
+        ]
+      }
+    },
+    "4-4": {
+      "id": "4-4",
+      "title": "Integration Architecture",
+      "layout": {
+        "structure": ["introduction", "component_interfaces", "data_flows", "dependency_management"],
+        "requiredElements": ["architectureDiagrams", "interfaceSpecifications", "dataFlowMaps"],
+        "optionalElements": ["sequenceDiagrams", "integrationPatterns"]
+      },
+      "contentGuidelines": {
+        "tone": "architectural, integration-focused, system-oriented",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {"min": 450, "max": 950},
+        "requiredTopics": [
+          "How do components connect and integrate?",
+          "What are the data flows between components?",
+          "What dependencies exist?",
+          "What integration patterns are used?"
+        ],
+        "examples": [
+          "**Application-KMS Integration**: Applications call KMS API via AWS SDK with IAM role-based authentication...",
+          "**Database-HSM Integration**: Database engines integrate with CloudHSM via PKCS#11 interface...",
+          "**Logging-SIEM Integration**: CloudTrail KMS events stream to SIEM via Kinesis Data Firehose..."
+        ]
+      }
+    },
+    "4-5": {
+      "id": "4-5",
+      "title": "Exception Handling",
+      "layout": {
+        "structure": ["introduction", "exception_criteria", "approval_process", "compensating_controls"],
+        "requiredElements": ["exceptionCategories", "approvalWorkflow", "compensatingControlRequirements"],
+        "optionalElements": ["exceptionTracking", "reviewCycles"]
+      },
+      "contentGuidelines": {
+        "tone": "governance-focused, risk-aware, process-oriented",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {"min": 400, "max": 850},
+        "requiredTopics": [
+          "What are valid reasons for policy exceptions?",
+          "What is the approval process?",
+          "What compensating controls are required?",
+          "How are exceptions tracked and reviewed?"
+        ],
+        "examples": [
+          "**Legacy System Exception**: Systems scheduled for decommissioning within 6 months may defer encryption implementation...",
+          "**Approval Process**: Exception requests require CISO approval, documented business justification, and compensating controls...",
+          "**Compensating Controls**: Network segmentation, enhanced monitoring, restricted access, and expedited migration timeline..."
+        ]
+      }
+    }
+  },
+  "contentQuality": {
+    "traceability": {
+      "upstreamReferences": {
+        "required": true,
+        "minimumCount": 2,
+        "format": "Section references must use format: {policy-id}.logical.{section} and {policy-id}.conceptual.{section}"
+      }
+    },
+    "frameworkAlignment": {
+      "required": ["NIST SP 800-53", "CIS Controls"],
+      "optional": ["AWS Well-Architected Framework", "Azure Security Benchmark", "GCP Security Best Practices", "NIST SP 800-175B"],
+      "citationFormat": "Framework Name + Control ID (e.g., NIST SP 800-53 SC-28(1), CIS Control 3.11)"
+    },
+    "technicalDepth": {
+      "level": "implementation",
+      "avoidance": ["specific version numbers that become outdated", "hardcoded credentials", "organization-specific details"],
+      "inclusion": ["cloud services", "technology platforms", "implementation patterns", "procedures", "configuration standards", "integration architecture"]
+    }
+  },
+  "validation": {
+    "structure": {
+      "requiredSections": ["4-1", "4-2", "4-3", "4-4", "4-5"],
+      "sectionOrder": "sequential",
+      "allowSkip": false
+    },
+    "content": {
+      "checks": [
+        {"type": "wordCount", "min": 400, "max": 1100, "appliesTo": "each section"},
+        {"type": "traceability", "minReferences": 2, "appliesTo": "sections 4-1, 4-2, 4-3"},
+        {"type": "framework", "minCitations": 2, "appliesTo": "all sections"}
+      ]
+    },
+    "rationale": {
+      "required": true,
+      "minLength": 120,
+      "purpose": "Explain WHY this implementation approach satisfies upstream logical controls and security principles"
+    }
+  }
+}

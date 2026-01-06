@@ -1,0 +1,321 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SABSA Layer Document Guide Master Schema",
+  "description": "Defines the structure that all layer-specific document guides must follow",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "layerId",
+    "layerName",
+    "layerNumber",
+    "version",
+    "purpose",
+    "formatting",
+    "sections",
+    "contentQuality",
+    "validation"
+  ],
+  "properties": {
+    "layerId": {
+      "type": "string",
+      "enum": ["contextual", "conceptual", "logical", "physical", "component", "operational"],
+      "description": "Unique identifier for this SABSA layer"
+    },
+    "layerName": {
+      "type": "string",
+      "description": "Display name of the layer"
+    },
+    "layerNumber": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 6,
+      "description": "Sequential layer number (1-6)"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of this guide (e.g., 1.0.0)"
+    },
+    "purpose": {
+      "type": "string",
+      "description": "What this layer achieves in the SABSA framework"
+    },
+    "formatting": {
+      "type": "object",
+      "required": ["fonts", "colors", "spacing"],
+      "properties": {
+        "fonts": {
+          "type": "object",
+          "required": ["headings", "body", "code"],
+          "properties": {
+            "headings": {
+              "type": "object",
+              "required": ["family", "sizes"],
+              "properties": {
+                "family": {"type": "string"},
+                "sizes": {
+                  "type": "object",
+                  "required": ["h1", "h2", "h3"],
+                  "properties": {
+                    "h1": {"type": "integer", "minimum": 12, "maximum": 24},
+                    "h2": {"type": "integer", "minimum": 10, "maximum": 20},
+                    "h3": {"type": "integer", "minimum": 10, "maximum": 18}
+                  }
+                }
+              }
+            },
+            "body": {
+              "type": "object",
+              "required": ["family", "size"],
+              "properties": {
+                "family": {"type": "string"},
+                "size": {"type": "integer", "minimum": 9, "maximum": 14}
+              }
+            },
+            "code": {
+              "type": "object",
+              "required": ["family", "size"],
+              "properties": {
+                "family": {"type": "string"},
+                "size": {"type": "integer", "minimum": 8, "maximum": 12}
+              }
+            }
+          }
+        },
+        "colors": {
+          "type": "object",
+          "required": ["primary", "accent", "headings"],
+          "properties": {
+            "primary": {
+              "type": "string",
+              "pattern": "^#[0-9A-Fa-f]{6}$",
+              "description": "Primary brand color (hex)"
+            },
+            "accent": {
+              "type": "string",
+              "pattern": "^#[0-9A-Fa-f]{6}$",
+              "description": "Accent color (hex)"
+            },
+            "headings": {
+              "type": "object",
+              "properties": {
+                "h1": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+                "h2": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+                "h3": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"}
+              }
+            }
+          }
+        },
+        "spacing": {
+          "type": "object",
+          "required": ["paragraphBefore", "paragraphAfter", "lineSpacing"],
+          "properties": {
+            "paragraphBefore": {"type": "integer", "minimum": 0, "maximum": 12},
+            "paragraphAfter": {"type": "integer", "minimum": 0, "maximum": 12},
+            "lineSpacing": {"type": "number", "minimum": 1.0, "maximum": 2.0}
+          }
+        }
+      }
+    },
+    "sections": {
+      "type": "object",
+      "description": "Section-specific layout and content guidelines",
+      "patternProperties": {
+        "^[1-6]-[1-6]$": {
+          "type": "object",
+          "required": ["id", "title", "layout", "contentGuidelines"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[1-6]-[1-6]$",
+              "description": "Section identifier (e.g., 1-1, 2-3)"
+            },
+            "title": {
+              "type": "string",
+              "description": "Section title"
+            },
+            "layout": {
+              "type": "object",
+              "required": ["structure", "requiredElements"],
+              "properties": {
+                "structure": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "description": "Ordered list of structural components"
+                },
+                "requiredElements": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "description": "Mandatory content elements"
+                },
+                "optionalElements": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "description": "Optional content elements"
+                }
+              }
+            },
+            "contentGuidelines": {
+              "type": "object",
+              "required": ["tone", "perspective", "tense", "lengthRange", "requiredTopics"],
+              "properties": {
+                "tone": {
+                  "type": "string",
+                  "description": "Writing tone (e.g., business-focused, technical, formal)"
+                },
+                "perspective": {
+                  "type": "string",
+                  "enum": ["first-person", "second-person", "third-person"],
+                  "description": "Narrative perspective"
+                },
+                "tense": {
+                  "type": "string",
+                  "enum": ["past", "present", "future"],
+                  "description": "Verb tense to use"
+                },
+                "lengthRange": {
+                  "type": "object",
+                  "required": ["min", "max"],
+                  "properties": {
+                    "min": {"type": "integer", "minimum": 0},
+                    "max": {"type": "integer", "minimum": 1}
+                  }
+                },
+                "requiredTopics": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "description": "Questions/topics that must be addressed"
+                },
+                "examples": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "description": "Example content snippets"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "contentQuality": {
+      "type": "object",
+      "required": ["traceability", "frameworkAlignment", "technicalDepth"],
+      "properties": {
+        "traceability": {
+          "type": "object",
+          "required": ["upstreamReferences"],
+          "properties": {
+            "upstreamReferences": {
+              "type": "object",
+              "required": ["required", "minimumCount", "format"],
+              "properties": {
+                "required": {"type": "boolean"},
+                "minimumCount": {"type": "integer", "minimum": 0},
+                "format": {"type": "string"}
+              }
+            }
+          }
+        },
+        "frameworkAlignment": {
+          "type": "object",
+          "required": ["required", "citationFormat"],
+          "properties": {
+            "required": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Mandatory frameworks to reference"
+            },
+            "optional": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Optional frameworks to reference"
+            },
+            "citationFormat": {
+              "type": "string",
+              "description": "How to cite framework controls"
+            }
+          }
+        },
+        "technicalDepth": {
+          "type": "object",
+          "required": ["level"],
+          "properties": {
+            "level": {
+              "type": "string",
+              "enum": ["conceptual", "detailed", "implementation"],
+              "description": "Expected technical depth"
+            },
+            "avoidance": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Content to avoid"
+            },
+            "inclusion": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Content to include"
+            }
+          }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "required": ["structure", "content", "rationale"],
+      "properties": {
+        "structure": {
+          "type": "object",
+          "required": ["requiredSections", "sectionOrder", "allowSkip"],
+          "properties": {
+            "requiredSections": {
+              "type": "array",
+              "items": {"type": "string", "pattern": "^[1-6]-[1-6]$"}
+            },
+            "sectionOrder": {
+              "type": "string",
+              "enum": ["sequential", "any"],
+              "description": "Whether sections must be in order"
+            },
+            "allowSkip": {
+              "type": "boolean",
+              "description": "Whether sections can be omitted"
+            }
+          }
+        },
+        "content": {
+          "type": "object",
+          "required": ["checks"],
+          "properties": {
+            "checks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["type", "appliesTo"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["wordCount", "traceability", "framework", "technicalDepth"]
+                  },
+                  "min": {"type": "integer"},
+                  "max": {"type": "integer"},
+                  "minReferences": {"type": "integer"},
+                  "minCitations": {"type": "integer"},
+                  "appliesTo": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "rationale": {
+          "type": "object",
+          "required": ["required", "minLength", "purpose"],
+          "properties": {
+            "required": {"type": "boolean"},
+            "minLength": {"type": "integer", "minimum": 0},
+            "purpose": {"type": "string"}
+          }
+        }
+      }
+    }
+  }
+}

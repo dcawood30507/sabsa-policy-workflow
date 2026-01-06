@@ -1,0 +1,169 @@
+{
+  "sectionId": "6-5",
+  "layerId": "operational",
+  "templateVersion": "1.0.0",
+  "title": "Metrics & Reporting",
+  "purpose": "Defines key performance indicators (KPIs), compliance metrics, operational metrics, and reporting requirements from the operations perspective",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish metrics strategy and reporting framework",
+      "elements": ["metrics_overview", "measurement_philosophy", "reporting_objectives"],
+      "wordCount": {"min": 50, "max": 100},
+      "example": "This section establishes **metrics and reporting** for encryption operations, defining KPIs that measure security effectiveness, compliance status, operational efficiency, and service reliability. Metrics follow the SMART framework (Specific, Measurable, Achievable, Relevant, Time-bound) with automated collection via CloudWatch, weekly operational reviews, monthly executive reporting, and quarterly trend analysis. Reporting objectives: provide actionable insights to operations teams, demonstrate compliance to auditors, inform strategic decisions for leadership."
+    },
+    "securityMetrics": {
+      "purpose": "Define security-focused KPIs measuring encryption effectiveness",
+      "elements": ["encryption_coverage", "key_management_health", "access_control_effectiveness", "incident_metrics"],
+      "wordCount": {"min": 120, "max": 180},
+      "guidingQuestions": [
+        "What metrics measure encryption coverage?",
+        "What metrics indicate key management health?",
+        "What metrics evaluate access control effectiveness?",
+        "What metrics track security incidents?"
+      ],
+      "example": "**Encryption Coverage KPI**: Percentage of production data resources with encryption enabled. **Target**: 100%. **Measurement**: Daily automated scan of S3 buckets (count encrypted / total buckets × 100), RDS instances (count encrypted / total instances × 100), EBS volumes (count encrypted / total volumes × 100). **Data Source**: AWS Config aggregated query. **Reporting**: Weekly trend to Security Operations, monthly summary to CISO.\n\n**Key Rotation Compliance KPI**: Percentage of encryption keys rotated within policy deadline (90 days). **Target**: 100%. **Measurement**: Daily query: count keys rotated within 90 days / total active keys × 100. **Data Source**: KMS ListKeys API with CreationDate filtering. **Alerting**: Warning if <95%, critical if <90%. **Reporting**: Weekly to Security Operations, monthly to Security Leadership.\n\n**Unauthorized Access Attempts**: Count of denied KMS API access attempts from unexpected principals. **Target**: 0 successful unauthorized access. **Measurement**: Real-time CloudTrail query for AccessDeniedException events on KMS APIs. **Data Source**: CloudWatch Logs Insights. **Reporting**: Daily summary to Security Operations, escalate any suspicious patterns immediately.\n\n**Mean Time to Detect (MTTD) - Encryption Issues**: Average time from encryption failure occurrence to alert generation. **Target**: <5 minutes. **Measurement**: Timestamp of first failed KMS API call to timestamp of CloudWatch alarm trigger. **Data Source**: CloudWatch Metrics + Alarms. **Reporting**: Monthly operations review."
+    },
+    "complianceMetrics": {
+      "purpose": "Define compliance-focused KPIs for audit and regulatory requirements",
+      "elements": ["policy_compliance", "audit_readiness", "regulatory_adherence", "control_effectiveness"],
+      "wordCount": {"min": 100, "max": 150},
+      "guidingQuestions": [
+        "What metrics demonstrate policy compliance?",
+        "What metrics indicate audit readiness?",
+        "What metrics track regulatory adherence?",
+        "What metrics measure control effectiveness?"
+      ],
+      "example": "**Policy Compliance Score**: Percentage of encryption controls passing automated compliance checks. **Target**: 100%. **Measurement**: Weekly execution of automated compliance tests (section 5-5): (count passed tests / total tests × 100). **Data Source**: Wiz policy engine + AWS Config rules. **Reporting**: Weekly to Compliance Team, quarterly to Audit Committee.\n\n**Audit Finding Closure Rate**: Percentage of audit findings remediated within SLA. **Target**: 100% within 30 days for high-severity, 90 days for medium. **Measurement**: Track Jira tickets tagged 'audit-finding' from creation to closure. **Data Source**: Jira query. **Reporting**: Monthly to Security Leadership, quarterly to Audit Committee.\n\n**CloudTrail Logging Coverage**: Percentage of AWS accounts with CloudTrail enabled for KMS event logging. **Target**: 100%. **Measurement**: Daily query: count accounts with CloudTrail enabled / total accounts × 100. **Data Source**: AWS Organizations + CloudTrail API. **Reporting**: Monthly to Compliance Team.\n\n**Data Encryption SLA**: Percentage of customer PII encrypted within policy timeframe (24 hours of collection). **Target**: 100%. **Measurement**: Sample customer records, verify encryption timestamp ≤ 24 hours after creation timestamp. **Data Source**: Database audit logs. **Reporting**: Weekly to Data Protection Officer, monthly to executive team."
+    },
+    "operationalMetrics": {
+      "purpose": "Define operational efficiency and reliability KPIs",
+      "elements": ["service_availability", "performance_metrics", "cost_efficiency", "automation_effectiveness"],
+      "wordCount": {"min": 100, "max": 150},
+      "guidingQuestions": [
+        "What metrics measure service availability?",
+        "What metrics track operational performance?",
+        "What metrics evaluate cost efficiency?",
+        "What metrics assess automation effectiveness?"
+      ],
+      "example": "**KMS Service Availability**: Percentage uptime of KMS API operations. **Target**: 99.95% (21.6 minutes downtime/month max). **Measurement**: CloudWatch metric `kms:Decrypt` success rate aggregated hourly. **Data Source**: CloudWatch Metrics. **Reporting**: Real-time dashboard, monthly SLA report to executive team.\n\n**KMS API Latency (P95)**: 95th percentile latency for KMS decrypt operations. **Target**: <100 milliseconds. **Measurement**: CloudWatch metric `kms:Decrypt` duration at P95 aggregated every 5 minutes. **Data Source**: CloudWatch Metrics. **Reporting**: Real-time dashboard, weekly trend analysis to DevOps.\n\n**Mean Time to Repair (MTTR) - Encryption Incidents**: Average time from incident detection to service restoration. **Target**: <4 hours. **Measurement**: Incident ticket creation timestamp to resolution timestamp. **Data Source**: Jira incident tickets. **Reporting**: Monthly to Security Operations, quarterly trend to CISO.\n\n**Encryption Operations Cost**: Monthly AWS KMS API request costs + CloudHSM cluster costs. **Target**: <$5000/month. **Measurement**: AWS Cost Explorer query filtered for KMS + CloudHSM services. **Data Source**: AWS Billing. **Reporting**: Monthly cost report to Finance + Engineering Leadership.\n\n**Automation Rate**: Percentage of encryption operations executed via automation (vs manual). **Target**: >90%. **Measurement**: Count automated key rotations / total rotations × 100. **Data Source**: CloudTrail event source (Lambda vs user). **Reporting**: Quarterly to DevOps Leadership."
+    },
+    "reportingSchedule": {
+      "purpose": "Define reporting cadence, audiences, and delivery mechanisms",
+      "elements": ["daily_reports", "weekly_reports", "monthly_reports", "quarterly_reports", "annual_reports"],
+      "wordCount": {"min": 80, "max": 120},
+      "guidingQuestions": [
+        "What reports are generated daily?",
+        "What reports are delivered weekly?",
+        "What monthly reporting is required?",
+        "What quarterly executive reporting occurs?",
+        "What annual reports are produced?"
+      ],
+      "example": "**Daily Reports (Automated)**: (1) **Security Operations Summary** (08:00 UTC): KMS API error count, unauthorized access attempts, encryption failures (last 24 hours). Delivery: Email to security-ops@company.com + Slack #security-operations. (2) **Key Rotation Status** (08:00 UTC): Keys requiring rotation in next 7 days, overdue rotations. Delivery: Email to key owners + Security Operations.\n\n**Weekly Reports**: (1) **Operational Metrics Dashboard** (Monday 09:00 UTC): Encryption coverage %, key rotation compliance %, KMS availability, P95 latency trends. Audience: Security Operations + DevOps. Delivery: Confluence page + email digest. (2) **CloudTrail Security Events** (Monday 14:00 UTC): KMS-related events (CreateKey, DeleteKey, PutKeyPolicy), anomaly analysis. Audience: Security Leadership. Delivery: Email with CloudWatch Insights query results.\n\n**Monthly Reports**: (1) **Executive Security Dashboard** (1st business day): Encryption coverage trend, compliance score, incident summary (MTTD, MTTR), cost analysis. Audience: CISO + CTO + CIO. Delivery: PowerPoint presentation + Excel data. (2) **Compliance Status Report**: Audit finding status, policy compliance metrics, regulatory adherence (GDPR, PCI DSS). Audience: Compliance Team + Audit Committee. Delivery: PDF report + supporting evidence.\n\n**Quarterly Reports**: (1) **Strategic Security Review**: 3-month trend analysis, year-over-year comparison, cost optimization opportunities, technology evolution recommendations. Audience: Executive Leadership + Board of Directors. (2) **Audit Readiness Package**: Comprehensive compliance evidence, control effectiveness testing, audit trail documentation. Audience: External Auditors.\n\n**Annual Reports**: (1) **Year in Review**: Full-year metrics, major incidents post-mortem, policy updates, security assessment findings, 3-year strategic roadmap. Audience: Executive Team + Board."
+    }
+  },
+  "upstreamTraceability": {
+    "required": true,
+    "minimumReferences": 2,
+    "expectedSources": [
+      {
+        "layer": "component",
+        "sections": ["5-1", "5-3", "5-4"],
+        "relationshipTypes": ["validates", "refines"],
+        "rationale": "Metrics validate component configurations and refine validation tests with measurable KPIs"
+      },
+      {
+        "layer": "physical",
+        "sections": ["4-1", "4-3"],
+        "relationshipTypes": ["validates"],
+        "rationale": "Operational metrics validate physical implementation specifications and technical standards"
+      }
+    ],
+    "exampleReferences": [
+      {
+        "upstreamSection": "POL-2025-004.component.5-1",
+        "relationshipType": "validates",
+        "rationale": "Encryption coverage KPI validates KMS key configurations by measuring percentage of resources with encryption enabled"
+      },
+      {
+        "upstreamSection": "POL-2025-004.component.5-3",
+        "relationshipType": "validates",
+        "rationale": "Policy compliance score validates automated compliance tests by tracking percentage of passing test results"
+      },
+      {
+        "upstreamSection": "POL-2025-004.physical.4-1",
+        "relationshipType": "validates",
+        "rationale": "KMS API latency metrics validate physical implementation specifications by measuring P95 performance against targets"
+      }
+    ]
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST CSF",
+      "control": "DE.CM (Continuous Monitoring)",
+      "relevance": "Metrics for continuous monitoring of security controls and detection processes"
+    },
+    {
+      "framework": "ISO 27001",
+      "control": "A.18.2.3",
+      "relevance": "Technical compliance review through measurable security metrics"
+    },
+    {
+      "framework": "ITIL 4",
+      "control": "Service Level Management",
+      "relevance": "KPI definition and reporting for service quality measurement"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All five structural elements present (introduction, security metrics, compliance metrics, operational metrics, reporting schedule)",
+      "Minimum word count met for each element (total 450-700 words)",
+      "All guiding questions addressed",
+      "At least 2 upstream traceability references"
+    ],
+    "kpiSpecificity": [
+      "Each KPI includes: Name, Target value, Measurement method, Data source, Reporting frequency",
+      "Targets are quantifiable (100%, <5 minutes, 99.95%)",
+      "Measurement methods are specific (daily automated scan, CloudWatch metric)",
+      "Data sources are named (AWS Config, CloudTrail, Jira)"
+    ],
+    "reportingClarity": [
+      "Reporting frequencies clearly stated (daily, weekly, monthly, quarterly, annual)",
+      "Audiences identified for each report (Security Ops, CISO, Audit Committee)",
+      "Delivery mechanisms specified (Email, Slack, Confluence, PowerPoint)",
+      "Specific times stated where applicable (Monday 09:00 UTC)"
+    ],
+    "smartFramework": [
+      "Metrics are Specific (encryption coverage %, not 'good encryption')",
+      "Metrics are Measurable (100%, <5 min, 99.95%)",
+      "Metrics are Achievable (realistic targets based on industry standards)",
+      "Metrics are Relevant (align with security, compliance, operational objectives)",
+      "Metrics are Time-bound (daily, weekly, monthly measurement cadences)"
+    ]
+  },
+  "commonPitfalls": {
+    "avoid": [
+      "Vague KPIs without numeric targets ('improve security')",
+      "Metrics without defined measurement methods",
+      "No data sources specified for metric collection",
+      "Generic reporting ('regular reports to management')",
+      "Missing audience identification for reports"
+    ],
+    "include": [
+      "Specific numeric targets (100%, 99.95%, <5 minutes, <100ms)",
+      "Exact measurement methods (daily AWS Config query, CloudWatch P95)",
+      "Named data sources (CloudWatch Metrics, CloudTrail, Jira, AWS Cost Explorer)",
+      "Precise reporting schedules (Monday 09:00 UTC, 1st business day)",
+      "Named audiences (Security Ops, CISO, Audit Committee)"
+    ]
+  },
+  "examplePolicyScenario": {
+    "policyId": "POL-2025-004",
+    "policyTitle": "Customer PII Encryption Policy",
+    "sectionExample": {
+      "introduction": "This section establishes metrics and reporting for encryption operations following SMART framework. Automated collection via CloudWatch, weekly operational reviews, monthly executive reporting, quarterly trend analysis. Objectives: actionable insights to ops, demonstrate compliance, inform strategic decisions.",
+      "securityMetricsSnippet": "**Encryption Coverage KPI**: % of production resources encrypted. **Target**: 100%. **Measurement**: Daily AWS Config query (encrypted resources / total × 100). **Reporting**: Weekly to Security Ops, monthly to CISO.\n\n**Key Rotation Compliance**: % keys rotated within 90 days. **Target**: 100%. **Measurement**: Daily KMS ListKeys with CreationDate filter. **Alert**: <95% warning, <90% critical.",
+      "operationalMetricsSnippet": "**KMS Availability**: % uptime. **Target**: 99.95% (21.6 min/month downtime max). **Measurement**: CloudWatch `kms:Decrypt` success rate hourly. **Reporting**: Real-time dashboard, monthly SLA report.\n\n**API Latency (P95)**: **Target**: <100ms. **Measurement**: CloudWatch `kms:Decrypt` P95 every 5 min.",
+      "reportingSnippet": "**Daily** (08:00 UTC): Security Ops Summary (errors, unauthorized access, failures) → Email + Slack.\n\n**Weekly** (Monday 09:00 UTC): Operational Metrics Dashboard (coverage %, rotation %, availability, latency) → Confluence + email.\n\n**Monthly** (1st day): Executive Dashboard (trends, compliance, incidents, costs) → PowerPoint to CISO/CTO/CIO.\n\n**Quarterly**: Strategic Review (3-month trends, YoY comparison, optimization, roadmap) → Executive Leadership + Board."
+    }
+  }
+}

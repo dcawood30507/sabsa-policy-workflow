@@ -1,0 +1,199 @@
+{
+  "sectionId": "4-5",
+  "layerId": "physical",
+  "templateVersion": "1.0.0",
+  "title": "Exception Handling",
+  "purpose": "Defines the process for requesting, approving, and managing exceptions to encryption requirements - including compensating controls and legacy system handling",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish exception governance framework and risk-based approach",
+      "elements": ["exception_philosophy", "governance_framework", "risk_awareness"],
+      "wordCount": {"min": 60, "max": 100},
+      "example": "This section defines the **risk-based exception process** for encryption policy deviations. Exceptions are time-limited, require documented business justification, and mandate compensating controls proportional to residual risk. Governance follows **CISO approval workflow** for production exceptions, automated tracking via JIRA, and quarterly recertification reviews."
+    },
+    "exceptionCategories": {
+      "purpose": "Define valid categories of exceptions with approval criteria",
+      "elements": ["legacy_systems", "technical_constraints", "performance_requirements", "business_critical_exemptions"],
+      "wordCount": {"min": 120, "max": 200},
+      "guidingQuestions": [
+        "What constitutes a valid legacy system exception?",
+        "What technical constraints justify encryption deferral?",
+        "When do performance requirements override encryption mandates?",
+        "What business-critical scenarios warrant temporary exemptions?"
+      ],
+      "example": "**Legacy Systems**: Systems scheduled for decommissioning within 6 months may defer encryption implementation, requires documented migration timeline and executive sponsor approval. **Technical Constraints**: Systems incompatible with KMS integration (e.g., mainframe VSAM files) granted exception with compensating controls (network-layer encryption via VPN, physical access controls). **Performance Requirements**: Real-time trading systems where encryption latency exceeds SLA (sub-5ms response time) granted exception for low-sensitivity data only, PII always encrypted. **Business-Critical Exemptions**: Emergency system deployments bypassing encryption for first 30 days, requires CISO verbal approval within 24 hours, written approval within 5 business days, automatic expiration triggers mandatory remediation."
+    },
+    "exceptionRequestProcess": {
+      "purpose": "Define step-by-step process for submitting exception requests",
+      "elements": ["request_submission", "required_documentation", "initial_triage", "technical_review"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "How do requesters submit exception requests?",
+        "What documentation is required for a complete request?",
+        "How are requests initially triaged and prioritized?",
+        "What technical review validates the exception need?"
+      ],
+      "example": "**Request Submission**: Requester opens JIRA ticket in 'Security Exception Requests' project (template: JIRA-EXC), assigns to Security Architecture team. **Required Documentation**: (1) Business justification (why encryption not feasible), (2) Risk assessment (what PII exposed, volume, sensitivity), (3) Proposed compensating controls, (4) Remediation timeline (when encryption will be implemented), (5) Executive sponsor approval (VP+ for production systems). **Initial Triage**: Security Architecture team reviews completeness within 2 business days, requests missing information, assigns risk rating (High/Medium/Low). **Technical Review**: Security Engineering validates technical constraints (e.g., tests KMS integration feasibility), proposes alternative solutions (application-layer encryption vs. database TDE), documents findings in JIRA."
+    },
+    "approvalWorkflow": {
+      "purpose": "Define approval hierarchy and decision criteria",
+      "elements": ["approval_tiers", "decision_criteria", "approval_sla", "escalation_path"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "What approval tiers exist based on risk level?",
+        "What criteria determine approval vs. denial?",
+        "What SLA applies to exception approvals?",
+        "How are approval delays escalated?"
+      ],
+      "example": "**Approval Tiers**: (1) Low Risk (non-production, test data): Security Architecture Manager approval, (2) Medium Risk (production, non-PII): Director of Security approval, (3) High Risk (production PII, customer-facing): CISO approval. **Decision Criteria**: Approval requires: sufficient compensating controls (residual risk acceptable), finite exception duration (<6 months for production), documented remediation plan with milestones. Denial triggers: inadequate compensating controls, indefinite exception request, alternative encryption solutions exist but not pursued. **Approval SLA**: Low Risk: 3 business days, Medium Risk: 5 business days, High Risk: 10 business days. **Escalation Path**: Approval exceeding SLA escalates to CISO office, requesters notified via JIRA comment and email, urgent requests (P0/P1 incidents) bypass standard workflow with verbal CISO approval."
+    },
+    "compensatingControls": {
+      "purpose": "Define required compensating controls for different exception types",
+      "elements": ["network_segmentation", "access_restrictions", "enhanced_monitoring", "physical_security"],
+      "wordCount": {"min": 120, "max": 200},
+      "guidingQuestions": [
+        "What network segmentation compensates for missing encryption?",
+        "What access restrictions reduce exposure of unencrypted data?",
+        "What enhanced monitoring detects unauthorized access?",
+        "When do physical security controls compensate for encryption absence?"
+      ],
+      "example": "**Network Segmentation**: Unencrypted systems isolated in dedicated VPC with Security Group rules denying inbound traffic except from authorized application subnets, VPC Flow Logs enabled with anomaly detection. **Access Restrictions**: Unencrypted database access restricted to specific IAM roles (no wildcard permissions), database-level access controls (row-level security) limit data exposure, MFA required for database console access. **Enhanced Monitoring**: CloudWatch Logs capture all database queries (query logging enabled), GuardDuty monitors for unusual data access patterns, automated alerts on bulk exports (>1000 records), quarterly access reviews validate need-to-know principle. **Physical Security**: For on-premises unencrypted databases: data center access requires biometric authentication + badge + escort, server room CCTV with 90-day retention, encrypted backups stored in offsite vault with dual-custody requirement."
+    },
+    "legacySystemHandling": {
+      "purpose": "Define specific procedures for legacy systems unable to implement encryption",
+      "elements": ["identification_criteria", "migration_planning", "interim_controls", "decommissioning_timeline"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "What criteria identify a system as 'legacy'?",
+        "How is migration to encrypted systems planned?",
+        "What interim controls protect data during migration?",
+        "What timeline governs legacy system decommissioning?"
+      ],
+      "example": "**Identification Criteria**: Systems classified as legacy if: (1) running unsupported operating system (e.g., Windows Server 2008), (2) vendor-unsupported software (no encryption capability), (3) technical constraints prevent encryption (e.g., encryption breaks application functionality), (4) planned for replacement within 12 months. **Migration Planning**: Required migration deliverables: (1) target state architecture (encrypted replacement system), (2) data migration plan (ETL process with encryption), (3) application refactoring needs, (4) resource allocation (budget, team). **Interim Controls**: Network isolation (dedicated VLAN, ACLs block internet access), privileged access management (CyberArk vault for credentials), change freeze (no new features, security patches only), daily backup to encrypted storage. **Decommissioning Timeline**: Maximum exception duration = 12 months, 6-month checkpoint reviews mandatory, automatic escalation to CISO if migration delayed, exceptions not renewed (system must be decommissioned or encryption implemented)."
+    },
+    "exceptionTracking": {
+      "purpose": "Define how exceptions are tracked, monitored, and reviewed",
+      "elements": ["tracking_system", "automated_notifications", "exception_reporting", "recertification_process"],
+      "wordCount": {"min": 80, "max": 150},
+      "guidingQuestions": [
+        "What system tracks active exceptions?",
+        "How are exception owners notified of approaching expirations?",
+        "What reporting provides visibility to leadership?",
+        "How often are exceptions recertified?"
+      ],
+      "example": "**Tracking System**: JIRA 'Security Exception Requests' project tracks all exceptions, fields include: exception ID, risk level, approval date, expiration date, compensating controls, responsible owner. **Automated Notifications**: JIRA automation sends email notifications: 30 days before expiration (warning), 14 days before expiration (final warning), expiration date (automatic ticket closure, exception no longer valid). **Exception Reporting**: Monthly exception dashboard (Tableau) shared with CISO and engineering leadership: active exceptions by risk level, exceptions nearing expiration, overdue remediation milestones. **Recertification Process**: Quarterly recertification required for exceptions >90 days, exception owner must re-justify business need, security team re-assesses compensating controls, CISO re-approves or forces remediation."
+    },
+    "exceptionExpiration": {
+      "purpose": "Define what happens when exceptions expire",
+      "elements": ["expiration_actions", "automatic_revocation", "grace_period", "remediation_enforcement"],
+      "wordCount": {"min": 60, "max": 120},
+      "guidingQuestions": [
+        "What actions occur when an exception expires?",
+        "Are expired exceptions automatically revoked?",
+        "Is a grace period granted for remediation?",
+        "How is remediation enforced if not completed?"
+      ],
+      "example": "**Expiration Actions**: On expiration date: JIRA ticket auto-closes, exception status changes to 'Expired', automated email to system owner and CISO office. **Automatic Revocation**: Expired exceptions no longer valid, system must immediately implement encryption or request new exception (restart approval process). **Grace Period**: No automatic grace period granted, grace periods require explicit CISO approval (maximum 30 days), granted only for unforeseen technical blockers. **Remediation Enforcement**: If system remains unencrypted 30 days post-expiration: security team engages executive sponsor, system escalated to risk register as unacceptable risk, potential service suspension if residual risk exceeds risk appetite."
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST SP 800-53 Rev 5",
+      "control": "CA-9",
+      "relevance": "Internal system connections and exception handling"
+    },
+    {
+      "framework": "ISO 27001:2022",
+      "control": "A.5.1",
+      "relevance": "Policies for information security - exception management"
+    },
+    {
+      "framework": "PCI DSS v4.0",
+      "control": "12.3",
+      "relevance": "Risk assessment and exception approval processes"
+    }
+  ],
+  "upstreamTraceability": {
+    "requiredReferences": [
+      {
+        "section": "3-1",
+        "layer": "logical",
+        "purpose": "Security policies that define when exceptions are permissible"
+      },
+      {
+        "section": "3-3",
+        "layer": "logical",
+        "purpose": "Control specifications requiring these exception procedures"
+      },
+      {
+        "section": "4-1",
+        "layer": "physical",
+        "purpose": "Implementation specifications that exceptions deviate from"
+      }
+    ],
+    "relationshipTypes": {
+      "constrained_by": "Exception process constrained by logical policies defining acceptable risk",
+      "refines": "Exception handling refines logical control specifications with operational workflows"
+    }
+  },
+  "qualityChecks": {
+    "completeness": [
+      "All eight exception elements present (introduction through expiration)",
+      "Minimum word count met for each element (total 640+ words)",
+      "All guiding questions addressed with specific processes"
+    ],
+    "governanceRigor": [
+      "Approval hierarchy clearly defined (Manager → Director → CISO based on risk)",
+      "Approval criteria objective and measurable (compensating controls, finite duration)",
+      "SLAs specified for approval turnaround times",
+      "Escalation paths defined for delayed approvals"
+    ],
+    "riskMitigation": [
+      "Compensating controls specified for each exception category",
+      "Residual risk explicitly considered in approval criteria",
+      "Exception duration time-limited (no indefinite exceptions)",
+      "Automatic expiration and enforcement mechanisms defined"
+    ],
+    "traceability": [
+      "References to upstream logical sections 3-1, 3-3 (policies, control specs)",
+      "References to physical section 4-1 (implementation specifications being excepted)",
+      "Framework citations present (minimum 3: NIST SP 800-53, ISO 27001, PCI DSS)",
+      "Rationale explains WHEN exceptions are acceptable and HOW residual risk is managed"
+    ]
+  },
+  "exceptionGuidelines": {
+    "riskBasedApproach": {
+      "lowRisk": "Delegated approval (Security Manager), standard compensating controls",
+      "mediumRisk": "Director approval, enhanced compensating controls, quarterly review",
+      "highRisk": "CISO approval, rigorous compensating controls, monthly review"
+    },
+    "durationLimits": {
+      "shortTerm": "30-90 days for emergency deployments, tactical workarounds",
+      "mediumTerm": "6 months maximum for legacy system migrations",
+      "neverPermanent": "Indefinite exceptions not permitted, all exceptions time-bound"
+    },
+    "compensatingControlPrinciples": {
+      "proportional": "Compensating controls proportional to residual risk (high risk = multiple controls)",
+      "measurable": "Controls must be measurable (not 'increased vigilance' - specify monitoring metrics)",
+      "enforceable": "Controls must be technically enforceable (not relying solely on policy compliance)"
+    }
+  },
+  "examplePolicyContext": {
+    "policyId": "POL-2025-004",
+    "policyTitle": "Customer PII Encryption Policy",
+    "commonExceptions": [
+      "Legacy mainframe systems (6-month migration timeline)",
+      "Real-time trading systems (performance constraints)",
+      "Emergency production deployments (30-day encryption implementation)",
+      "Vendor-managed systems (encryption outside organization control)",
+      "Test/development environments (non-production PII exception)"
+    ],
+    "typicalCompensatingControls": [
+      "Network segmentation (dedicated VPC, Security Groups)",
+      "Access restrictions (MFA, least privilege IAM policies)",
+      "Enhanced monitoring (GuardDuty, CloudWatch anomaly detection)",
+      "Encrypted backups (unencrypted production → encrypted backup storage)",
+      "Accelerated migration (prioritize legacy system replacement)"
+    ]
+  }
+}

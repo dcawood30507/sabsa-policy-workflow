@@ -1,0 +1,152 @@
+{
+  "sectionId": "5-4",
+  "layerId": "component",
+  "templateVersion": "1.0.0",
+  "title": "Deployment Checklist",
+  "purpose": "Provides step-by-step deployment verification checklist ensuring all component layer artifacts are correctly deployed and validated",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Set context for deployment checklist and verification approach",
+      "elements": ["deployment_philosophy", "checklist_organization", "rollback_readiness"],
+      "wordCount": {"min": 50, "max": 100},
+      "example": "This deployment checklist provides step-by-step verification steps for deploying Customer PII Encryption Policy infrastructure (KMS keys, S3 encryption, RDS encryption, monitoring). The checklist is organized into three phases: (1) Pre-Deployment verification of prerequisites, (2) Deployment execution with validation gates, and (3) Post-Deployment validation confirming successful implementation. All steps must be completed in order; any failures require immediate rollback per Section 5-5."
+    },
+    "preDeploymentChecks": {
+      "purpose": "Define prerequisite verification steps before deployment begins",
+      "elements": ["environment_readiness", "backup_verification", "permission_validation", "dependency_confirmation"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "What environment prerequisites must be verified?",
+        "What backups must be taken before deployment?",
+        "What IAM permissions are required for deployment?",
+        "What resource dependencies must be confirmed (VPCs, subnets, security groups)?"
+      ],
+      "example": "**Pre-Deployment Checklist**\n\n**Environment Readiness:**\n- [ ] Terraform state backend configured and accessible (S3 bucket: `terraform-state-pii-encryption`)\n- [ ] AWS credentials configured with deployment permissions (IAM role: `TerraformDeploymentRole`)\n- [ ] Target environment confirmed (dev/staging/prod): **prod**\n- [ ] Deployment window approved by Change Advisory Board (CAB ticket: CHG-2025-001)\n- [ ] All team members notified of deployment schedule\n\n**Backup Verification:**\n- [ ] RDS database snapshot created: `pii-database-prod-pre-encryption-YYYY-MM-DD`\n- [ ] S3 bucket versioning enabled on all PII storage buckets\n- [ ] Existing KMS key configurations backed up to: `s3://config-backups/kms/pre-pol-2025-004/`\n- [ ] IAM policies exported to Git repository: `infrastructure/backups/iam-policies-YYYY-MM-DD.json`\n- [ ] CloudFormation/Terraform state file backed up externally\n\n**Permission Validation:**\n- [ ] Verify `TerraformDeploymentRole` has `kms:CreateKey`, `kms:PutKeyPolicy` permissions\n- [ ] Verify role has `rds:ModifyDBInstance`, `s3:PutEncryptionConfiguration` permissions\n- [ ] Verify role has `iam:CreateRole`, `iam:AttachRolePolicy` permissions\n- [ ] Verify role has `cloudwatch:PutMetricAlarm`, `sns:CreateTopic` permissions\n- [ ] Test AWS CLI access: `aws sts get-caller-identity` (confirm correct account/role)\n\n**Dependency Confirmation:**\n- [ ] VPC and subnets exist for HSM cluster (if deploying CloudHSM): `vpc-abc123`, `subnet-def456`\n- [ ] Security groups configured for HSM ENI attachments: `sg-hsm-cluster-001`\n- [ ] S3 logging bucket exists: `audit-logs-pii-encryption-prod`\n- [ ] SNS topic for alerts exists or will be created: `pii-encryption-alerts-prod`\n- [ ] CloudWatch Logs groups exist or will be created: `/aws/kms/pii-encryption-prod`\n\n**Code Review & Testing:**\n- [ ] Terraform plan executed and reviewed: `terraform plan -out=tfplan-pol-2025-004`\n- [ ] Terraform plan peer-reviewed by security architect\n- [ ] All validation tests passed in staging environment\n- [ ] No Terraform state drift detected: `terraform plan` shows 0 changes before deployment"
+    },
+    "deploymentSteps": {
+      "purpose": "Define ordered deployment execution steps with validation gates",
+      "elements": ["infrastructure_deployment", "configuration_application", "validation_gates", "smoke_tests"],
+      "wordCount": {"min": 150, "max": 300},
+      "guidingQuestions": [
+        "What is the deployment sequence (which resources deploy first)?",
+        "What validation gates occur between deployment steps?",
+        "What smoke tests verify basic functionality?",
+        "What are the success criteria for each step?"
+      ],
+      "example": "**Deployment Execution Steps**\n\n**Phase 1: KMS Infrastructure (15 minutes)**\n- [ ] **Step 1.1:** Deploy KMS customer master keys\n  ```bash\n  terraform apply -target=module.kms_encryption -auto-approve\n  ```\n  **Validation:** Verify KMS key created: `aws kms describe-key --key-id alias/pii-encryption-prod`\n  **Success Criteria:** Key state = \"Enabled\", KeyRotationEnabled = \"true\"\n\n- [ ] **Step 1.2:** Verify KMS key policy attached\n  ```bash\n  aws kms get-key-policy --key-id alias/pii-encryption-prod --policy-name default\n  ```\n  **Success Criteria:** Policy includes application role ARN with Encrypt/Decrypt permissions\n\n- [ ] **Step 1.3:** Create KMS key alias for human-readable reference\n  **Validation:** `aws kms list-aliases | grep pii-encryption-prod`\n  **Success Criteria:** Alias points to correct key ID\n\n**Phase 2: IAM Roles & Policies (10 minutes)**\n- [ ] **Step 2.1:** Deploy application IAM role\n  ```bash\n  terraform apply -target=module.kms_encryption.aws_iam_role.app_encryption -auto-approve\n  ```\n  **Validation:** Role exists: `aws iam get-role --role-name pii-encryption-app-role-prod`\n\n- [ ] **Step 2.2:** Attach IAM policy granting KMS access\n  **Validation:** `aws iam list-attached-role-policies --role-name pii-encryption-app-role-prod`\n  **Success Criteria:** Policy `pii-encryption-app-policy-prod` attached\n\n**Phase 3: Storage Encryption (20 minutes)**\n- [ ] **Step 3.1:** Deploy S3 bucket encryption configuration\n  ```bash\n  terraform apply -target=module.s3_encrypted_storage -auto-approve\n  ```\n  **Validation:** Verify encryption enabled:\n  ```bash\n  aws s3api get-bucket-encryption --bucket pii-customer-data-prod\n  ```\n  **Success Criteria:** SSEAlgorithm = \"aws:kms\", KMSMasterKeyID contains KMS key ARN\n\n- [ ] **Step 3.2:** Enable RDS encryption (requires snapshot restore)\n  ```bash\n  # Create encrypted snapshot from unencrypted instance\n  aws rds create-db-snapshot \\\n    --db-instance-identifier pii-database-prod \\\n    --db-snapshot-identifier pii-db-pre-encryption-snapshot\n  \n  # Copy snapshot with encryption\n  aws rds copy-db-snapshot \\\n    --source-db-snapshot-identifier pii-db-pre-encryption-snapshot \\\n    --target-db-snapshot-identifier pii-db-encrypted-snapshot \\\n    --kms-key-id alias/pii-encryption-prod\n  \n  # Restore encrypted snapshot (via Terraform)\n  terraform apply -target=module.rds_encrypted -auto-approve\n  ```\n  **Validation:** Verify RDS encryption:\n  ```bash\n  aws rds describe-db-instances --db-instance-identifier pii-database-prod \\\n    --query 'DBInstances[0].[StorageEncrypted,KmsKeyId]'\n  ```\n  **Success Criteria:** StorageEncrypted = \"true\", KmsKeyId = KMS key ARN\n\n**Phase 4: Monitoring & Alerting (10 minutes)**\n- [ ] **Step 4.1:** Deploy CloudWatch alarms\n  ```bash\n  terraform apply -target=module.kms_encryption.aws_cloudwatch_metric_alarm -auto-approve\n  ```\n  **Validation:** `aws cloudwatch describe-alarms --alarm-names pii-encryption-kms-decrypt-failures-prod`\n  **Success Criteria:** Alarm state = \"OK\" (no failures yet)\n\n- [ ] **Step 4.2:** Create SNS topic for alerts\n  **Validation:** `aws sns list-topics | grep pii-encryption-alerts-prod`\n  **Success Criteria:** Topic ARN returned\n\n- [ ] **Step 4.3:** Subscribe security team to SNS topic\n  ```bash\n  aws sns subscribe --topic-arn <topic-arn> --protocol email --notification-endpoint security-team@example.com\n  ```\n  **Success Criteria:** Subscription confirmation email sent\n\n**Smoke Tests:**\n- [ ] **Test 1:** Encrypt test data using KMS key\n  ```bash\n  echo \"test-pii-data\" | aws kms encrypt \\\n    --key-id alias/pii-encryption-prod \\\n    --plaintext fileb:///dev/stdin \\\n    --query CiphertextBlob --output text | base64 --decode > encrypted.bin\n  ```\n  **Success Criteria:** Command succeeds, encrypted.bin created\n\n- [ ] **Test 2:** Decrypt test data\n  ```bash\n  aws kms decrypt --ciphertext-blob fileb://encrypted.bin \\\n    --query Plaintext --output text | base64 --decode\n  ```\n  **Success Criteria:** Output = \"test-pii-data\"\n\n- [ ] **Test 3:** Upload object to S3 with encryption\n  ```bash\n  echo \"customer_email=test@example.com\" > test.txt\n  aws s3 cp test.txt s3://pii-customer-data-prod/smoke-test/\n  aws s3api head-object --bucket pii-customer-data-prod --key smoke-test/test.txt\n  ```\n  **Success Criteria:** ServerSideEncryption = \"aws:kms\""
+    },
+    "postDeploymentValidation": {
+      "purpose": "Define comprehensive validation steps after deployment completes",
+      "elements": ["infrastructure_verification", "security_validation", "compliance_checks", "performance_testing"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "What infrastructure validation confirms all resources deployed correctly?",
+        "What security validation verifies encryption is functional?",
+        "What compliance checks confirm policy requirements are met?",
+        "What performance tests ensure encryption doesn't degrade application performance?"
+      ],
+      "example": "**Post-Deployment Validation**\n\n**Infrastructure Verification:**\n- [ ] All Terraform resources in desired state: `terraform plan` shows 0 changes\n- [ ] KMS keys exist and enabled: `aws kms list-keys | grep pii-encryption`\n- [ ] S3 buckets have encryption enabled (all buckets tagged DataClassification=PII)\n- [ ] RDS instances encrypted (verify via AWS console or CLI)\n- [ ] CloudWatch alarms created and in \"OK\" state\n- [ ] SNS topic subscriptions confirmed by security team\n\n**Security Validation:**\n- [ ] Run Wiz policy WIZ-POL-2025-004-001: No unencrypted RDS instances detected\n- [ ] Run Wiz policy WIZ-POL-2025-004-002: No S3 buckets without KMS encryption\n- [ ] Run Wiz policy WIZ-POL-2025-004-003: All KMS keys have rotation enabled\n- [ ] Execute AWS Config rule `encrypted-volumes`: All EBS volumes encrypted\n- [ ] Execute AWS Config rule `rds-storage-encrypted`: All RDS instances encrypted\n- [ ] Execute AWS Config rule `s3-default-encryption-kms`: All S3 buckets use KMS\n\n**Compliance Checks:**\n- [ ] CloudTrail logging enabled for all KMS API calls\n- [ ] CloudWatch Logs encrypted with separate log encryption key\n- [ ] IAM policies follow least privilege (application role only has Encrypt/Decrypt, not administrative KMS permissions)\n- [ ] All resources tagged with Policy=POL-2025-004, DataClassification=PII\n- [ ] Encryption context enforced in application code (verify via code review)\n\n**Performance Testing:**\n- [ ] Measure KMS encryption latency (target: <100ms per operation)\n  ```bash\n  time aws kms encrypt --key-id alias/pii-encryption-prod --plaintext \"test-data\" --query CiphertextBlob --output text\n  ```\n  **Success Criteria:** Real time < 0.1 seconds\n\n- [ ] Measure S3 upload latency with encryption (baseline vs. KMS encrypted)\n  **Success Criteria:** <5% latency increase compared to SSE-S3\n\n- [ ] Verify application encryption/decryption performance (run load test)\n  **Success Criteria:** 95th percentile latency < 200ms\n\n**Application Integration Validation:**\n- [ ] Application successfully encrypts PII before storage\n- [ ] Application successfully decrypts PII on retrieval\n- [ ] No encryption/decryption errors in application logs (check last 24 hours)\n- [ ] Database queries return expected results (data integrity preserved)\n- [ ] API endpoints functional (health checks pass)\n\n**Rollback Readiness:**\n- [ ] Document current state (all resource IDs, ARNs, configurations)\n- [ ] Rollback procedure reviewed and ready (Section 5-5)\n- [ ] Rollback decision criteria established (>1% encryption errors = immediate rollback)\n- [ ] On-call rotation notified of deployment and rollback procedures"
+    },
+    "signoffRequirements": {
+      "purpose": "Define required approvals and sign-offs before deployment is considered complete",
+      "elements": ["technical_approval", "security_approval", "compliance_approval"],
+      "wordCount": {"min": 50, "max": 100},
+      "guidingQuestions": [
+        "Who must approve the deployment as successful?",
+        "What documentation must be updated post-deployment?",
+        "What communication is required to stakeholders?"
+      ],
+      "example": "**Sign-Off Requirements**\n\n**Technical Approval:**\n- [ ] Engineering Manager sign-off: Deployment completed successfully, no errors\n- [ ] Application team confirms: All services functional, no data access issues\n- [ ] Infrastructure team confirms: All monitoring and alerts operational\n\n**Security Approval:**\n- [ ] Security Architect confirms: All Wiz policies passing, no compliance violations\n- [ ] Security Operations confirms: CloudTrail logging functional, no unauthorized KMS access\n\n**Compliance Approval:**\n- [ ] Compliance Officer notified: POL-2025-004 deployed to production\n- [ ] Audit log review completed: No suspicious KMS API activity during deployment\n\n**Documentation Updates:**\n- [ ] Update runbook with production KMS key ARNs and resource IDs\n- [ ] Update disaster recovery documentation with encryption key backup procedures\n- [ ] Update incident response playbook with encryption failure scenarios\n- [ ] Create JIRA ticket for next quarterly key rotation attestation (due in 90 days)\n\n**Stakeholder Communication:**\n- [ ] Notify all application teams: PII encryption now enforced in production\n- [ ] Update security dashboard: POL-2025-004 status = \"Deployed\"\n- [ ] Send deployment summary to executive leadership (CTO, CISO)"
+    }
+  },
+  "upstreamTraceability": {
+    "requiredReferences": [
+      {
+        "section": "4-1",
+        "relationship": "validates",
+        "rationale": "Deployment checklist validates implementation specifications are correctly deployed"
+      },
+      {
+        "section": "4-2",
+        "relationship": "validates",
+        "rationale": "Post-deployment checks confirm procedures are operational"
+      },
+      {
+        "section": "5-1",
+        "relationship": "validates",
+        "rationale": "Checklist verifies tool configurations are applied correctly"
+      },
+      {
+        "section": "5-2",
+        "relationship": "validates",
+        "rationale": "Deployment steps execute IaC templates and verify resource creation"
+      }
+    ],
+    "exampleTraceabilityEntry": {
+      "sectionId": "5-4",
+      "references": [
+        {
+          "targetSection": "POL-2025-004.physical.4-1",
+          "relationship": "validates",
+          "description": "Deployment checklist Phase 1 Step 1.1 validates Section 4-1 KMS implementation specification by verifying KMS key created with KeyRotationEnabled=true"
+        },
+        {
+          "targetSection": "POL-2025-004.component.5-2",
+          "relationship": "validates",
+          "description": "Deployment steps execute Section 5-2 Terraform modules and verify all resources in desired state (terraform plan shows 0 changes)"
+        }
+      ]
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST SP 800-53A",
+      "control": "CM-3",
+      "relevance": "Configuration change control - checklist ensures controlled deployment"
+    },
+    {
+      "framework": "NIST SP 800-53A",
+      "control": "SA-11",
+      "relevance": "Developer security testing - smoke tests and validation before production use"
+    },
+    {
+      "framework": "CIS Controls",
+      "control": "2.3",
+      "relevance": "Secure configuration for network infrastructure - deployment verification"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All checklist phases present (pre-deployment, deployment, post-deployment, sign-off)",
+      "Minimum word count met for each element (400-900 total)",
+      "All guiding questions addressed",
+      "Minimum 10 pre-deployment checks, 5 deployment steps, 10 post-deployment validations"
+    ],
+    "technicalAccuracy": [
+      "All AWS CLI commands are syntactically correct and executable",
+      "Terraform commands follow best practices (plan before apply, targeted applies)",
+      "Validation commands return expected outputs",
+      "Success criteria are specific and measurable"
+    ],
+    "traceability": [
+      "Minimum 2 upstream references to Layer 4 sections",
+      "Deployment steps map to Section 5-2 IaC templates",
+      "Post-deployment validation includes Section 5-3 automated checks (Wiz, AWS Config)"
+    ],
+    "frameworkAlignment": [
+      "Minimum 2 framework citations (NIST, CIS)",
+      "Deployment approach satisfies change control requirements"
+    ]
+  },
+  "commonPitfalls": [
+    "Vague success criteria (e.g., 'verify encryption works' instead of specific command output)",
+    "Missing validation gates between deployment phases",
+    "No rollback readiness preparation",
+    "Omitting performance testing (deployment succeeds but degrades application)",
+    "Not documenting resource IDs/ARNs for operational use",
+    "Skipping sign-off requirements (compliance risk)"
+  ],
+  "exampleOutput": {
+    "rationale": "The deployment checklist specified in this section provides step-by-step verification that all Customer PII Encryption Policy infrastructure components from Section 5-2 are correctly deployed and operational. Pre-deployment checks validate prerequisites (IAM permissions, backups, dependencies) before execution begins. Deployment steps execute Terraform modules in the correct order (KMS → IAM → Storage → Monitoring) with validation gates after each phase, implementing Section 4-1 physical specifications. Post-deployment validation confirms security controls are functional by executing Section 5-3 automated checks (Wiz policies, AWS Config rules) and verifying encryption performance meets requirements. The checklist aligns with NIST SP 800-53A CM-3 (configuration change control) by requiring technical, security, and compliance sign-offs before deployment is considered complete."
+  }
+}

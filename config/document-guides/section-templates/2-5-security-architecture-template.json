@@ -1,0 +1,164 @@
+{
+  "sectionId": "2-5",
+  "layerId": "conceptual",
+  "templateVersion": "1.0.0",
+  "title": "Security Architecture Overview",
+  "purpose": "Provides a high-level view of the security architecture showing how security domains, services, and components interact to deliver security objectives while respecting trust boundaries and principles",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish the purpose of the security architecture and its relationship to previous sections",
+      "elements": ["architecture_overview", "integration_with_objectives", "scope_statement"],
+      "wordCount": {"min": 50, "max": 100},
+      "example": "This section presents the **Security Architecture Overview**—a conceptual view of how security components interact to deliver Security Objectives (2-1) through Security Services (2-2) while adhering to Security Principles (2-3) and Trust Model (2-4). The architecture is organized into **Security Domains** (logical groupings of related security functions), **Key Components** (essential architectural elements), **Data Flows** (how information moves through security controls), and **Integration Points** (interfaces between security and business systems). This remains a technology-agnostic architectural view; specific implementation technologies are addressed in Layer 4 (Physical)."
+    },
+    "securityDomains": {
+      "purpose": "Define logical groupings of security functions and their relationships",
+      "elements": ["domain_definitions", "domain_purposes", "domain_boundaries"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "How are security functions logically grouped?",
+        "What is the purpose of each security domain?",
+        "How do domains relate to trust boundaries?",
+        "What capabilities does each domain provide?"
+      ],
+      "example": "**Cryptographic Services Domain**: Encompasses all encryption, decryption, and key management capabilities. **Purpose**: Deliver Data Protection Services (2-2) ensuring confidentiality and integrity of customer PII. **Boundary**: Aligns with Cryptographic Trust Boundary from Trust Model (2-4); isolated through hardware security modules. **Capabilities**: AES-256 encryption/decryption, key lifecycle management (generation, rotation, destruction), cryptographic API services. **Identity & Access Management Domain**: Provides authentication, authorization, and access governance for all security operations. **Purpose**: Deliver Identity Services (2-2) implementing least privilege and separation of duties from Security Principles (2-3). **Capabilities**: Multi-factor authentication, role-based access control, privileged access management, identity lifecycle management. **Security Monitoring Domain**: Collects, analyzes, and responds to security events across all domains. **Purpose**: Deliver Monitoring Services (2-2) and Incident Response Services (2-2) supporting Accountability Objectives (2-1). **Capabilities**: Audit log aggregation, anomaly detection, security event correlation, automated alerting, incident orchestration."
+    },
+    "architectureComponents": {
+      "purpose": "Define the essential architectural components and their responsibilities",
+      "elements": ["component_catalog", "component_responsibilities", "component_interactions"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "What are the essential architectural components?",
+        "What is each component responsible for?",
+        "How do components interact with each other?",
+        "How do components support security services?"
+      ],
+      "example": "**Key Management Infrastructure**: **Responsibility**: Secure generation, storage, rotation, and destruction of encryption keys per Key Management Services (2-2). **Interactions**: Provides cryptographic keys to Encryption Services; authenticated by Identity Management; audited by Security Monitoring. **Hardware Security Modules (HSM)**: **Responsibility**: Provide FIPS 140-2 Level 3 cryptographic isolation for master encryption keys, serving as root of trust per Trust Model (2-4). **Interactions**: Receives key operations from Key Management Infrastructure; authenticates service accounts via Identity Management. **Encryption Services**: **Responsibility**: Perform encryption and decryption of customer PII at rest and in transit per Data Protection Services (2-2). **Interactions**: Obtains encryption keys from Key Management Infrastructure; authenticates API requests via Identity Management; logs all operations to Security Monitoring. **Identity Provider**: **Responsibility**: Authenticate users and services, provide authorization claims per Identity Services (2-2). **Interactions**: Synchronized with HR system for user identities; issues time-bound credentials; publishes authentication events to Security Monitoring. **Audit Logging Infrastructure**: **Responsibility**: Collect, store, and protect audit logs from all security components per Monitoring Services (2-2). **Interactions**: Receives audit events from all domains; provides queryable interface for Security Monitoring; enforces 7-year retention per Business Drivers (1-2)."
+    },
+    "dataFlows": {
+      "purpose": "Describe how data (especially PII and encryption keys) flows through the architecture",
+      "elements": ["data_lifecycle", "encryption_points", "trust_transitions"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "How does customer PII flow through the architecture?",
+        "Where is encryption applied in data flows?",
+        "What happens when data crosses trust boundaries?",
+        "How are encryption keys distributed to encryption points?"
+      ],
+      "example": "**Customer PII Lifecycle Flow**: (1) **Collection**: Customer PII collected via API endpoints with TLS 1.2+ encryption-in-transit. (2) **Encryption**: Application requests data encryption key from Key Management Infrastructure, encrypts PII using AES-256, stores encrypted data in production database. (3) **Processing**: Application requests decryption key, decrypts PII in memory for business logic processing, re-encrypts before storage. (4) **Transmission**: Encrypted PII transmitted via TLS-protected API calls; keys never transmitted with encrypted data. (5) **Disposal**: Encrypted data deleted per retention policy; encryption keys destroyed via secure key destruction process in HSM. **Encryption Key Flow**: (1) **Generation**: Master keys generated in HSM using hardware random number generator. (2) **Derivation**: Data encryption keys derived from master keys using key derivation functions. (3) **Distribution**: Data encryption keys delivered to Encryption Services via authenticated, encrypted channels; cached in memory only (never persisted). (4) **Rotation**: Automated 90-day rotation triggers new key generation, re-encryption of data with new keys, and secure destruction of old keys. (5) **Destruction**: Cryptographic erasure in HSM ensures keys cannot be recovered. **Trust Transitions**: Data crossing from Non-Production to Production domain requires re-encryption with production keys and authentication upgrade from basic to multi-factor per Trust Model (2-4)."
+    },
+    "integrationPoints": {
+      "purpose": "Define interfaces between security architecture and business systems",
+      "elements": ["system_interfaces", "integration_requirements", "data_exchange_patterns"],
+      "wordCount": {"min": 50, "max": 150},
+      "guidingQuestions": [
+        "How does security architecture integrate with business systems?",
+        "What interfaces exist between security and application systems?",
+        "What security requirements apply to integrations?",
+        "How are integration points secured?"
+      ],
+      "example": "**Application-to-Encryption Integration**: Applications access Encryption Services via REST API with mutual TLS authentication and API key authorization per Security Services (2-2). API enforces rate limiting (1000 requests/second) to prevent denial of service. **HR System Integration**: Identity Provider synchronizes with HR system via secure SFTP with PGP encryption to maintain authoritative user identities per Trust Model (2-4). Daily reconciliation validates synchronization accuracy. **SIEM Integration**: Audit Logging Infrastructure forwards security events to enterprise SIEM via syslog over TLS for centralized security monitoring. Events use Common Event Format (CEF) for standardization. **Compliance Reporting Integration**: Automated compliance validation tools query Audit Logging Infrastructure via read-only API to generate SOC 2 evidence reports per Business Drivers (1-2). **Incident Response Integration**: Security Monitoring Domain integrates with enterprise incident management platform via webhooks for automated ticket creation when anomalies detected per Incident Response Services (2-2)."
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "SABSA",
+      "control": "Conceptual Architecture",
+      "relevance": "Security architecture framework and domain modeling"
+    },
+    {
+      "framework": "NIST CSF",
+      "control": "ID.AM-3",
+      "relevance": "Organizational communication and data flows"
+    },
+    {
+      "framework": "TOGAF",
+      "control": "Architecture Development Method",
+      "relevance": "Enterprise architecture integration"
+    },
+    {
+      "framework": "ISO 27001",
+      "control": "A.8.1.1",
+      "relevance": "Inventory of assets and information flows"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All four structural elements present (introduction, security domains, architecture components, data flows, integration points)",
+      "Minimum word count met for each element (400-850 total)",
+      "All guiding questions addressed",
+      "At least 3 security domains defined with clear purposes and capabilities",
+      "At least 5 architecture components cataloged with responsibilities",
+      "Data flows cover complete PII lifecycle (collection → processing → disposal)",
+      "At least 3 integration points documented"
+    ],
+    "clarity": [
+      "Security domains clearly delineated with distinct purposes",
+      "Component responsibilities are specific and measurable",
+      "Data flows show clear start-to-end paths with encryption points",
+      "Integration points specify interface types and security requirements",
+      "Technology-agnostic descriptions (capabilities not vendor products)",
+      "Clear visual separation between logical groupings"
+    ],
+    "traceability": [
+      "References to Section 2-1 (Security Objectives) showing how architecture delivers objectives",
+      "References to Section 2-2 (Security Services) mapping services to domains/components",
+      "References to Section 2-3 (Security Principles) showing principle application",
+      "References to Section 2-4 (Trust Model) aligning domains with trust boundaries",
+      "References to upstream sections 1-2 (Business Drivers), 1-4 (Success Criteria) where relevant",
+      "Framework citations present (minimum 2 from SABSA, NIST CSF, TOGAF, ISO 27001)",
+      "Relationship types used correctly: implements (objectives), delivers (services), aligns_with (trust boundaries)"
+    ],
+    "frameworkAlignment": [
+      "Architecture aligns with SABSA conceptual architecture layer",
+      "Citations use correct format: Framework + Control ID",
+      "Domain model supports enterprise architecture integration (TOGAF)"
+    ],
+    "visualization": [
+      "Consider including textual description of architecture diagram showing: domains, components, data flows, trust boundaries",
+      "Describe key relationships: which components belong to which domains, how data flows between components",
+      "Note: Actual diagrams created in Layer 4 (Physical); conceptual descriptions sufficient here"
+    ]
+  },
+  "commonPitfalls": [
+    "Including implementation technologies instead of conceptual capabilities",
+    "Missing data flow descriptions (especially encryption/decryption points)",
+    "Domains not clearly distinguished from components",
+    "Integration points defined without security requirements",
+    "Architecture components missing responsibility statements",
+    "Data flows missing trust boundary transitions",
+    "No clear mapping from architecture to security objectives and services"
+  ],
+  "exampleArchitectureElements": [
+    {
+      "category": "Security Domain",
+      "element": "Cryptographic Services Domain",
+      "purpose": "Deliver Data Protection Services ensuring PII confidentiality and integrity",
+      "capabilities": ["AES-256 encryption/decryption", "Key lifecycle management", "Cryptographic API services"],
+      "boundary": "Aligns with Cryptographic Trust Boundary (2-4)",
+      "upstream": "Delivers Data Protection Services (2-2), supports Confidentiality Objectives (2-1)"
+    },
+    {
+      "category": "Architecture Component",
+      "element": "Key Management Infrastructure",
+      "responsibility": "Secure generation, storage, rotation, and destruction of encryption keys",
+      "interactions": ["Provides keys to Encryption Services", "Authenticated by Identity Management", "Audited by Security Monitoring"],
+      "upstream": "Implements Key Management Services (2-2)"
+    },
+    {
+      "category": "Data Flow",
+      "element": "Customer PII Lifecycle",
+      "stages": ["Collection (TLS-encrypted)", "Encryption (AES-256)", "Processing (in-memory decryption)", "Transmission (TLS-encrypted)", "Disposal (key destruction)"],
+      "encryptionPoints": ["Application layer encryption before database storage", "TLS encryption for API transmission"],
+      "trustTransitions": ["Non-production to production requires re-encryption and authentication upgrade"],
+      "upstream": "Implements Data Protection Services (2-2), respects Trust Model (2-4) boundaries"
+    },
+    {
+      "category": "Integration Point",
+      "element": "Application-to-Encryption Integration",
+      "interface": "REST API with mutual TLS authentication and API key authorization",
+      "securityRequirements": ["Mutual TLS authentication", "API key authorization", "Rate limiting (1000 req/s)"],
+      "upstream": "Implements Security Services (2-2) API security requirements"
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "sectionId": "6-1",
+  "layerId": "operational",
+  "templateVersion": "1.0.0",
+  "title": "Monitoring & Alerting",
+  "purpose": "Defines monitoring metrics, alert thresholds, notification channels, and dashboard specifications for operational visibility from the operations perspective",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish operational monitoring strategy and scope",
+      "elements": ["monitoring_strategy", "scope_statement", "operational_objectives"],
+      "wordCount": {"min": 50, "max": 100},
+      "example": "This section establishes **operational monitoring** for the encryption key lifecycle, encompassing real-time visibility into KMS API operations, key rotation status, encryption failures, and security events. Monitoring provides 24/7 operational awareness with automated alerting to ensure immediate detection and response to encryption service degradation or security incidents."
+    },
+    "metricsDefinitions": {
+      "purpose": "Define specific metrics to monitor operational health",
+      "elements": ["performance_metrics", "availability_metrics", "security_metrics", "compliance_metrics"],
+      "wordCount": {"min": 150, "max": 250},
+      "guidingQuestions": [
+        "What metrics measure encryption service health?",
+        "What metrics indicate security events?",
+        "What metrics track compliance status?",
+        "What are the measurement frequencies?"
+      ],
+      "example": "**KMS API Metrics**: `kms:GetDataKey` success/failure rate (1-min resolution), `kms:Decrypt` latency P50/P95/P99 (1-min), `kms:Encrypt` throughput operations/sec (5-min). **Key Rotation Metrics**: Key age in days (daily snapshot), rotation compliance percentage (daily), overdue rotation count (hourly). **Security Metrics**: Failed authentication attempts (real-time), unauthorized access attempts (real-time), key policy changes (event-driven). **Compliance Metrics**: Encryption coverage percentage (daily scan), unencrypted resource count (daily), policy violation count (hourly)."
+    },
+    "alertThresholds": {
+      "purpose": "Define alert conditions with specific thresholds and severities",
+      "elements": ["critical_alerts", "high_severity_alerts", "warning_alerts", "threshold_values"],
+      "wordCount": {"min": 150, "max": 250},
+      "guidingQuestions": [
+        "What conditions trigger critical alerts?",
+        "What thresholds define high-severity events?",
+        "What warning conditions require attention?",
+        "What are the specific threshold values?"
+      ],
+      "example": "**CRITICAL (P1)**: KMS API error rate >10% for 5 consecutive minutes → Immediate page to on-call engineer, auto-escalate to Security Operations after 15 min. Key deletion event detected → Immediate page to CISO + Security Lead + Database Team. **HIGH (P2)**: Key rotation overdue by >7 days → Alert Security Operations, create incident ticket. Encryption failure rate >5% → Alert DevOps + Security, initiate investigation. **WARNING (P3)**: Key rotation due within 7 days → Email Security Operations + Key Owner. Unusual KMS API access pattern detected → Alert Security Operations for review."
+    },
+    "notificationChannels": {
+      "purpose": "Define how alerts are delivered and to whom",
+      "elements": ["notification_methods", "recipient_groups", "escalation_paths", "on_call_rotation"],
+      "wordCount": {"min": 100, "max": 150},
+      "guidingQuestions": [
+        "What notification methods are used?",
+        "Who receives alerts by severity?",
+        "What is the escalation path?",
+        "How is on-call rotation managed?"
+      ],
+      "example": "**Critical Alerts**: PagerDuty (immediate page) → L2 Security Operations → L3 Security Architecture (30 min escalation) → CISO (60 min). SNS topic `encryption-critical-alerts` → Lambda → Slack #security-alerts channel. **High Alerts**: Email → Security Operations team + Service Owner, Slack #security-operations. **Warning Alerts**: Email → Service Owner, weekly digest to Security Leadership. **On-Call Rotation**: 24/7 coverage via PagerDuty, weekly rotation, secondary on-call for escalations."
+    },
+    "dashboardSpecifications": {
+      "purpose": "Define operational dashboards for real-time visibility",
+      "elements": ["dashboard_layouts", "widget_definitions", "refresh_frequencies", "access_controls"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "What dashboards provide operational visibility?",
+        "What widgets display key metrics?",
+        "What are the refresh rates?",
+        "Who has dashboard access?"
+      ],
+      "example": "**CloudWatch Dashboard: KMS Operations**: Real-time view (1-min auto-refresh) with widgets: (1) KMS API Success Rate (line graph, 24hr), (2) Active Encryption Keys Count (number widget), (3) Keys Requiring Rotation (table widget, sorted by age), (4) Recent Key Policy Changes (log widget, last 100 events), (5) Geographic API Distribution (map widget). **Access**: Security Operations (full access), Service Owners (read-only), Executives (summary dashboard). **Retention**: 90 days detailed metrics, 1 year aggregated."
+    }
+  },
+  "upstreamTraceability": {
+    "required": true,
+    "minimumReferences": 2,
+    "expectedSources": [
+      {
+        "layer": "component",
+        "sections": ["5-1", "5-3", "5-4"],
+        "relationshipTypes": ["validates", "refines"],
+        "rationale": "Monitoring validates component configurations and refines deployment checklists with operational metrics"
+      },
+      {
+        "layer": "physical",
+        "sections": ["4-1", "4-2"],
+        "relationshipTypes": ["implements"],
+        "rationale": "Alert thresholds implement physical implementation specifications and procedures"
+      }
+    ],
+    "exampleReferences": [
+      {
+        "upstreamSection": "POL-2025-004.component.5-1",
+        "relationshipType": "validates",
+        "rationale": "CloudWatch alarms validate KMS key configurations by monitoring API error rates and key rotation compliance"
+      },
+      {
+        "upstreamSection": "POL-2025-004.component.5-3",
+        "relationshipType": "validates",
+        "rationale": "Encryption coverage metrics validate automated compliance tests by providing continuous operational verification"
+      },
+      {
+        "upstreamSection": "POL-2025-004.physical.4-2",
+        "relationshipType": "implements",
+        "rationale": "Alert notification channels implement key rotation procedures by triggering automated notifications 7 days before rotation deadlines"
+      }
+    ]
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST SP 800-137",
+      "control": "Information Security Continuous Monitoring",
+      "relevance": "Real-time monitoring and automated alerting for security events"
+    },
+    {
+      "framework": "ITIL 4",
+      "control": "Monitoring and Event Management",
+      "relevance": "Operational monitoring practices and incident detection"
+    },
+    {
+      "framework": "ISO 27001",
+      "control": "A.12.4.1",
+      "relevance": "Event logging and monitoring requirements"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All five structural elements present (introduction, metrics, alerts, notifications, dashboards)",
+      "Minimum word count met for each element (total 550-950 words)",
+      "All guiding questions addressed",
+      "At least 2 upstream traceability references"
+    ],
+    "technicalDepth": [
+      "Specific metric names with measurement frequencies (e.g., kms:GetDataKey 1-min resolution)",
+      "Exact threshold values (e.g., >10% for 5 minutes)",
+      "Named notification channels (e.g., PagerDuty, SNS topic names)",
+      "Dashboard widget types specified (line graph, table, map)"
+    ],
+    "operationalFocus": [
+      "CloudWatch-specific examples where applicable",
+      "AWS service names for monitoring targets (KMS, CloudTrail)",
+      "Escalation paths with time windows (5 min → 15 min → 30 min)",
+      "On-call rotation mechanics described"
+    ],
+    "frameworkAlignment": [
+      "Minimum 2 framework citations (NIST, ITIL, ISO 27001)",
+      "Citations relate monitoring practices to industry standards",
+      "Continuous monitoring concepts from NIST SP 800-137"
+    ]
+  },
+  "commonPitfalls": {
+    "avoid": [
+      "Generic monitoring statements without specific metrics",
+      "Alert thresholds without numeric values or time windows",
+      "Notification channels without recipient identification",
+      "Dashboards without widget specifications or refresh rates",
+      "Missing escalation paths or on-call rotation details"
+    ],
+    "include": [
+      "Specific AWS CloudWatch metric names (kms:Decrypt, kms:Encrypt)",
+      "Exact threshold values (>10%, >5%, 7 days)",
+      "Named notification systems (PagerDuty, Slack, SNS)",
+      "Dashboard widget types and layouts",
+      "Time-based escalation paths (5 min, 15 min, 30 min, 60 min)"
+    ]
+  },
+  "examplePolicyScenario": {
+    "policyId": "POL-2025-004",
+    "policyTitle": "Customer PII Encryption Policy",
+    "sectionExample": {
+      "introduction": "This section establishes operational monitoring for AWS KMS encryption key management, providing 24/7 visibility into key lifecycle operations, API performance, rotation compliance, and security events. CloudWatch dashboards and automated alerting ensure immediate detection of encryption failures, unauthorized access, or service degradation.",
+      "metricsSnippet": "**KMS API Performance**: `kms:GetDataKey` success rate (target: >99.9%, 1-min), `kms:Decrypt` P95 latency (target: <100ms, 1-min). **Key Rotation Compliance**: Keys rotated within 90 days (target: 100%, daily scan), overdue rotation count (threshold: 0, hourly check).",
+      "alertsSnippet": "**CRITICAL**: KMS API error rate >10% for 5 min → Page Security Operations + DevOps, auto-escalate to CISO after 15 min. **HIGH**: Key rotation overdue >7 days → Alert Security Ops, create Jira incident. **WARNING**: Key rotation due <7 days → Email key owner + Security team.",
+      "dashboardSnippet": "**CloudWatch Dashboard 'KMS-Operations-Live'**: (1) API Success Rate graph (24hr trend), (2) Active Keys counter, (3) Rotation Due table (sorted by days remaining), (4) Recent Policy Changes log, (5) API Call Heatmap by region. Auto-refresh: 1 minute."
+    }
+  }
+}

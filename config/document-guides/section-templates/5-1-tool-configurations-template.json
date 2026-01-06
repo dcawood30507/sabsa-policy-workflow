@@ -1,0 +1,165 @@
+{
+  "sectionId": "5-1",
+  "layerId": "component",
+  "templateVersion": "1.0.0",
+  "title": "Tool Configuration Specifications",
+  "purpose": "Defines exact configuration parameters for security tools implementing upstream physical specifications",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Set context for tool configurations and their role in implementing security controls",
+      "elements": ["scope_statement", "configuration_philosophy", "tool_inventory"],
+      "wordCount": {"min": 50, "max": 100},
+      "example": "This section specifies exact configuration parameters for AWS Key Management Service (KMS), AWS CloudHSM, and logging infrastructure implementing the Customer PII Encryption Policy. All configurations align with upstream physical specifications defined in sections 4-1 (Implementation Specifications), 4-2 (Procedures), and 4-3 (Technical Standards)."
+    },
+    "kmsConfiguration": {
+      "purpose": "Define AWS KMS customer master key (CMK) configurations",
+      "elements": ["key_specifications", "key_policy_json", "key_rotation_settings", "multi_region_config"],
+      "wordCount": {"min": 150, "max": 300},
+      "guidingQuestions": [
+        "What are the exact KMS key specifications (KeySpec, CustomerMasterKeySpec)?",
+        "What is the complete key policy JSON document?",
+        "What are the key rotation parameters (enabled, rotation period)?",
+        "Are multi-region keys required? If so, what replica regions?"
+      ],
+      "example": "**KMS CMK Configuration for Customer PII Encryption:**\n\n```json\n{\n  \"KeySpec\": \"SYMMETRIC_DEFAULT\",\n  \"CustomerMasterKeySpec\": \"AES_256\",\n  \"KeyUsage\": \"ENCRYPT_DECRYPT\",\n  \"Origin\": \"AWS_KMS\",\n  \"MultiRegion\": false,\n  \"Description\": \"Customer PII encryption master key - POL-2025-004\",\n  \"Tags\": [\n    {\"TagKey\": \"Policy\", \"TagValue\": \"POL-2025-004\"},\n    {\"TagKey\": \"DataClassification\", \"TagValue\": \"PII\"},\n    {\"TagKey\": \"Compliance\", \"TagValue\": \"GDPR-SOC2\"}\n  ]\n}\n```\n\n**Key Rotation Configuration:**\n```json\n{\n  \"KeyRotationEnabled\": true,\n  \"RotationPeriodInDays\": 90,\n  \"AutoRotationSchedule\": \"0 2 * * 0\"\n}\n```\n\n**Key Policy (Full JSON):**\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"Enable IAM User Permissions\",\n      \"Effect\": \"Allow\",\n      \"Principal\": {\"AWS\": \"arn:aws:iam::123456789012:root\"},\n      \"Action\": \"kms:*\",\n      \"Resource\": \"*\"\n    },\n    {\n      \"Sid\": \"Allow Application Role Encryption\",\n      \"Effect\": \"Allow\",\n      \"Principal\": {\"AWS\": \"arn:aws:iam::123456789012:role/AppEncryptionRole\"},\n      \"Action\": [\n        \"kms:Encrypt\",\n        \"kms:Decrypt\",\n        \"kms:GenerateDataKey\",\n        \"kms:DescribeKey\"\n      ],\n      \"Resource\": \"*\",\n      \"Condition\": {\n        \"StringEquals\": {\n          \"kms:ViaService\": [\n            \"s3.us-east-1.amazonaws.com\",\n            \"rds.us-east-1.amazonaws.com\"\n          ]\n        }\n      }\n    },\n    {\n      \"Sid\": \"Allow CloudTrail Encryption\",\n      \"Effect\": \"Allow\",\n      \"Principal\": {\"Service\": \"cloudtrail.amazonaws.com\"},\n      \"Action\": [\n        \"kms:GenerateDataKey\",\n        \"kms:DecryptDataKey\"\n      ],\n      \"Resource\": \"*\"\n    }\n  ]\n}\n```"
+    },
+    "hsmConfiguration": {
+      "purpose": "Define AWS CloudHSM cluster and instance configurations (if applicable)",
+      "elements": ["cluster_specifications", "hsm_instance_config", "network_configuration", "backup_settings"],
+      "wordCount": {"min": 100, "max": 250},
+      "guidingQuestions": [
+        "What is the CloudHSM cluster configuration (instance type, cluster ID)?",
+        "What are the network requirements (VPC, subnets, ENI configuration)?",
+        "What backup and disaster recovery settings are configured?",
+        "What are the HSM initialization parameters?"
+      ],
+      "example": "**CloudHSM Cluster Configuration:**\n\n```yaml\nClusterConfiguration:\n  ClusterId: cluster-pii-encryption-prod\n  HSMType: hsm1.medium\n  InstanceCount: 3  # High availability across 3 AZs\n  SubnetIds:\n    - subnet-abc123def  # us-east-1a\n    - subnet-def456ghi  # us-east-1b\n    - subnet-ghi789jkl  # us-east-1c\n  SecurityGroupId: sg-hsm-cluster-001\n  BackupRetentionPolicy:\n    AutomaticBackupEnabled: true\n    BackupRetentionDays: 90\n    BackupWindow: \"03:00-05:00 UTC\"\n  StateChangeNotifications:\n    SNSTopicArn: \"arn:aws:sns:us-east-1:123456789012:hsm-state-changes\"\n```\n\n**HSM Instance Initialization Parameters:**\n```json\n{\n  \"InitializationMode\": \"FIPS_140_2_LEVEL_3\",\n  \"ClusterCertificateRequired\": true,\n  \"PasswordPolicy\": {\n    \"MinLength\": 14,\n    \"RequireUppercase\": true,\n    \"RequireLowercase\": true,\n    \"RequireNumbers\": true,\n    \"RequireSymbols\": true,\n    \"PasswordHistory\": 12\n  }\n}\n```"
+    },
+    "applicationEncryptionConfiguration": {
+      "purpose": "Define application-level encryption library and SDK configurations",
+      "elements": ["sdk_config", "encryption_context", "caching_parameters", "client_configuration"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "What encryption SDK or library is configured (AWS Encryption SDK, libsodium)?",
+        "What encryption context is used for additional authenticated data?",
+        "Are data key caching parameters configured? If so, what are they?",
+        "What are the SDK client configuration settings?"
+      ],
+      "example": "**AWS Encryption SDK Configuration (Python):**\n\n```python\nimport aws_encryption_sdk\nfrom aws_encryption_sdk.key_providers.kms import KMSMasterKeyProvider\n\n# KMS Master Key Provider Configuration\nkms_key_provider = KMSMasterKeyProvider(\n    key_ids=[\n        'arn:aws:kms:us-east-1:123456789012:key/abc12345-6789-def0-1234-56789abcdef0'\n    ]\n)\n\n# Data Key Caching Configuration\nfrom aws_encryption_sdk.caches import LocalCryptoMaterialsCache\nfrom aws_encryption_sdk.materials_managers.caching_cmm import CachingCryptoMaterialsManager\n\ncache = LocalCryptoMaterialsCache(capacity=100)\ncaching_cmm = CachingCryptoMaterialsManager(\n    master_key_provider=kms_key_provider,\n    cache=cache,\n    max_age=300.0,  # 5 minutes\n    max_messages_encrypted=10\n)\n\n# Encryption Context (for audit trail and access control)\nencryption_context = {\n    'purpose': 'customer-pii-encryption',\n    'policy': 'POL-2025-004',\n    'data_classification': 'PII',\n    'application': 'customer-api'\n}\n```"
+    },
+    "loggingConfiguration": {
+      "purpose": "Define logging and audit trail configurations for encryption operations",
+      "elements": ["cloudtrail_config", "cloudwatch_logs_config", "log_retention", "log_encryption"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "What CloudTrail configuration captures KMS API calls?",
+        "What CloudWatch Logs configuration is used?",
+        "What are the log retention and encryption settings?",
+        "What events are logged for audit purposes?"
+      ],
+      "example": "**CloudTrail Configuration for KMS API Logging:**\n\n```yaml\nCloudTrailConfiguration:\n  Name: pii-encryption-audit-trail\n  S3BucketName: audit-logs-pii-encryption-prod\n  S3KeyPrefix: cloudtrail/kms/\n  IncludeGlobalServiceEvents: true\n  IsMultiRegionTrail: false\n  EnableLogFileValidation: true\n  KMSKeyId: arn:aws:kms:us-east-1:123456789012:key/log-encryption-key\n  EventSelectors:\n    - ReadWriteType: All\n      IncludeManagementEvents: true\n      DataResources:\n        - Type: AWS::KMS::Key\n          Values: [\"arn:aws:kms:us-east-1:123456789012:key/*\"]\n  InsightSelectors:\n    - InsightType: ApiCallRateInsight\n```\n\n**CloudWatch Logs Configuration:**\n```json\n{\n  \"LogGroupName\": \"/aws/kms/pii-encryption\",\n  \"RetentionInDays\": 2555,\n  \"KmsKeyId\": \"arn:aws:kms:us-east-1:123456789012:key/log-encryption-key\",\n  \"Tags\": {\n    \"Policy\": \"POL-2025-004\",\n    \"Compliance\": \"SOC2-GDPR\",\n    \"DataClassification\": \"Audit\"\n  }\n}\n```"
+    },
+    "validationSettings": {
+      "purpose": "Define validation and testing configurations for tool implementations",
+      "elements": ["health_check_config", "integration_test_config", "performance_thresholds"],
+      "wordCount": {"min": 50, "max": 100},
+      "guidingQuestions": [
+        "What health check configurations validate tool availability?",
+        "What integration test configurations verify tool functionality?",
+        "What performance thresholds must tools meet?"
+      ],
+      "example": "**KMS Health Check Configuration:**\n\n```yaml\nHealthChecks:\n  - Name: kms-key-availability\n    Type: AWS::KMS::DescribeKey\n    Interval: 60  # seconds\n    Timeout: 10\n    HealthyThreshold: 2\n    UnhealthyThreshold: 3\n    KeyId: arn:aws:kms:us-east-1:123456789012:key/abc12345\n  - Name: kms-encryption-latency\n    Type: AWS::KMS::Encrypt\n    Interval: 300\n    MaxLatencyMs: 100\n    TestDataSize: 4096  # bytes\n```"
+    }
+  },
+  "upstreamTraceability": {
+    "requiredReferences": [
+      {
+        "section": "4-1",
+        "relationship": "refines",
+        "rationale": "Tool configurations refine implementation specifications with exact parameters"
+      },
+      {
+        "section": "4-2",
+        "relationship": "implements",
+        "rationale": "Configurations implement procedural requirements (e.g., key rotation)"
+      },
+      {
+        "section": "4-3",
+        "relationship": "constrained_by",
+        "rationale": "All configurations must comply with technical standards (e.g., AES-256, TLS 1.2+)"
+      }
+    ],
+    "exampleTraceabilityEntry": {
+      "sectionId": "5-1",
+      "references": [
+        {
+          "targetSection": "POL-2025-004.physical.4-1",
+          "relationship": "refines",
+          "description": "KMS CMK configuration refines Section 4-1 AWS KMS implementation specification with exact KeySpec (SYMMETRIC_DEFAULT), CustomerMasterKeySpec (AES_256), and key policy JSON"
+        },
+        {
+          "targetSection": "POL-2025-004.physical.4-2",
+          "relationship": "implements",
+          "description": "Key rotation configuration implements Section 4-2 90-day rotation procedure with RotationPeriodInDays parameter"
+        }
+      ]
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST SP 800-53A",
+      "control": "SC-12(1)",
+      "relevance": "Symmetric and asymmetric cryptographic key establishment and management"
+    },
+    {
+      "framework": "NIST SP 800-53A",
+      "control": "SC-28(1)",
+      "relevance": "Protection of information at rest using cryptographic mechanisms"
+    },
+    {
+      "framework": "CIS Controls",
+      "control": "3.11",
+      "relevance": "Encrypt sensitive data at rest"
+    },
+    {
+      "framework": "AWS Security Best Practices",
+      "control": "IAM-06",
+      "relevance": "Use KMS customer managed keys for encryption at rest"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All configuration subsections present (KMS, HSM if applicable, application, logging, validation)",
+      "Minimum word count met for each element (500-1200 total)",
+      "All guiding questions addressed with specific parameters",
+      "Complete configuration files provided (JSON/YAML/Python code)"
+    ],
+    "technicalAccuracy": [
+      "All JSON/YAML syntax is valid",
+      "AWS resource ARNs follow correct format (no hardcoded account IDs in examples)",
+      "Configuration parameters match AWS/tool documentation",
+      "No hardcoded secrets or credentials in configurations"
+    ],
+    "traceability": [
+      "Minimum 2 upstream references to Layer 4 sections (4-1, 4-2, 4-3)",
+      "Relationship types correctly applied (refines, implements, constrained_by)",
+      "Rationale explains how configurations implement upstream specs"
+    ],
+    "frameworkAlignment": [
+      "Minimum 2 framework citations (NIST, CIS, AWS/Azure/GCP best practices)",
+      "Citations include control IDs and relevance explanation",
+      "Configurations demonstrably satisfy framework requirements"
+    ]
+  },
+  "commonPitfalls": [
+    "Including hardcoded secrets, passwords, or API keys in configuration examples",
+    "Using organization-specific account IDs or resource ARNs without placeholder notation",
+    "Providing incomplete configuration files (missing required fields)",
+    "Failing to specify encryption context for AWS Encryption SDK",
+    "Omitting log encryption configuration for audit trails",
+    "Not addressing multi-region or high availability requirements"
+  ],
+  "exampleOutput": {
+    "rationale": "The KMS CMK configuration specified in this section directly refines the AWS KMS implementation specification defined in Section 4-1 by providing the exact KeySpec (SYMMETRIC_DEFAULT), CustomerMasterKeySpec (AES_256), and complete key policy JSON document. The 90-day key rotation configuration implements the procedural requirement from Section 4-2, while the AES-256 encryption algorithm satisfies the technical standard constraint from Section 4-3. All configurations align with NIST SP 800-53A SC-28(1) for protection of information at rest and CIS Control 3.11 for encrypting sensitive data."
+  }
+}

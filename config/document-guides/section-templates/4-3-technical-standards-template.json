@@ -1,0 +1,194 @@
+{
+  "sectionId": "4-3",
+  "layerId": "physical",
+  "templateVersion": "1.0.0",
+  "title": "Technical Standards",
+  "purpose": "Defines technology-specific configuration standards and hardening requirements that implement logical security standards",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish scope and purpose of technical standards",
+      "elements": ["standards_scope", "compliance_mapping", "enforcement_mechanisms"],
+      "wordCount": {"min": 60, "max": 100},
+      "example": "This section defines technology-specific configuration standards for encryption infrastructure. Standards map to **NIST SP 800-53 SC-28** (protection at rest), **CIS AWS Benchmark 2.1** (encryption requirements), and internal security policies. Enforcement via AWS Config rules, Infrastructure-as-Code templates (Terraform/CloudFormation), and automated compliance scanning (Wiz policies)."
+    },
+    "kmsCmkConfigurationStandard": {
+      "purpose": "Define KMS Customer Master Key configuration requirements",
+      "elements": ["key_specification", "key_usage", "key_rotation", "key_deletion", "key_policy"],
+      "wordCount": {"min": 120, "max": 200},
+      "guidingQuestions": [
+        "What key specifications are required (symmetric vs. asymmetric)?",
+        "What key usage permissions are allowed?",
+        "What key rotation policies apply?",
+        "What key deletion policies prevent accidental deletion?",
+        "What key policies enforce least privilege?"
+      ],
+      "example": "**Key Specification**: Symmetric CMKs (SYMMETRIC_DEFAULT) for data encryption, RSA_2048 asymmetric keys only for digital signatures. **Key Usage**: ENCRYPT_DECRYPT for data keys, SIGN_VERIFY for code signing. **Key Rotation**: Automatic key rotation enabled (90-day period), manual rotation for asymmetric keys annually. **Key Deletion**: Minimum 7-day waiting period, PendingDeletion state triggers CloudWatch alarm and SNS notification to security team. **Key Policy**: Deny wildcard principals (`\"Principal\": \"*\"`), require IAM principal ARNs, separate key administrators from key users, enforce MFA for administrative operations via condition: `\"Condition\": {\"Bool\": {\"aws:MultiFactorAuthPresent\": \"true\"}}`."
+    },
+    "tlsConfigurationStandard": {
+      "purpose": "Define TLS protocol and cipher suite requirements",
+      "elements": ["protocol_versions", "cipher_suites", "certificate_requirements", "alb_security_policy"],
+      "wordCount": {"min": 120, "max": 200},
+      "guidingQuestions": [
+        "What TLS protocol versions are allowed/forbidden?",
+        "What cipher suites are whitelisted/blacklisted?",
+        "What certificate requirements apply (key length, signature algorithm)?",
+        "What AWS-specific security policies are enforced?"
+      ],
+      "example": "**Protocol Versions**: TLS 1.2 minimum (MANDATORY), TLS 1.3 preferred (RECOMMENDED), SSLv3/TLS 1.0/TLS 1.1 explicitly disabled. **Cipher Suites**: Whitelist: ECDHE-RSA-AES256-GCM-SHA384, ECDHE-RSA-AES128-GCM-SHA256, TLS_AES_256_GCM_SHA384 (TLS 1.3). Blacklist: RC4, 3DES, MD5-based ciphers, export-grade ciphers, anonymous Diffie-Hellman. **Certificate Requirements**: RSA 2048-bit minimum (4096-bit for root CAs), ECDSA P-256 curve for elliptic curve certificates, SHA-256 signature algorithm (SHA-1 forbidden). **ALB Security Policy**: ELBSecurityPolicy-TLS-1-2-2017-01 minimum, upgrade to ELBSecurityPolicy-TLS-1-3-2021-06 by Q2 2026."
+    },
+    "hsmConfigurationStandard": {
+      "purpose": "Define Hardware Security Module hardening and configuration requirements",
+      "elements": ["hsm_authentication", "hsm_clustering", "hsm_backup", "hsm_monitoring"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "What authentication mechanisms protect HSM access?",
+        "How are HSMs configured for high availability?",
+        "What backup configurations ensure key recovery?",
+        "What monitoring detects HSM anomalies?"
+      ],
+      "example": "**HSM Authentication**: M-of-N authentication required (minimum 3 of 5 crypto officers for administrative operations), quorum authentication for cluster management operations, TLS mutual authentication with X.509 client certificates for application access via PKCS#11. **HSM Clustering**: Minimum 2 CloudHSM instances across separate Availability Zones, automatic key material synchronization, cluster membership requires cryptographic verification. **HSM Backup**: Weekly automated backups via CloudHSM API, quarterly manual backup to hardware tokens (YubiKey HSM), backup encryption uses separate recovery key (stored offsite). **HSM Monitoring**: CloudWatch metrics for HSM CPU/memory utilization, CloudTrail logs for all HSM API calls, alert on failed authentication attempts (threshold: 5 failures in 10 minutes)."
+    },
+    "databaseEncryptionStandard": {
+      "purpose": "Define database-level encryption configuration requirements",
+      "elements": ["rds_encryption", "dynamodb_encryption", "encryption_algorithms", "key_association"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "What RDS encryption settings are required?",
+        "What DynamoDB encryption configurations apply?",
+        "What encryption algorithms are used at the database layer?",
+        "How are databases associated with KMS keys?"
+      ],
+      "example": "**RDS Encryption**: Encryption enabled at instance creation (MANDATORY), storage encryption uses customer-managed CMK (no AWS-managed keys), encrypted automated backups with same CMK, encrypted read replicas in same region (cross-region replicas use region-specific CMK). **DynamoDB Encryption**: Server-side encryption with KMS customer-managed keys (SSE-KMS), encryption at rest for base tables and global secondary indexes, point-in-time recovery backups encrypted with same CMK. **Encryption Algorithms**: AES-256-GCM for data-at-rest, transparent data encryption (TDE) for Oracle/SQL Server RDS, encryption SDK for application-layer column encryption. **Key Association**: Each database instance uses dedicated CMK (no key sharing across environments), CMK tags identify associated database instance."
+    },
+    "s3EncryptionStandard": {
+      "purpose": "Define S3 bucket encryption and access control standards",
+      "elements": ["default_encryption", "bucket_policies", "access_logging", "versioning"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "What default encryption settings apply to S3 buckets?",
+        "What bucket policies enforce encryption?",
+        "How are S3 access events logged for audit?",
+        "What versioning policies protect against accidental deletion?"
+      ],
+      "example": "**Default Encryption**: SSE-KMS with customer-managed CMK (SSE-S3 forbidden for PII buckets), bucket policy denies unencrypted uploads: `\"Condition\": {\"StringNotEquals\": {\"s3:x-amz-server-side-encryption\": \"aws:kms\"}}`. **Bucket Policies**: Deny HTTP requests (enforce HTTPS): `\"Condition\": {\"Bool\": {\"aws:SecureTransport\": \"false\"}}`, restrict bucket access to VPC endpoints only, enforce encryption header on PUT operations. **Access Logging**: S3 access logging enabled, logs delivered to centralized audit bucket (separate AWS account), log files encrypted with audit account CMK. **Versioning**: Versioning enabled with MFA delete protection, lifecycle policy transitions old versions to Glacier after 90 days, permanent deletion requires CISO approval."
+    },
+    "iamPolicyStandard": {
+      "purpose": "Define IAM policy standards for KMS key access",
+      "elements": ["least_privilege", "policy_conditions", "service_roles", "policy_validation"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "How is least privilege enforced in IAM policies?",
+        "What policy conditions restrict key usage?",
+        "How are service roles configured for KMS access?",
+        "How are policies validated before deployment?"
+      ],
+      "example": "**Least Privilege**: Grant only required KMS actions (kms:Decrypt for read-only, kms:Encrypt + kms:GenerateDataKey for write), deny wildcard resources (`\"Resource\": \"*\"`), scope policies to specific CMK ARNs. **Policy Conditions**: Require encryption context: `\"Condition\": {\"StringEquals\": {\"kms:EncryptionContext:environment\": \"production\"}}`, restrict API calls to VPC endpoints: `\"Condition\": {\"StringEquals\": {\"aws:SourceVpce\": \"vpce-xxxxx\"}}`, enforce MFA for administrative operations. **Service Roles**: RDS service-linked role grants kms:Decrypt + kms:DescribeKey, Lambda execution role grants kms:Decrypt for envelope encryption, EC2 instance role grants kms:GenerateDataKey for application-layer encryption. **Policy Validation**: IAM Access Analyzer scans for overly permissive policies, deny deployment if policy grants kms:* wildcard permissions."
+    },
+    "cloudtrailLoggingStandard": {
+      "purpose": "Define CloudTrail logging requirements for encryption audit trail",
+      "elements": ["kms_event_logging", "log_retention", "log_encryption", "log_integrity"],
+      "wordCount": {"min": 80, "max": 150},
+      "guidingQuestions": [
+        "What KMS API events must be logged?",
+        "How long are audit logs retained?",
+        "How are audit logs encrypted?",
+        "How is log file integrity validated?"
+      ],
+      "example": "**KMS Event Logging**: Log all KMS management events (CreateKey, ScheduleKeyDeletion, DisableKey), log KMS data events (Encrypt, Decrypt, GenerateDataKey) for production keys only (high volume). **Log Retention**: CloudTrail logs retained 7 years in S3 (compliance requirement), Glacier transition after 90 days, lifecycle policy prevents early deletion. **Log Encryption**: CloudTrail S3 bucket encrypted with dedicated audit CMK, CMK key policy denies access to application accounts (audit account only). **Log Integrity**: CloudTrail log file integrity validation enabled, digest files generated hourly, automated validation via Lambda (daily scan for tampering)."
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST SP 800-53 Rev 5",
+      "control": "SC-28, SC-13",
+      "relevance": "Protection at rest and cryptographic protection standards"
+    },
+    {
+      "framework": "NIST SP 800-175B",
+      "control": "Key Management Guidelines",
+      "relevance": "Key generation, distribution, and storage standards"
+    },
+    {
+      "framework": "CIS AWS Foundations Benchmark v1.5",
+      "control": "2.1.1, 2.1.2, 2.8",
+      "relevance": "S3 encryption, KMS key rotation, CloudTrail configuration"
+    },
+    {
+      "framework": "PCI DSS v4.0",
+      "control": "3.5, 3.6",
+      "relevance": "Cryptographic key management and protection"
+    }
+  ],
+  "upstreamTraceability": {
+    "requiredReferences": [
+      {
+        "section": "3-2",
+        "layer": "logical",
+        "purpose": "Security standards that these technical standards implement"
+      },
+      {
+        "section": "3-3",
+        "layer": "logical",
+        "purpose": "Control specifications requiring these technical configurations"
+      },
+      {
+        "section": "4-1",
+        "layer": "physical",
+        "purpose": "Implementation specifications that these standards configure"
+      }
+    ],
+    "relationshipTypes": {
+      "implements": "Technical standards implement logical security standards with technology-specific configurations",
+      "refines": "Technical standards refine implementation specifications with exact configuration parameters"
+    }
+  },
+  "qualityChecks": {
+    "completeness": [
+      "All eight standard elements present (introduction through CloudTrail logging)",
+      "Minimum word count met for each standard (total 760+ words)",
+      "All guiding questions addressed with specific configurations"
+    ],
+    "specificity": [
+      "Exact configuration values provided (not ranges or 'recommended' without specifics)",
+      "Specific AWS policy syntax examples included (JSON conditions)",
+      "Specific cipher suites, algorithms, key lengths identified",
+      "Specific security policies named (ELBSecurityPolicy-TLS-1-2-2017-01)"
+    ],
+    "enforceability": [
+      "Each standard includes enforcement mechanism (AWS Config, IAM Access Analyzer, bucket policy)",
+      "Compliance validation method specified (automated scanning, manual review)",
+      "Remediation approach defined for non-compliant resources"
+    ],
+    "traceability": [
+      "References to upstream logical section 3-2 (security standards)",
+      "References to physical section 4-1 (implementation specs)",
+      "Framework citations present (minimum 4: NIST SP 800-53, NIST SP 800-175B, CIS, PCI DSS)",
+      "Rationale explains HOW technical standards enforce logical requirements"
+    ]
+  },
+  "standardsGuidelines": {
+    "mandatoryVsRecommended": {
+      "mandatory": "Use 'MUST', 'REQUIRED', 'SHALL' for non-negotiable requirements (e.g., TLS 1.2 minimum)",
+      "recommended": "Use 'SHOULD', 'RECOMMENDED' for best practices (e.g., TLS 1.3 preferred)",
+      "optional": "Use 'MAY', 'OPTIONAL' for discretionary configurations"
+    },
+    "configurationFormat": {
+      "provideExamples": "Include actual configuration snippets (IAM policy JSON, KMS key policy)",
+      "avoidVagueness": "Don't say 'strong encryption' - specify 'AES-256-GCM'",
+      "includeValidation": "Specify how to verify compliance (AWS CLI commands, Config rules)"
+    }
+  },
+  "examplePolicyContext": {
+    "policyId": "POL-2025-004",
+    "policyTitle": "Customer PII Encryption Policy",
+    "standardDomains": [
+      "KMS key configuration (rotation, deletion, policy)",
+      "TLS protocol configuration (versions, cipher suites)",
+      "HSM hardening (authentication, clustering, backup)",
+      "Database encryption (RDS, DynamoDB algorithms)",
+      "S3 encryption (SSE-KMS, bucket policies)",
+      "IAM policy standards (least privilege, conditions)",
+      "CloudTrail logging (event capture, retention, integrity)"
+    ]
+  }
+}

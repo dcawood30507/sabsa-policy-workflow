@@ -4,406 +4,269 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is the **SABSA Agentic Policy Workflow** system - a GitHub Actions-based automation platform that transforms security policy statements into complete, traceable SABSA (Sherwood Applied Business Security Architecture) artifacts across all six architectural layers using Anthropic Claude AI.
+This is the **SABSA Agentic Policy Workflow** — a GitHub Actions-based automation platform that transforms security policy statements into complete SABSA (Sherwood Applied Business Security Architecture) artifacts across all six layers using Claude AI.
 
-**Core Purpose:** Accept a security policy statement as input and automatically generate comprehensive security architecture documentation through all six SABSA layers (Contextual → Conceptual → Logical → Physical → Component → Operational) with human review gates at each layer.
+**Core Purpose:** Accept a security policy statement as input and automatically generate comprehensive security architecture documentation through six layers with human review gates.
 
-**Platform:** GitHub Actions with native Pull Request review mechanics, treating artifacts as code (GitOps approach)
+**Platform:** GitHub Actions with Pull Request review mechanics
+**AI Engine:** Claude Sonnet 4 (claude-sonnet-4-20250514)
 
-**AI Engine:** Anthropic Claude (claude-sonnet-4-20250514)
+## Quick Start Commands
 
-## Architecture & Design Philosophy
-
-### Key Design Principles
-
-1. **Artifacts as Code** - All outputs stored in Git with full version history
-2. **Human in the Loop** - Every layer requires explicit PR approval before proceeding
-3. **Minimal Context** - Each layer receives only the upstream sections it needs (token optimization)
-4. **Structured Traceability** - JSON documents capture all relationships; markdown for content
-5. **Graceful Degradation** - Partial results surfaced for human intervention on failures
-6. **Familiar UX** - Standard GitHub PR workflow—no custom interfaces
-
-### The Six SABSA Layers (Process Domain)
-
-| Layer | Prefix | View | Core Question | Primary Output |
-|-------|--------|------|---------------|----------------|
-| **Contextual** | 1-x | Business | What does the business need? | Business context, risks, success criteria |
-| **Conceptual** | 2-x | Architect | What security capabilities? | Security objectives, services, principles, trust model |
-| **Logical** | 3-x | Designer | What are the security rules? | Policies, standards, control specifications |
-| **Physical** | 4-x | Builder | How will it be implemented? | Procedures, technical standards, integration specs |
-| **Component** | 5-x | Tradesman | What specific tools/configs? | Tool configs, IaC templates, validation tests |
-| **Operational** | 6-x | Operations | How will it be maintained? | Runbooks, monitoring, incident response playbooks |
-
-### Workflow Flow
-
-```
-GitHub Issue (new-policy)
-    ↓
-Initialize Workflow → Generate Policy ID → Create Folder Structure → Generate Summary → Commit to Main
-    ↓
-Generate Layer 1 (Contextual) → Create PR → Human Review
-    ↓
-[If Approved & Merged] Cascade to Layer 2
-[If Changes Requested] Revision Workflow → Regenerate with Feedback
-    ↓
-Repeat for Layers 2-6
-    ↓
-Finalize Workflow → Create Release Tag → Close Issue
-```
-
-## Repository Structure
-
-```
-sabsa-policy-workflow/
-├── .github/
-│   ├── workflows/              # GitHub Actions workflows
-│   │   ├── initialize-policy.yml      # Policy initialization & summary generation
-│   │   ├── generate-layer.yml         # Layer artifact generation (core workflow)
-│   │   ├── handle-revision.yml        # Process PR review feedback & regenerate
-│   │   ├── cascade-next-layer.yml     # Trigger next layer on PR merge
-│   │   └── finalize-policy.yml        # Create release, close issue
-│   ├── actions/
-│   │   └── call-claude/        # Composite action for Claude API integration
-│   │       ├── action.yml      # Action metadata & input/output definitions
-│   │       ├── index.js        # Main logic: API calls, retry, JSON parsing
-│   │       └── package.json    # Dependencies (@anthropic-ai/sdk, @actions/core)
-│   ├── ISSUE_TEMPLATE/
-│   │   └── new-policy.yml      # Issue form for policy submission
-│   └── templates/
-│       └── pr-description.md   # Template for layer PR descriptions
-├── config/
-│   ├── layer-dependencies.json        # Defines upstream sections each layer receives
-│   ├── layer-sections.json            # Defines expected output sections per layer
-│   └── relationship-vocabulary.json   # Controlled vocabulary for traceability
-├── prompts/
-│   ├── system-prompt.md        # Base system prompt for all Claude calls
-│   ├── summary-prompt.md       # Policy summary generation instructions
-│   ├── contextual-prompt.md    # Layer 1 generation instructions
-│   ├── conceptual-prompt.md    # Layer 2 generation instructions
-│   ├── logical-prompt.md       # Layer 3 generation instructions
-│   ├── physical-prompt.md      # Layer 4 generation instructions
-│   ├── component-prompt.md     # Layer 5 generation instructions
-│   └── operational-prompt.md   # Layer 6 generation instructions
-├── policies/
-│   └── {policy-id}/            # Generated artifacts (e.g., POL-2025-001/)
-│       ├── metadata.json       # Policy status, layer progress, PR tracking
-│       ├── summary.md          # 150-word policy summary
-│       ├── input/
-│       │   └── policy-statement.md    # Original policy text
-│       ├── contextual/
-│       │   ├── sections.json   # Layer 1 artifacts with rationale
-│       │   └── traceability.json      # Upstream references
-│       ├── conceptual/         # Layer 2 artifacts
-│       ├── logical/            # Layer 3 artifacts
-│       ├── physical/           # Layer 4 artifacts
-│       ├── component/          # Layer 5 artifacts
-│       └── operational/        # Layer 6 artifacts
-└── archive/                    # Rejected or abandoned policies
-```
-
-## Data Model & Naming Conventions
-
-### Policy ID Format
-
-**Pattern:** `POL-{YYYY}-{NNN}`
-- `YYYY` - Four-digit year
-- `NNN` - Sequential number, zero-padded (e.g., `POL-2025-001`)
-
-### Section Naming
-
-**Pattern:** `{policy-id}.{layer}.{section}`
-- Example: `POL-2025-001.contextual.1-2` (Contextual layer, Business Drivers section)
-- Example: `POL-2025-001.logical.3-1` (Logical layer, Security Policies section)
-
-### Traceability Relationships
-
-Only use these relationship types in `traceability.json`:
-
-| Relationship | Definition | Typical Direction | Example |
-|-------------|-----------|-------------------|---------|
-| `implements` | Directly realizes upstream requirement | downstream → upstream | Logical control implements Conceptual objective |
-| `derives_from` | Logically follows from upstream element | any → any | Physical procedure derives from Logical standard |
-| `constrained_by` | Bounded by upstream constraint | downstream → upstream | Physical implementation constrained by Logical policy |
-| `refines` | Adds implementation detail | downstream → immediate upstream | Component script refines Physical procedure |
-| `validates` | Provides verification/proof | downstream → upstream | Component test validates Physical specification |
-
-## Context Assembly & Token Optimization
-
-**Critical Design Decision:** Selective context assembly based on explicit dependency mapping to prevent token bloat.
-
-### Layer Dependency Matrix
-
-| Layer | Always Receives | Upstream Sections Required |
-|-------|-----------------|---------------------------|
-| Contextual | `summary.md` | None (first layer) |
-| Conceptual | `summary.md` | `1-2` (Business Drivers), `1-3` (Risk Context), `1-4` (Success Criteria) |
-| Logical | `summary.md` | `2-1` (Security Objectives), `2-2` (Security Services), `2-3` (Security Principles) |
-| Physical | `summary.md` | `3-1` (Security Policies), `3-2` (Security Standards), `3-3` (Control Specs), `2-4` (Trust Model) |
-| Component | `summary.md` | `4-1` (Implementation Specs), `4-2` (Procedures), `4-3` (Technical Standards) |
-| Operational | `summary.md` | `5-1` (Tool Configs), `5-3` (Validation Tests), `5-4` (Deployment Checklist), `4-5` (Exception Handling) |
-
-**Configuration:** All dependencies defined in `config/layer-dependencies.json`
-
-## Implementation Guidelines
-
-### Creating Workflow Files
-
-**Workflow Trigger Patterns:**
-- `initialize-policy.yml` - Trigger: Issue opened with `new-policy` label OR `workflow_dispatch`
-- `generate-layer.yml` - Trigger: `workflow_call` from other workflows OR `workflow_dispatch`
-- `handle-revision.yml` - Trigger: `pull_request_review` with `changes_requested` action
-- `cascade-next-layer.yml` - Trigger: `pull_request` closed with `merged == true`
-- `finalize-policy.yml` - Trigger: Cascade workflow detects operational layer merge
-
-**Branch Naming:** `policy/{policy-id}/layer-{n}-{layer-name}`
-- Example: `policy/POL-2025-001/layer-3-logical`
-
-**PR Naming:** `[{policy-id}] Layer {n}: {layer-name}`
-- Example: `[POL-2025-001] Layer 3: Logical`
-
-### Implementing the Claude Action (`.github/actions/call-claude/`)
-
-**Core Responsibilities:**
-1. Accept assembled prompt as input
-2. Call Anthropic API with retry logic (rate limit handling)
-3. Parse JSON response
-4. Validate expected sections are present
-5. Handle partial results gracefully
-6. Return structured output or error details
-
-**API Configuration:**
-```javascript
-{
-  model: "claude-sonnet-4-20250514",
-  max_tokens: 8000,
-  messages: [{ role: "user", content: assembledPrompt }],
-  system: systemPrompt  // From prompts/system-prompt.md
-}
-```
-
-**Retry Logic:**
-- Max attempts: 3
-- Exponential backoff: 1s → 2s → 4s
-- Retryable errors: rate_limit, timeout, server_error
-
-**Output Schema:**
-```yaml
-outputs:
-  result:           # Parsed JSON response (if success)
-  success:          # 'true' or 'false'
-  error-message:    # Error details if failed
-  partial-result:   # Parseable content if partial failure
-```
-
-### Error Handling Strategy
-
-**Philosophy:** Capture partial results and surface in PR for human intervention rather than failing completely.
-
-**Error Categories:**
-
-| Category | Examples | Handling |
-|----------|----------|----------|
-| API Failure | Rate limit, timeout, 5xx errors | Retry with exponential backoff (max 3 attempts) |
-| Parse Failure | Malformed JSON, incomplete response | Extract partial content, flag for review |
-| Validation Failure | Missing sections, invalid traceability | Include valid sections, mark missing as errors |
-| Workflow Failure | Git conflicts, permission errors | Fail workflow, alert maintainer |
-
-**Partial Result Pattern:**
-- Set `generationStatus: "partial"` in `sections.json`
-- Include `errors` array with section-specific details
-- Add `needs-manual-review` label to PR
-- Preserve raw Claude output in error details
-
-**Revision Limits:**
-- Maximum 3 automated revision attempts per layer
-- After limit: Add `revision-limit-reached` label, require manual intervention
-
-### Writing Prompts
-
-**System Prompt Requirements (`prompts/system-prompt.md`):**
-- Define role: Security architecture expert specializing in SABSA
-- Specify output format: Valid JSON matching schema
-- List relationship types (implements, derives_from, etc.)
-- Emphasize traceability and framework alignment (NIST, ISO 27001, CIS)
-
-**Layer-Specific Prompt Structure:**
-```markdown
-# Layer {N}: {Layer Name}
-
-## Purpose
-[What this layer achieves in SABSA framework]
-
-## Expected Sections
-[List all section IDs and titles this layer must generate]
-
-## Upstream Context
-[Explain what upstream sections are provided and why]
-
-## Output Schema
-[Define JSON structure with all required fields]
-
-## Generation Instructions
-[Specific guidance for this layer's content]
-```
-
-**Summary Prompt Requirements (`prompts/summary-prompt.md`):**
-- Maximum 150 words
-- Capture core intent
-- List key requirements
-- Note compliance frameworks
-- Third person, present tense
-
-## Common Development Commands
-
-### Testing Workflows Locally (Act)
+### Validate Artifacts
 
 ```bash
-# Install Act (GitHub Actions local runner)
-brew install act
+# Install dependencies first
+npm install
 
-# Test initialize workflow
-act issues -e .github/test-events/new-policy-event.json
+# Validate all layers for a policy
+npm run validate POL-2025-001
 
-# Test generate layer workflow
-act workflow_call -e .github/test-events/generate-layer-event.json
+# Validate specific layer only
+node scripts/validate-artifacts.js POL-2025-001 --layer logical
 
-# Test specific job in workflow
-act -j generate -W .github/workflows/generate-layer.yml
-```
-
-### Validating JSON Schemas
-
-```bash
-# Validate sections.json against schema
-npm install -g ajv-cli
-ajv validate -s schemas/sections.schema.json -d policies/POL-2025-001/contextual/sections.json
-
-# Validate traceability.json against schema
-ajv validate -s schemas/traceability.schema.json -d policies/POL-2025-001/contextual/traceability.json
+# Verbose validation output
+node scripts/validate-artifacts.js POL-2025-001 --verbose
 ```
 
 ### Manual Workflow Triggers
 
 ```bash
-# Trigger initialize workflow (via gh CLI)
+# Initialize a new policy (manual trigger)
 gh workflow run initialize-policy.yml \
   -f policy-title="Customer PII Encryption Policy" \
   -f policy-text="All customer PII must be encrypted..."
 
-# Trigger generate layer workflow
+# Generate specific layer (useful for testing)
 gh workflow run generate-layer.yml \
   -f policy-id="POL-2025-001" \
-  -f layer="contextual"
+  -f layer="logical"
 
 # Check workflow status
 gh run list --workflow=generate-layer.yml --limit 5
 gh run view <run-id> --log
 ```
 
-### Policy Management
+### Local Testing with Act
 
 ```bash
-# List all policies
-ls -d policies/POL-*
+# Install Act (GitHub Actions local runner)
+brew install act
 
-# Check policy status
-cat policies/POL-2025-001/metadata.json | jq '.status, .currentLayer, .layerStatus'
+# Test initialize workflow locally
+act issues -e .github/test-fixtures/new-policy-event.json
 
-# View policy summary
-cat policies/POL-2025-001/summary.md
-
-# Extract specific section content
-cat policies/POL-2025-001/logical/sections.json | jq '.sections["3-1"].content'
-
-# Generate traceability report
-node scripts/generate-traceability-report.js POL-2025-001
+# Test generate layer workflow
+act workflow_call -e .github/test-fixtures/generate-layer-event.json
 ```
 
-## Key Configuration Files
+## Architecture Overview
 
-### `config/layer-dependencies.json`
+### The Six SABSA Layers
 
-Defines which upstream sections each layer receives as context. **Critical for token optimization.**
+| Layer | Prefix | View | Core Question | Primary Output |
+|-------|--------|------|---------------|----------------|
+| **Contextual** | 1-x | Business | What does business need? | Business context, risks, success criteria |
+| **Conceptual** | 2-x | Architect | What security capabilities? | Security objectives, services, principles |
+| **Logical** | 3-x | Designer | What are security rules? | Policies, standards, control specs |
+| **Physical** | 4-x | Builder | How to implement? | Procedures, technical standards |
+| **Component** | 5-x | Tradesman | What tools/configs? | Tool configs, IaC, validation tests |
+| **Operational** | 6-x | Operations | How to maintain? | Runbooks, monitoring, incident response |
 
-Structure:
+### Workflow Execution Flow
+
+```
+GitHub Issue (new-policy label)
+    ↓
+Initialize → Generate Policy ID → Create Folders → Generate Summary → Commit
+    ↓
+Generate Layer 1 (Contextual) → Create PR → Human Review
+    ↓
+[If Approved & Merged] → Cascade to Layer 2
+[If Changes Requested] → Revision Workflow → Regenerate
+    ↓
+Repeat for Layers 2-6
+    ↓
+Finalize → Create Release Tag → Close Issue
+```
+
+## Critical Design Principles
+
+### Context Assembly & Token Optimization
+
+**Key Insight:** Each layer receives ONLY the upstream sections it needs (not full artifacts).
+
+Example Layer Dependencies:
+- **Conceptual** receives: Business Drivers (1-2), Risk Context (1-3), Success Criteria (1-4)
+- **Logical** receives: Security Objectives (2-1), Security Services (2-2), Security Principles (2-3)
+- **Physical** receives: Policies (3-1), Standards (3-2), Control Specs (3-3), Trust Model (2-4)
+
+Configuration file: `config/layer-dependencies.json`
+
+### Naming Conventions
+
+**Policy IDs:** `POL-{YYYY}-{NNN}` (e.g., `POL-2025-001`)
+**Section IDs:** `{policy-id}.{layer}.{section}` (e.g., `POL-2025-001.logical.3-1`)
+**Branch Names:** `policy/{policy-id}/layer-{n}-{layer-name}` (e.g., `policy/POL-2025-001/layer-3-logical`)
+
+### Traceability Relationships
+
+**Only use these five relationship types:**
+
+- `implements` - Directly realizes upstream requirement
+- `derives_from` - Logically follows from upstream element
+- `constrained_by` - Bounded by upstream constraint
+- `refines` - Adds implementation detail to upstream
+- `validates` - Provides verification for upstream element
+
+## Key File Locations
+
+### Configuration Files
+- `config/layer-dependencies.json` - Defines which upstream sections each layer receives
+- `config/layer-sections.json` - Expected output sections per layer
+- `config/relationship-vocabulary.json` - Controlled traceability vocabulary
+
+### Prompt Templates
+- `prompts/system-prompt.md` - Base system prompt for all Claude calls
+- `prompts/summary-prompt.md` - Policy summary generation
+- `prompts/contextual-prompt.md` through `prompts/operational-prompt.md` - Layer-specific prompts
+
+### Workflow Files
+- `.github/workflows/initialize-policy.yml` - Bootstrap new policies from issues
+- `.github/workflows/generate-layer.yml` - Generate SABSA artifacts using Claude
+- `.github/workflows/handle-revision.yml` - Capture feedback and trigger regeneration
+- `.github/workflows/cascade-next-layer.yml` - Auto-trigger next layer on PR merge
+- `.github/workflows/finalize-policy.yml` - Create release and complete workflow
+
+### Schemas
+- `schemas/sections.schema.json` - Validates sections.json structure
+- `schemas/traceability.schema.json` - Validates traceability.json structure
+- `schemas/metadata.schema.json` - Validates metadata.json structure
+
+## Data Model
+
+### Policy Directory Structure
+
+```
+policies/POL-2025-001/
+├── metadata.json              # Policy status, layer progress, PR tracking
+├── summary.md                 # 150-word policy summary
+├── input/
+│   └── policy-statement.md    # Original policy text
+├── contextual/
+│   ├── sections.json          # Layer 1 artifacts with rationale
+│   └── traceability.json      # Upstream references
+├── conceptual/                # Layer 2 artifacts
+├── logical/                   # Layer 3 artifacts
+├── physical/                  # Layer 4 artifacts
+├── component/                 # Layer 5 artifacts
+└── operational/               # Layer 6 artifacts
+```
+
+### sections.json Structure
+
 ```json
 {
-  "layers": {
-    "contextual": {
-      "displayName": "Contextual",
-      "number": 1,
-      "receives": {
-        "summary": true,
-        "sections": []  // First layer, no upstream
-      },
-      "outputs": ["1-1", "1-2", "1-3", "1-4", "1-5"]
-    },
-    "conceptual": {
-      "receives": {
-        "summary": true,
-        "sections": [
-          {"layer": "contextual", "section": "1-2"},  // Business Drivers
-          {"layer": "contextual", "section": "1-3"},  // Risk Context
-          {"layer": "contextual", "section": "1-4"}   // Success Criteria
-        ]
-      }
+  "policyId": "POL-2025-001",
+  "layer": "logical",
+  "version": 1,
+  "generatedAt": "2025-01-16T10:00:00Z",
+  "generationStatus": "complete",
+  "sections": {
+    "3-1": {
+      "title": "Security Policies",
+      "content": "## 3.1 Security Policies\n\n...",
+      "rationale_why": "NIST SP 800-53 SC-28 mandates...",
+      "rationale_condition": "Satisfies Security Objective 2-1..."
     }
+  },
+  "errors": []
+}
+```
+
+### traceability.json Structure
+
+```json
+{
+  "policyId": "POL-2025-001",
+  "layer": "logical",
+  "references": {
+    "3-1": [
+      {
+        "source": "POL-2025-001.conceptual.2-1",
+        "relationship": "implements",
+        "description": "Implements confidentiality objective for PII"
+      }
+    ]
   }
 }
 ```
 
-### `config/layer-sections.json`
+## Development Workflow
 
-Defines expected output structure for each layer (section IDs, titles, descriptions).
+### Creating New Prompts
 
-### `config/relationship-vocabulary.json`
+When modifying layer prompts, ensure they include:
 
-Controlled vocabulary for traceability relationships. **Only use defined relationship types.**
+1. **Purpose** - What this layer achieves in SABSA
+2. **Expected Sections** - All section IDs and titles to generate
+3. **Upstream Context** - What sections are provided and why
+4. **Output Schema** - JSON structure with required fields
+5. **Generation Instructions** - Specific guidance for content
 
-## Environment Variables & Secrets
+### Error Handling Strategy
 
-### Required GitHub Secrets
+The system captures partial results and surfaces them in PRs for human intervention:
 
-| Secret | Purpose | Where Used |
-|--------|---------|-----------|
-| `ANTHROPIC_API_KEY` | Claude API authentication | `.github/actions/call-claude` |
+**Partial Result Example:**
+```json
+{
+  "generationStatus": "partial",
+  "sections": {
+    "3-1": { "content": "...", "rationale_why": "...", "rationale_condition": "..." },
+    "3-2": { "content": null, "rationale_why": null, "rationale_condition": null }
+  },
+  "errors": [
+    {
+      "section": "3-2",
+      "errorType": "parse_failure",
+      "message": "JSON parse error at position 4521"
+    }
+  ]
+}
+```
 
-### Repository Settings
+### Security Hardening
 
-**Branch Protection (main):**
-- ✅ Require pull request reviews before merging
-- ✅ Require status checks to pass
-- ✅ Restrict pushes to GitHub Actions bot only (for workflow commits)
+All workflows follow GitHub security best practices:
 
-**Required Labels:**
-- `new-policy` - Triggers initialize workflow
-- `sabsa-artifact` - Applied to all layer PRs
-- `layer-1` through `layer-6` - Layer identification
-- `needs-manual-review` - Partial generation requiring intervention
-- `revision-limit-reached` - Maximum revisions exceeded
+**❌ NEVER do this (command injection risk):**
+```yaml
+run: echo "${{ github.event.issue.title }}"
+```
+
+**✅ ALWAYS do this (safe):**
+```yaml
+env:
+  TITLE: ${{ github.event.issue.title }}
+run: echo "$TITLE"
+```
 
 ## Testing Strategy
 
-### Unit Testing (Claude Action)
+### Unit Testing (Individual Workflows)
 
-```bash
-cd .github/actions/call-claude
-npm install
-npm test  # Run Jest tests
-
-# Test specific scenarios
-npm test -- --testNamePattern="should handle partial JSON response"
-npm test -- --testNamePattern="should retry on rate limit"
-```
+Test each workflow in isolation using manual triggers or local Act runner.
 
 ### Integration Testing (End-to-End)
 
-1. **Create test policy issue** using `.github/ISSUE_TEMPLATE/new-policy.yml`
-2. **Verify initialization:** Check `policies/POL-YYYY-NNN/` structure created
-3. **Review Layer 1 PR:** Validate sections.json structure, traceability.json correctness
-4. **Test revision flow:** Request changes, verify regeneration with feedback
-5. **Test cascade:** Merge Layer 1, verify Layer 2 PR auto-created
-6. **Complete all layers:** Verify finalize workflow creates release tag
+1. Create test policy issue
+2. Verify initialization creates folder structure
+3. Review Layer 1 PR for valid JSON structure
+4. Test revision flow by requesting changes
+5. Test cascade by merging Layer 1
+6. Complete all 6 layers
+7. Verify finalize creates release tag
 
 ### Sample Test Policy
 
@@ -417,99 +280,99 @@ a hardware security module. Access to encryption keys requires multi-factor
 authentication and must be logged for audit purposes.
 
 Business Context:
-Supports SOC 2 Type II certification and GDPR Article 32 compliance requirements.
+Supports SOC 2 Type II certification and GDPR Article 32 compliance.
 
 Priority: High
 ```
 
-## Implementation Phases
+## Common Issues & Solutions
 
-### Phase 1: Core Workflow (Week 1-2)
-- [ ] Repository structure and config files
-- [ ] Claude composite action (JavaScript)
-- [ ] Initialize workflow (with summary generation)
-- [ ] Generate workflow (single layer, manual trigger)
-- [ ] Basic PR creation
-
-### Phase 2: Review Integration (Week 3)
-- [ ] Cascade workflow (PR merge → next layer)
-- [ ] Revision workflow (parse comments, regenerate)
-- [ ] Issue template for policy input
-- [ ] PR description template (full)
-
-### Phase 3: Completion & Polish (Week 4)
-- [ ] Finalize workflow (release tagging)
-- [ ] Full 6-layer cascade testing
-- [ ] Error handling refinement
-- [ ] Branch protection rules
-- [ ] Documentation and runbook
-
-## Troubleshooting
-
-### Common Issues
-
-**Workflow doesn't trigger on issue creation:**
+### Workflow doesn't trigger on issue creation
 - Check issue has `new-policy` label
-- Verify workflow file syntax: `yamllint .github/workflows/initialize-policy.yml`
+- Verify workflow file syntax with `yamllint`
 - Check workflow permissions in repository settings
 
-**Claude API rate limit errors:**
-- Verify retry logic in `call-claude/index.js` (exponential backoff implemented)
-- Check API key validity: `echo $ANTHROPIC_API_KEY` in workflow logs
-- Increase max retry attempts if persistent
-
-**JSON parse failures in Claude responses:**
-- Check prompt clarity in `prompts/{layer}-prompt.md`
+### JSON parse failures in Claude responses
+- Check prompt clarity in layer-specific prompt files
 - Verify output schema definition in prompt
-- Enable partial result handling in `call-claude/index.js`
+- Enable partial result handling (already implemented)
 
-**Missing traceability references:**
-- Verify upstream sections loaded in `generate-layer.yml` context assembly step
-- Check `config/layer-dependencies.json` for correct section mappings
+### Missing traceability references
+- Verify upstream sections loaded correctly
+- Check `config/layer-dependencies.json` mappings
 - Review Claude prompt includes traceability instructions
 
-**Cascade doesn't trigger after PR merge:**
-- Verify `cascade-next-layer.yml` has correct branch pattern filter: `policy/*/layer-*`
+### Cascade doesn't trigger after PR merge
+- Verify branch matches pattern `policy/*/layer-*`
 - Check PR was merged to `main` (not closed without merge)
 - Review workflow permissions allow triggering other workflows
 
-### Debugging Workflow Runs
+## Compliance Validation (v1.1)
 
-```bash
-# View workflow run logs
-gh run view <run-id> --log
+**New Feature:** Layer 5 (Component) generates hybrid compliance validation specifications.
 
-# Download workflow artifacts
-gh run download <run-id>
+### Validation Check Types
 
-# Debug specific job
-gh run view <run-id> --job=<job-id> --log
+**Automated Checks:**
+- **Wiz Policies** - WizQL queries to detect non-compliant resources
+- **ICS Checks** - Cloud security posture checks (AWS/GCP/Azure)
 
-# Re-run failed workflow
-gh run rerun <run-id>
+**Manual Checks:**
+- **JIRA Tickets** - Evidence collection specifications
+- **Evidence Requirements** - File formats, frequency, responsible owners
+
+### Example Generated Check
+
+```json
+{
+  "checkId": "ENC-AWS-001",
+  "requirement": "All RDS instances must use KMS encryption",
+  "validationType": "automated",
+  "wizPolicy": {
+    "policyName": "RDS KMS Encryption Required",
+    "query": "cloudResource where type='AWS RDS Instance' and encryptionEnabled=false",
+    "severity": "HIGH"
+  }
+}
 ```
 
-### Validating Generated Artifacts
+## Repository Settings Required
 
-```bash
-# Validate all sections present
-jq '.sections | keys' policies/POL-2025-001/logical/sections.json
+### GitHub Secrets
+- `ANTHROPIC_API_KEY` - Claude API authentication
 
-# Check for partial generation
-jq '.generationStatus, .errors' policies/POL-2025-001/logical/sections.json
+### Labels
+- `new-policy` - Triggers initialize workflow
+- `sabsa-artifact` - Applied to all layer PRs
+- `layer-1` through `layer-6` - Layer identification
+- `needs-manual-review` - Partial generation requiring intervention
+- `revision-limit-reached` - Maximum revisions exceeded (3 per layer)
 
-# Verify traceability completeness
-jq '.references | to_entries | map(select(.value | length == 0))' \
-  policies/POL-2025-001/logical/traceability.json
-```
+### Branch Protection (main)
+- Require pull request reviews before merging
+- Require status checks to pass
+- Restrict pushes to GitHub Actions bot for workflow commits
 
 ## Documentation Reference
 
-- **Product Requirements Document:** `SABSA-AGENTIC-POLICY-WORKFLOW-PRD.md` (complete specification)
-- **Workflow Diagrams:** See PRD Section 7.1
-- **Data Model Schemas:** See PRD Section 6
-- **Prompt Templates:** See PRD Appendix A
-- **JSON Schemas:** See PRD Appendix B
+- **PRD:** `SABSA-AGENTIC-POLICY-WORKFLOW-PRD.md` - Complete product specification
+- **README:** `README.md` - Quick start and overview
+- **Workflow Report:** `WORKFLOW_IMPLEMENTATION_REPORT.md` - Implementation details
+- **Setup Guide:** `SETUP_COMPLETE.md` - Initial setup documentation
+- **Schema Guide:** `schemas/README.md` - Schema documentation
+- **Contributing:** `CONTRIBUTING.md` - Contribution guidelines
+
+## Performance Characteristics
+
+### Per-Layer Timing
+- **Generation:** 1-3 minutes (Claude API + PR creation)
+- **Human Review:** 30-60 minutes (variable)
+- **Revision:** 1-3 minutes (if needed)
+
+### Complete Policy Cycle
+- **Best Case (no revisions):** 3-6 hours (mostly review time)
+- **With Revisions:** 4-8 hours (1 revision per layer)
+- **Active Automation Time:** ~20-30 minutes total
 
 ## Key Success Metrics
 

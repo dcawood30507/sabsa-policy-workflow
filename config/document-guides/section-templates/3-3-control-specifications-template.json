@@ -1,0 +1,132 @@
+{
+  "sectionId": "3-3",
+  "layerId": "logical",
+  "templateVersion": "1.0.0",
+  "title": "Logical Control Specifications",
+  "purpose": "Defines detailed security control requirements mapped to compliance frameworks, specifying preventive, detective, and corrective controls with effectiveness criteria",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish the relationship between security objectives, policies, and control specifications",
+      "elements": ["control_purpose", "control_categories", "framework_mapping_approach"],
+      "wordCount": {"min": 75, "max": 125},
+      "example": "This section specifies logical security controls that implement the security policies defined in Section 3-1 and align with security objectives from the Conceptual layer (Section 2-1). Controls are organized into preventive (stop security incidents before they occur), detective (identify security incidents during or after occurrence), and corrective (remediate security incidents after detection). All controls are mapped to relevant compliance framework controls including NIST SP 800-53 Rev 5, ISO 27001:2022, CIS Controls v8, and PCI DSS 4.0 to demonstrate regulatory compliance."
+    },
+    "preventiveControls": {
+      "purpose": "Define controls that prevent security incidents from occurring",
+      "elements": ["encryption_controls", "access_control_mechanisms", "input_validation_controls", "secure_configuration_controls"],
+      "wordCount": {"min": 150, "max": 250},
+      "guidingQuestions": [
+        "What controls prevent unauthorized access to encrypted data?",
+        "What controls prevent unauthorized cryptographic operations?",
+        "What controls prevent weak cryptography from being deployed?",
+        "How do preventive controls map to security objectives and framework controls?"
+      ],
+      "example": "**PC-1: Data-at-Rest Encryption Control** - All customer PII SHALL be encrypted using AES-256-GCM before storage in databases, file systems, or backup media. **Control Objective**: Prevent unauthorized access to customer PII through physical media theft or unauthorized database access (aligns with Security Objective SO-1: Data Confidentiality). **Effectiveness Criteria**: 100% of customer PII records encrypted, validated through automated scanning. **Framework Mapping**: NIST SP 800-53 SC-28 (Protection of Information at Rest), ISO 27001 A.8.24 (Use of cryptography), PCI DSS 3.5.1 (Cryptographic key management). **PC-2: Multi-Factor Authentication Control** - MFA SHALL be required for all access to encryption key management systems, production databases containing customer PII, and administrative functions. **Control Objective**: Prevent unauthorized access through compromised credentials (aligns with Security Objective SO-3: Access Control). **Effectiveness Criteria**: Zero successful authentications to key management systems without valid MFA token. **Framework Mapping**: NIST SP 800-53 IA-2(1) (MFA for privileged access), ISO 27001 A.5.15 (Access control), PCI DSS 8.3 (MFA for personnel with administrative access)."
+    },
+    "detectiveControls": {
+      "purpose": "Define controls that detect security incidents during or after occurrence",
+      "elements": ["logging_controls", "monitoring_controls", "anomaly_detection_controls", "integrity_verification_controls"],
+      "wordCount": {"min": 150, "max": 250},
+      "guidingQuestions": [
+        "What controls detect unauthorized access attempts?",
+        "What controls detect cryptographic key compromise?",
+        "What controls detect policy violations?",
+        "How quickly must security incidents be detected?"
+      ],
+      "example": "**DC-1: Cryptographic Operation Logging Control** - All cryptographic operations (key generation, rotation, access, usage, deletion) SHALL be logged with immutable audit trail including timestamp, principal identity, operation type, resource identifier, and outcome. **Control Objective**: Detect unauthorized or anomalous cryptographic operations for forensic investigation (aligns with Security Objective SO-4: Audit and Accountability). **Effectiveness Criteria**: 100% of cryptographic operations logged within 1 second, logs tamper-evident, log completeness validated daily. **Detection Timeframe**: Real-time (sub-second) for critical operations. **Framework Mapping**: NIST SP 800-53 AU-2 (Event Logging), AU-9 (Protection of Audit Information), ISO 27001 A.5.28 (Collection of evidence), PCI DSS 10.2 (Audit trail for security events). **DC-2: Key Access Anomaly Detection Control** - Machine learning-based anomaly detection SHALL monitor key access patterns and alert on statistical deviations (unusual access times, frequency, geographic location, or requesting principals). **Control Objective**: Detect potential key compromise or insider threat activity. **Effectiveness Criteria**: Anomaly detection sensitivity ≥95% with false positive rate ≤2%. **Detection Timeframe**: Within 5 minutes of anomalous access. **Framework Mapping**: NIST SP 800-53 AU-6 (Audit Review and Analysis), ISO 27001 A.5.25 (Security assessment)."
+    },
+    "correctiveControls": {
+      "purpose": "Define controls that remediate security incidents after detection",
+      "elements": ["incident_response_controls", "key_revocation_controls", "automated_remediation_controls", "recovery_controls"],
+      "wordCount": {"min": 125, "max": 200},
+      "guidingQuestions": [
+        "What controls remediate detected security incidents?",
+        "What controls respond to key compromise?",
+        "What automated remediation capabilities are required?",
+        "How quickly must incidents be contained and resolved?"
+      ],
+      "example": "**CC-1: Emergency Key Rotation Control** - Upon detection of potential key compromise (anomalous access, failed integrity checks, security incident), encryption keys SHALL be automatically rotated within 4 hours with notification to security operations and data protection officer. **Control Objective**: Limit exposure window for potentially compromised keys (aligns with Security Objective SO-2: Data Integrity). **Effectiveness Criteria**: Key rotation completes within 4-hour SLA in 99.9% of incidents, zero data loss during rotation. **Framework Mapping**: NIST SP 800-53 IR-4 (Incident Handling), IR-5 (Incident Monitoring), ISO 27001 A.5.24 (Incident response planning). **CC-2: Access Revocation Control** - Suspected compromised credentials SHALL be automatically revoked within 15 minutes of detection with session termination and re-authentication requirement. **Control Objective**: Prevent continued unauthorized access using compromised credentials. **Effectiveness Criteria**: Credential revocation completes within 15-minute SLA, all active sessions terminated. **Framework Mapping**: NIST SP 800-53 AC-2(4) (Automated account actions), ISO 27001 A.5.16 (Identity management)."
+    },
+    "complianceFrameworkMapping": {
+      "purpose": "Provide comprehensive mapping of controls to compliance framework requirements",
+      "elements": ["nist_mapping", "iso_mapping", "cis_mapping", "pci_mapping", "gdpr_mapping"],
+      "wordCount": {"min": 150, "max": 250},
+      "guidingQuestions": [
+        "How do controls satisfy NIST SP 800-53 requirements?",
+        "How do controls satisfy ISO 27001 requirements?",
+        "How do controls satisfy CIS Controls requirements?",
+        "How do controls demonstrate regulatory compliance?"
+      ],
+      "example": "**NIST SP 800-53 Rev 5 Mapping**: Controls PC-1, PC-2, DC-1, DC-2, CC-1, CC-2 collectively satisfy SC-28 (Protection of Information at Rest), SC-8 (Transmission Confidentiality), AC-3 (Access Enforcement), IA-2 (Identification and Authentication), AU-2 (Event Logging), AU-6 (Audit Review), AU-9 (Protection of Audit Information), IR-4 (Incident Handling), IR-5 (Incident Monitoring). **ISO 27001:2022 Mapping**: Controls satisfy A.8.24 (Use of cryptography), A.5.15 (Access control), A.5.16 (Identity management), A.5.17 (Authentication information), A.5.24 (Incident response planning), A.5.25 (Security assessment), A.5.28 (Collection of evidence). **CIS Controls v8 Mapping**: Controls satisfy 3.11 (Encrypt sensitive data at rest), 3.12 (Encrypt sensitive data in transit), 6.5 (Multi-factor authentication for privileged access), 8.2 (Collect audit logs), 8.11 (Conduct audit log reviews), 17.1 (Incident response plan). **PCI DSS 4.0 Mapping**: Controls satisfy Requirement 3.5.1 (Cryptographic keys secured), Requirement 8.3 (MFA for administrative access), Requirement 10.2 (Audit logs for security events), Requirement 12.10.1 (Incident response plan)."
+    },
+    "controlEffectivenessMetrics": {
+      "purpose": "Define how control effectiveness will be measured and validated",
+      "elements": ["coverage_metrics", "performance_metrics", "compliance_metrics", "validation_methods"],
+      "wordCount": {"min": 100, "max": 175},
+      "guidingQuestions": [
+        "How will control coverage be measured?",
+        "What performance indicators demonstrate control effectiveness?",
+        "How will compliance be validated?",
+        "What are the acceptable thresholds for control effectiveness?"
+      ],
+      "example": "**Coverage Metrics**: Encryption Coverage = (Encrypted Customer PII Records / Total Customer PII Records) × 100% - Target: 100%, Minimum Acceptable: 99.5%. MFA Coverage = (Key Management Operations Requiring MFA / Total Key Management Operations) × 100% - Target: 100%, Minimum Acceptable: 100% (no exceptions). **Performance Metrics**: Log Completeness = (Logged Cryptographic Operations / Total Cryptographic Operations) × 100% - Target: 100%, Minimum Acceptable: 99.95%. Detection Latency = Time from incident occurrence to detection alert - Target: <5 minutes, Maximum Acceptable: 15 minutes. Remediation SLA = Time from detection to incident containment - Target: <4 hours, Maximum Acceptable: 8 hours. **Validation Methods**: Automated scanning (daily), manual audit reviews (quarterly), third-party assessments (annually), continuous monitoring dashboards (real-time)."
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST SP 800-53 Rev 5",
+      "controls": ["SC-28 (Protection of Information at Rest)", "SC-8 (Transmission Confidentiality)", "AC-3 (Access Enforcement)", "IA-2 (Identification and Authentication)", "AU-2 (Event Logging)", "AU-6 (Audit Review)", "AU-9 (Protection of Audit Information)", "IR-4 (Incident Handling)", "IR-5 (Incident Monitoring)"],
+      "relevance": "Federal information security control framework"
+    },
+    {
+      "framework": "ISO 27001:2022",
+      "controls": ["A.8.24 (Use of cryptography)", "A.5.15 (Access control)", "A.5.16 (Identity management)", "A.5.17 (Authentication information)", "A.5.24 (Incident response planning)", "A.5.25 (Security assessment)", "A.5.28 (Collection of evidence)"],
+      "relevance": "International information security management controls"
+    },
+    {
+      "framework": "CIS Controls v8",
+      "controls": ["3.11 (Encrypt sensitive data at rest)", "3.12 (Encrypt sensitive data in transit)", "6.5 (MFA for privileged access)", "8.2 (Collect audit logs)", "8.11 (Conduct audit log reviews)", "17.1 (Incident response plan)"],
+      "relevance": "Industry consensus security best practices"
+    },
+    {
+      "framework": "PCI DSS 4.0",
+      "controls": ["Requirement 3.5.1 (Cryptographic keys)", "Requirement 8.3 (MFA)", "Requirement 10.2 (Audit logs)", "Requirement 12.10.1 (Incident response)"],
+      "relevance": "Payment card industry security standards"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All five structural elements present (introduction, preventive controls, detective controls, corrective controls, framework mapping, effectiveness metrics)",
+      "Minimum word count met for each element",
+      "All guiding questions addressed with specific control specifications",
+      "Minimum 6 controls defined (2 preventive, 2 detective, 2 corrective)"
+    ],
+    "controlStructure": [
+      "Each control has unique identifier (PC-1, DC-1, CC-1 format)",
+      "Each control specifies control objective aligned to security objectives",
+      "Each control defines effectiveness criteria with measurable thresholds",
+      "Each control maps to minimum 2 compliance framework controls",
+      "Each control specifies detection/response timeframes where applicable"
+    ],
+    "traceability": [
+      "References minimum 2 Conceptual layer security objectives (Section 2-1)",
+      "References Security Policies (Section 3-1)",
+      "Cites minimum 4 compliance framework families (NIST, ISO, CIS, PCI or GDPR)",
+      "Rationale explains HOW controls implement security objectives and policies"
+    ],
+    "frameworkAlignment": [
+      "Each control maps to specific framework control identifiers",
+      "Framework citations use full control IDs (e.g., NIST SP 800-53 SC-28, not just SC-28)",
+      "Compliance mapping section provides comprehensive cross-reference matrix",
+      "Framework mappings demonstrate how control set satisfies regulatory requirements"
+    ]
+  },
+  "commonPitfalls": [
+    "Defining too many low-level controls (focus on major control families)",
+    "Omitting control effectiveness criteria or using non-measurable criteria",
+    "Failing to map controls to compliance frameworks",
+    "Missing traceability to upstream security objectives",
+    "Including implementation details (specific products/tools) rather than control specifications",
+    "Not distinguishing between preventive, detective, and corrective control types"
+  ]
+}

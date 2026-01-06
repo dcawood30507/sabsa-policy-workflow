@@ -1,0 +1,133 @@
+{
+  "sectionId": "3-2",
+  "layerId": "logical",
+  "templateVersion": "1.0.0",
+  "title": "Security Standards",
+  "purpose": "Defines technical security standards and baselines that specify mandatory technical requirements (algorithms, key lengths, protocols, configurations) to implement security policies",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish the relationship between policies and technical standards",
+      "elements": ["standards_purpose", "standards_scope", "policy_alignment"],
+      "wordCount": {"min": 75, "max": 125},
+      "example": "This section establishes technical security standards that operationalize the security policies defined in Section 3-1. These standards specify mandatory technical requirements including cryptographic algorithms, key lengths, protocol versions, and configuration baselines. All technical implementations SHALL comply with these standards to ensure consistent security posture across the organization. Standards are based on NIST SP 800-175B cryptographic recommendations, FIPS 140-2 validation requirements, and industry best practices."
+    },
+    "cryptographicStandards": {
+      "purpose": "Define mandatory cryptographic algorithm and key length requirements",
+      "elements": ["symmetric_algorithms", "asymmetric_algorithms", "hashing_algorithms", "key_lengths"],
+      "wordCount": {"min": 150, "max": 250},
+      "guidingQuestions": [
+        "What cryptographic algorithms are approved for use?",
+        "What minimum key lengths are required?",
+        "What algorithms are explicitly forbidden?",
+        "How do standards align with FIPS 140-2 and NIST recommendations?"
+      ],
+      "example": "**Symmetric Encryption**: AES-256-GCM (Galois/Counter Mode) SHALL be used for all data-at-rest encryption. AES-128 or lower key lengths SHALL NOT be used. ChaCha20-Poly1305 MAY be used for mobile/IoT applications where AES hardware acceleration is unavailable. **Asymmetric Encryption**: RSA-4096 or higher SHALL be used for key exchange and digital signatures. RSA key lengths below 2048 bits SHALL NOT be used. Elliptic Curve Cryptography (ECC) using NIST P-384 or P-521 curves MAY be used as an alternative to RSA. **Hashing**: SHA-256 or SHA-3 SHALL be used for integrity verification. MD5 and SHA-1 SHALL NOT be used for any security-critical purpose. **Rationale**: Standards align with NIST SP 800-175B recommendations and provide minimum 128-bit security strength through 2030."
+    },
+    "keyManagementStandards": {
+      "purpose": "Define technical standards for encryption key lifecycle management",
+      "elements": ["key_generation_standards", "key_storage_standards", "key_rotation_standards", "key_destruction_standards"],
+      "wordCount": {"min": 125, "max": 200},
+      "guidingQuestions": [
+        "What are the technical requirements for key generation?",
+        "What key storage mechanisms are approved?",
+        "What are the specific key rotation intervals?",
+        "How SHALL keys be cryptographically destroyed?"
+      ],
+      "example": "**Key Generation**: Encryption keys SHALL be generated using FIPS 140-2 Annex C approved random number generators with minimum 256-bit entropy. Key generation SHALL occur exclusively within FIPS 140-2 Level 2 or higher validated Hardware Security Modules (HSMs). **Key Storage**: Master keys SHALL be stored in FIPS 140-2 Level 3 validated HSMs with tamper-evident controls. Data encryption keys SHALL be encrypted (wrapped) using master keys before storage. Plaintext encryption keys SHALL NOT be stored in configuration files, environment variables, or application code. **Key Rotation**: Data encryption keys SHALL be rotated every 90 days. Master keys SHALL be rotated annually. Key rotation SHALL use cryptographic key derivation functions (KDFs) to ensure forward secrecy. **Key Destruction**: Key destruction SHALL use NIST SP 800-88 cryptographic erasure methods (minimum 3-pass overwrite with cryptographic verification)."
+    },
+    "protocolStandards": {
+      "purpose": "Define mandatory protocol versions and cipher suite requirements",
+      "elements": ["tls_standards", "ssh_standards", "api_security_standards"],
+      "wordCount": {"min": 125, "max": 200},
+      "guidingQuestions": [
+        "What protocol versions are required for data in transit?",
+        "What cipher suites are approved/forbidden?",
+        "What are the TLS/SSH configuration requirements?",
+        "How are secure API communications enforced?"
+      ],
+      "example": "**TLS Standards**: TLS 1.2 or TLS 1.3 SHALL be used for all data in transit. TLS 1.0 and 1.1 SHALL NOT be used. **Approved Cipher Suites**: TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384. **Forbidden Cipher Suites**: All cipher suites using RC4, DES, 3DES, MD5, or non-forward-secret key exchange (RSA key transport). **SSH Standards**: SSH Protocol 2 with Ed25519 or RSA-4096 keys. SSH Protocol 1 SHALL NOT be used. **API Security**: API endpoints SHALL use mutual TLS (mTLS) authentication with client certificate validation. API tokens SHALL use HMAC-SHA256 signatures with 512-bit secret keys."
+    },
+    "loggingAndAuditStandards": {
+      "purpose": "Define technical requirements for security logging and audit trails",
+      "elements": ["log_content_standards", "log_protection_standards", "log_retention_standards", "timestamp_standards"],
+      "wordCount": {"min": 100, "max": 175},
+      "guidingQuestions": [
+        "What information SHALL be included in security logs?",
+        "How SHALL audit logs be protected from tampering?",
+        "What are the technical retention requirements?",
+        "What timestamp and clock synchronization standards apply?"
+      ],
+      "example": "**Log Content Standards**: Security event logs SHALL include timestamp (ISO 8601 format with timezone), event type, user/service principal identifier, source IP address, resource identifier, operation performed, success/failure status, and error codes for failures. **Log Protection**: Audit logs SHALL be digitally signed using SHA-256 HMAC with per-log-entry signatures to ensure tamper-evidence. Logs SHALL be written to immutable storage (append-only, WORM) or cryptographically sealed using merkle tree commitments. **Timestamp Standards**: All systems SHALL synchronize time using NTP with authenticated time sources (stratum 1 or 2). Clock skew SHALL NOT exceed ±5 seconds. **Retention**: Security logs SHALL be retained for 7 years with first 90 days in hot storage (sub-second query), 91 days to 2 years in warm storage (minute-scale query), 2-7 years in cold archive (batch retrieval)."
+    },
+    "configurationBaselines": {
+      "purpose": "Define secure configuration baselines and hardening standards",
+      "elements": ["encryption_service_baselines", "authentication_baselines", "network_security_baselines"],
+      "wordCount": {"min": 100, "max": 175},
+      "guidingQuestions": [
+        "What are the minimum secure configuration requirements?",
+        "What hardening standards apply to encryption services?",
+        "What baseline configurations are mandatory?",
+        "How are configuration deviations detected and remediated?"
+      ],
+      "example": "**KMS Configuration Baseline**: AWS KMS keys SHALL use customer-managed keys (CMK) with automatic rotation enabled (365-day interval). Key policies SHALL implement least-privilege access with explicit deny for deletion without MFA. All KMS API calls SHALL be logged to CloudTrail with S3 object-lock enabled log destinations. **HSM Configuration Baseline**: CloudHSM clusters SHALL use minimum 2 HSMs across 2 availability zones. HSM backup SHALL occur daily with backup keys stored in geographically separate HSM cluster. **Authentication Baseline**: MFA SHALL use TOTP (Time-based One-Time Password) with 30-second intervals and SHA-256 hash function. Backup codes SHALL use cryptographically random 128-bit values. **Compliance Validation**: Configuration drift SHALL be detected within 15 minutes using AWS Config rules or equivalent policy-as-code validation."
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST SP 800-175B",
+      "controls": ["Cryptographic Algorithm and Key Length Recommendations"],
+      "relevance": "Federal cryptographic algorithm standards and recommendations"
+    },
+    {
+      "framework": "NIST SP 800-52 Rev 2",
+      "controls": ["Guidelines for TLS Implementations"],
+      "relevance": "TLS configuration and cipher suite standards"
+    },
+    {
+      "framework": "FIPS 140-2",
+      "controls": ["Security Requirements for Cryptographic Modules", "Annex C (Approved Random Number Generators)"],
+      "relevance": "HSM validation and key generation requirements"
+    },
+    {
+      "framework": "PCI DSS 4.0",
+      "controls": ["Requirement 3.5.1 (Cryptographic key strength)", "Requirement 4.2.1 (Strong cryptography for data transmission)"],
+      "relevance": "Payment industry cryptographic standards"
+    },
+    {
+      "framework": "NIST SP 800-88 Rev 1",
+      "controls": ["Guidelines for Media Sanitization"],
+      "relevance": "Cryptographic key destruction standards"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All five structural elements present (introduction, cryptographic standards, key management, protocols, logging, configuration baselines)",
+      "Minimum word count met for each element",
+      "All guiding questions addressed with specific technical requirements"
+    ],
+    "technicalPrecision": [
+      "Algorithm names use full technical names (AES-256-GCM, not just 'AES')",
+      "Key lengths specified numerically (RSA-4096, not 'strong RSA')",
+      "Protocol versions specified explicitly (TLS 1.2 or 1.3, not 'latest TLS')",
+      "Cipher suites listed with full IANA names",
+      "Configuration parameters quantified (rotation intervals in days, retention periods in years)"
+    ],
+    "traceability": [
+      "References minimum 2 Conceptual layer sections (typically 2-2, 2-3)",
+      "Cites minimum 3 technical standards (NIST SP 800-175B, FIPS 140-2, etc.)",
+      "Rationale explains HOW standards implement security policies and objectives"
+    ],
+    "implementationIndependence": [
+      "Standards avoid vendor-specific product names (use 'HSM' not 'AWS CloudHSM')",
+      "Technology-agnostic where possible (specify requirements, not products)",
+      "Cloud provider references allowed only for illustrative examples"
+    ]
+  },
+  "commonPitfalls": [
+    "Specifying outdated cryptographic algorithms (DES, MD5, SHA-1 for security)",
+    "Using vague terms ('strong encryption', 'secure protocols') instead of specific standards",
+    "Mixing standards and implementation details (standards define WHAT, not vendor-specific HOW)",
+    "Omitting rationale for why specific key lengths or algorithms are chosen",
+    "Failing to cite authoritative technical standards (NIST, FIPS, IETF RFCs)"
+  ]
+}

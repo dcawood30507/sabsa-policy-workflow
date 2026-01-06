@@ -1,0 +1,327 @@
+{
+  "layerId": "conceptual",
+  "layerName": "Conceptual",
+  "layerNumber": 2,
+  "version": "1.0.0",
+  "purpose": "Defines security architecture from the architect's perspective, establishing objectives, services, principles, trust models, and security domains - technology-agnostic but security-focused",
+  "formatting": {
+    "fonts": {
+      "headings": {
+        "family": "Arial",
+        "sizes": {
+          "h1": 18,
+          "h2": 14,
+          "h3": 12
+        }
+      },
+      "body": {
+        "family": "Calibri",
+        "size": 11
+      },
+      "code": {
+        "family": "Courier New",
+        "size": 10
+      }
+    },
+    "colors": {
+      "primary": "#1E3A8A",
+      "accent": "#10B981",
+      "headings": {
+        "h1": "#1E3A8A",
+        "h2": "#059669",
+        "h3": "#047857"
+      }
+    },
+    "spacing": {
+      "paragraphBefore": 6,
+      "paragraphAfter": 6,
+      "lineSpacing": 1.15
+    }
+  },
+  "sections": {
+    "2-1": {
+      "id": "2-1",
+      "title": "Security Objectives",
+      "layout": {
+        "structure": [
+          "introduction",
+          "primary_objectives",
+          "supporting_objectives",
+          "success_measurement"
+        ],
+        "requiredElements": [
+          "objectiveStatements",
+          "prioritization",
+          "traceabilityToBusinessDrivers"
+        ],
+        "optionalElements": [
+          "objectiveHierarchy",
+          "interdependencies"
+        ]
+      },
+      "contentGuidelines": {
+        "tone": "architectural, principles-based, security-focused but non-technical",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {
+          "min": 400,
+          "max": 900
+        },
+        "requiredTopics": [
+          "What must the security architecture achieve?",
+          "How do objectives map to business drivers?",
+          "What are the priorities among objectives?",
+          "How will objective achievement be measured?"
+        ],
+        "examples": [
+          "**Data Confidentiality**: Ensure customer PII remains confidential through cryptographic protection...",
+          "**Key Security**: Protect encryption keys from unauthorized access through isolation and access controls...",
+          "These objectives implement Business Drivers (1-2) requirement for SOC 2 CC6.1 compliance..."
+        ]
+      }
+    },
+    "2-2": {
+      "id": "2-2",
+      "title": "Security Services",
+      "layout": {
+        "structure": [
+          "introduction",
+          "confidentiality_services",
+          "integrity_services",
+          "availability_services",
+          "accountability_services"
+        ],
+        "requiredElements": [
+          "serviceDefinitions",
+          "serviceLevelExpectations",
+          "capabilityRequirements"
+        ],
+        "optionalElements": [
+          "serviceInteractions",
+          "serviceDependencies"
+        ]
+      },
+      "contentGuidelines": {
+        "tone": "capability-focused, service-oriented, technology-agnostic",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {
+          "min": 450,
+          "max": 950
+        },
+        "requiredTopics": [
+          "What security services (confidentiality, integrity, availability) are required?",
+          "What capabilities must each service provide?",
+          "How do services support security objectives?",
+          "What are the service level expectations?"
+        ],
+        "examples": [
+          "**Cryptographic Services**: Provide strong encryption capabilities for data at rest and in transit...",
+          "**Key Management Services**: Secure generation, storage, rotation, and destruction of cryptographic keys...",
+          "**Audit Services**: Comprehensive logging and monitoring of all cryptographic operations..."
+        ]
+      }
+    },
+    "2-3": {
+      "id": "2-3",
+      "title": "Security Principles",
+      "layout": {
+        "structure": [
+          "introduction",
+          "fundamental_principles",
+          "design_principles",
+          "operational_principles"
+        ],
+        "requiredElements": [
+          "principleStatements",
+          "principleRationale",
+          "applicationGuidance"
+        ],
+        "optionalElements": [
+          "principleExamples",
+          "conflictResolution"
+        ]
+      },
+      "contentGuidelines": {
+        "tone": "prescriptive, authoritative, principle-based",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {
+          "min": 400,
+          "max": 900
+        },
+        "requiredTopics": [
+          "What guiding principles govern security design decisions?",
+          "How do principles ensure alignment with objectives?",
+          "What trade-offs do principles require?",
+          "How should conflicting principles be resolved?"
+        ],
+        "examples": [
+          "**Defense in Depth**: Implement multiple layers of security controls...",
+          "**Least Privilege**: Grant minimum necessary permissions for cryptographic operations...",
+          "**Zero Trust Architecture**: Verify explicitly, use least privilege access, assume breach..."
+        ]
+      }
+    },
+    "2-4": {
+      "id": "2-4",
+      "title": "Trust Model",
+      "layout": {
+        "structure": [
+          "introduction",
+          "trust_boundaries",
+          "trust_relationships",
+          "trust_verification"
+        ],
+        "requiredElements": [
+          "boundaryDefinitions",
+          "trustAssumptions",
+          "verificationMechanisms"
+        ],
+        "optionalElements": [
+          "trustDiagrams",
+          "trustLevelDefinitions"
+        ]
+      },
+      "contentGuidelines": {
+        "tone": "analytical, boundary-focused, trust-centric",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {
+          "min": 400,
+          "max": 850
+        },
+        "requiredTopics": [
+          "Where are the trust boundaries?",
+          "What are the trust relationships between domains?",
+          "What trust assumptions underpin the architecture?",
+          "How is trust verified and maintained?"
+        ],
+        "examples": [
+          "**Cryptographic Boundary**: Separate trusted cryptographic operations from untrusted data processing...",
+          "**Key Management Domain**: Hardware security module as root of trust for all encryption keys...",
+          "**Zero Trust Principles**: No implicit trust based on network location or device ownership..."
+        ]
+      }
+    },
+    "2-5": {
+      "id": "2-5",
+      "title": "Security Domains",
+      "layout": {
+        "structure": [
+          "introduction",
+          "domain_definitions",
+          "domain_boundaries",
+          "inter_domain_controls"
+        ],
+        "requiredElements": [
+          "domainCategorization",
+          "boundaryEnforcement",
+          "crossDomainPolicies"
+        ],
+        "optionalElements": [
+          "domainDiagrams",
+          "domainHierarchy"
+        ]
+      },
+      "contentGuidelines": {
+        "tone": "architectural, segmentation-focused, domain-oriented",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {
+          "min": 400,
+          "max": 850
+        },
+        "requiredTopics": [
+          "How are assets logically grouped into security domains?",
+          "What controls enforce domain boundaries?",
+          "What cross-domain interactions are permitted?",
+          "How do domains align with trust boundaries?"
+        ],
+        "examples": [
+          "**Production Data Domain**: Contains all customer PII with strongest encryption requirements...",
+          "**Key Management Domain**: Isolated HSM infrastructure with restricted access...",
+          "**Non-Production Domain**: Development/staging environments with relaxed controls but no production PII..."
+        ]
+      }
+    }
+  },
+  "contentQuality": {
+    "traceability": {
+      "upstreamReferences": {
+        "required": true,
+        "minimumCount": 2,
+        "format": "Section references must use format: {policy-id}.contextual.{section} (e.g., POL-2025-001.contextual.1-2)"
+      }
+    },
+    "frameworkAlignment": {
+      "required": [
+        "NIST CSF",
+        "ISO 27001"
+      ],
+      "optional": [
+        "SABSA",
+        "TOGAF",
+        "Zero Trust Architecture",
+        "CIS Controls",
+        "NIST SP 800-53"
+      ],
+      "citationFormat": "Framework Name + Control ID (e.g., NIST CSF PR.DS-1, ISO 27001 A.9.1.1, NIST SP 800-53 SC-28)"
+    },
+    "technicalDepth": {
+      "level": "conceptual",
+      "avoidance": [
+        "vendor names",
+        "specific products",
+        "implementation technologies",
+        "code or configurations"
+      ],
+      "inclusion": [
+        "architectural patterns",
+        "security principles",
+        "capability requirements",
+        "service definitions",
+        "trust models",
+        "domain concepts"
+      ]
+    }
+  },
+  "validation": {
+    "structure": {
+      "requiredSections": [
+        "2-1",
+        "2-2",
+        "2-3",
+        "2-4",
+        "2-5"
+      ],
+      "sectionOrder": "sequential",
+      "allowSkip": false
+    },
+    "content": {
+      "checks": [
+        {
+          "type": "wordCount",
+          "min": 400,
+          "max": 950,
+          "appliesTo": "each section"
+        },
+        {
+          "type": "traceability",
+          "minReferences": 2,
+          "appliesTo": "sections 2-1, 2-2, 2-3"
+        },
+        {
+          "type": "framework",
+          "minCitations": 2,
+          "appliesTo": "all sections"
+        }
+      ]
+    },
+    "rationale": {
+      "required": true,
+      "minLength": 100,
+      "purpose": "Explain WHY this architectural decision supports security objectives using framework citations and upstream requirements"
+    }
+  }
+}

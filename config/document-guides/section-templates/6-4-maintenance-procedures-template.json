@@ -1,0 +1,176 @@
+{
+  "sectionId": "6-4",
+  "layerId": "operational",
+  "templateVersion": "1.0.0",
+  "title": "Maintenance Procedures",
+  "purpose": "Defines scheduled, preventive, and corrective maintenance procedures for encryption infrastructure from the operations perspective",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish maintenance strategy and scheduling framework",
+      "elements": ["maintenance_overview", "maintenance_categories", "scheduling_approach"],
+      "wordCount": {"min": 50, "max": 100},
+      "example": "This section establishes **maintenance procedures** for AWS KMS encryption infrastructure, encompassing scheduled maintenance (routine tasks at defined intervals), preventive maintenance (proactive measures to prevent failures), and corrective maintenance (remediation of identified issues). Maintenance windows are scheduled during low-traffic periods (Sunday 2-6 AM UTC) with advance notification to stakeholders. All maintenance activities include pre-flight checks, execution steps, verification procedures, and rollback plans."
+    },
+    "dailyMaintenance": {
+      "purpose": "Define daily operational maintenance tasks",
+      "elements": ["daily_checks", "automated_tasks", "manual_reviews", "escalation_triggers"],
+      "wordCount": {"min": 80, "max": 120},
+      "guidingQuestions": [
+        "What daily health checks are performed?",
+        "What automated tasks run daily?",
+        "What manual reviews are required?",
+        "What conditions trigger escalation?"
+      ],
+      "example": "**Daily Maintenance Tasks (Automated)**\n\n**06:00 UTC - KMS Health Check**: Automated Lambda function executes: (1) Test KMS API availability: `aws kms encrypt --key-id <test-key> --plaintext 'health-check'`, (2) Verify key status: Query all production keys, confirm `KeyState: Enabled`, (3) Check CloudWatch metrics: Review previous 24-hour KMS API error rate (target: <0.1%), (4) Alert if failures: Email Security Operations if any check fails.\n\n**08:00 UTC - Key Rotation Status Review**: Automated script: (1) Query all KMS keys: `aws kms list-keys`, (2) Calculate key age: Compare `CreationDate` to current date, (3) Flag keys approaching rotation deadline: Identify keys >83 days old (7 days before 90-day rotation policy), (4) Email key owners: Automated reminder to schedule rotation.\n\n**Manual Review (10:00 UTC)**: Security Operations: (1) Review overnight CloudWatch alarms: Check for any KMS-related alerts, (2) Review CloudTrail anomaly detection: Identify unusual KMS API access patterns, (3) Verify backup completion: Confirm HSM key backup completed successfully."
+    },
+    "weeklyMaintenance": {
+      "purpose": "Define weekly maintenance procedures",
+      "elements": ["weekly_tasks", "reporting_activities", "configuration_reviews"],
+      "wordCount": {"min": 80, "max": 120},
+      "guidingQuestions": [
+        "What weekly maintenance tasks are required?",
+        "What reports are generated?",
+        "What configuration reviews are performed?"
+      ],
+      "example": "**Weekly Maintenance Tasks (Every Monday 14:00 UTC)**\n\n**Encryption Coverage Audit**: (1) Execute automated discovery scan: Lambda function scans all S3 buckets, RDS instances, EBS volumes for encryption status, (2) Generate coverage report: Calculate percentage of resources with encryption enabled (target: 100%), (3) Identify unencrypted resources: List any non-compliant resources with owner identification, (4) Create remediation tickets: Automatically open Jira tickets for each unencrypted resource assigned to service owner.\n\n**CloudTrail Log Review**: (1) Query KMS-related events: CloudWatch Logs Insights query for `CreateKey`, `DeleteKey`, `PutKeyPolicy` events (last 7 days), (2) Review for anomalies: Identify unexpected key creation or policy modifications, (3) Verify authorization: Cross-reference events with approved Jira tickets, (4) Report findings: Email weekly summary to Security Leadership (keys created: X, policies modified: Y, anomalies: Z).\n\n**Access Matrix Update**: (1) Review KMS key access policies: Export current key policies for all production keys, (2) Compare to documented access matrix: Identify any drift from approved access list, (3) Remediate drift: Update key policies or access matrix to resolve discrepancies, (4) Update documentation: Refresh access matrix in Confluence."
+    },
+    "monthlyMaintenance": {
+      "purpose": "Define monthly maintenance and review procedures",
+      "elements": ["monthly_tasks", "performance_review", "capacity_planning"],
+      "wordCount": {"min": 80, "max": 120},
+      "guidingQuestions": [
+        "What monthly maintenance tasks are required?",
+        "What performance reviews are conducted?",
+        "What capacity planning is performed?"
+      ],
+      "example": "**Monthly Maintenance Tasks (First Sunday of Month, 02:00-06:00 UTC)**\n\n**HSM Backup & Verification**: (1) Schedule maintenance window: 4-hour window with advance notification to stakeholders, (2) Execute HSM backup: CloudHSM backup procedure to S3 with encryption, (3) Test backup restoration: Restore backup to test environment, verify key material integrity, (4) Transfer to offline storage: Copy backup to offline secure storage (physically disconnected), (5) Document backup: Update backup log with timestamp, backup size, verification results.\n\n**Performance Metrics Review**: (1) Analyze KMS API latency trends: CloudWatch P50/P95/P99 latency over last 30 days, identify performance degradation, (2) Review throughput capacity: Compare current request volume to KMS API limits (1000 req/sec default), forecast capacity needs, (3) Evaluate cost optimization: Analyze KMS API request costs, identify opportunities for request caching or batching.\n\n**Security Posture Assessment**: (1) Review key usage patterns: Identify unused or rarely-used keys (candidates for retirement), (2) Audit key policies: Ensure all key policies follow principle of least privilege, (3) Verify encryption algorithms: Confirm all keys use approved algorithms (AES-256), (4) Update security documentation: Refresh key inventory, access matrix, and configuration baselines."
+    },
+    "quarterlyMaintenance": {
+      "purpose": "Define quarterly strategic maintenance activities",
+      "elements": ["quarterly_reviews", "compliance_validation", "architecture_assessment"],
+      "wordCount": {"min": 80, "max": 120},
+      "guidingQuestions": [
+        "What quarterly reviews are conducted?",
+        "What compliance validation occurs?",
+        "What architecture assessments are performed?"
+      ],
+      "example": "**Quarterly Maintenance (Every 3 Months)**\n\n**Comprehensive Key Rotation**: (1) Review all production keys: Identify keys requiring rotation based on 90-day policy, (2) Schedule rotation activities: Coordinate with application teams for rotation windows, (3) Execute rotations: Follow key rotation runbook (section 6-2) for each key, (4) Verify application health: Monitor applications for 48 hours post-rotation, confirm zero encryption errors, (5) Update rotation schedule: Document next rotation date for each key.\n\n**Compliance Audit Preparation**: (1) Execute automated compliance tests: Run all compliance validation checks from Component layer (section 5-5), (2) Gather manual evidence: Collect documentation for manual compliance checks (policy reviews, access approvals), (3) Generate compliance report: Consolidate all findings into audit-ready report (encryption coverage, key rotation status, access controls), (4) Address non-compliance: Create remediation plan with timeline for any compliance gaps.\n\n**Disaster Recovery Test**: (1) Simulate regional KMS outage: Test failover to secondary region (us-west-2), (2) Verify backup key restoration: Restore encryption keys from HSM backup, confirm functionality, (3) Test emergency procedures: Execute incident response playbooks (section 6-3) in simulation, (4) Document lessons learned: Update runbooks and playbooks based on test results."
+    },
+    "annualMaintenance": {
+      "purpose": "Define annual strategic maintenance and assessment activities",
+      "elements": ["annual_reviews", "penetration_testing", "policy_updates"],
+      "wordCount": {"min": 60, "max": 100},
+      "guidingQuestions": [
+        "What annual reviews are performed?",
+        "What security testing is conducted?",
+        "What policy updates are required?"
+      ],
+      "example": "**Annual Maintenance Activities**\n\n**Security Assessment**: (1) Third-party penetration testing: Engage external security firm to test encryption controls, key management, and access controls, (2) Vulnerability scanning: Deep scan of KMS infrastructure, HSM configurations, and related systems, (3) Red team exercise: Simulate advanced persistent threat targeting encryption keys, (4) Remediation: Address all findings from security assessments, prioritize by risk severity.\n\n**Policy & Standard Review**: (1) Review encryption policy (POL-2025-004): Assess policy effectiveness, identify areas requiring update based on threats/technology changes, (2) Update technical standards: Refresh cipher suite requirements, key length standards, rotation frequencies based on NIST guidance, (3) Framework alignment: Ensure continued compliance with ISO 27001, NIST CSF, PCI DSS, (4) Stakeholder approval: Submit policy updates for CISO and executive approval.\n\n**Architecture Evolution Planning**: (1) Evaluate new encryption technologies: Assess emerging solutions (quantum-resistant algorithms, homomorphic encryption), (2) Cost optimization review: Analyze multi-year trends, identify cost reduction opportunities, (3) Capacity planning: Forecast 3-year encryption infrastructure needs based on business growth projections."
+    }
+  },
+  "upstreamTraceability": {
+    "required": true,
+    "minimumReferences": 2,
+    "expectedSources": [
+      {
+        "layer": "component",
+        "sections": ["5-1", "5-3", "5-4"],
+        "relationshipTypes": ["validates", "refines"],
+        "rationale": "Maintenance procedures validate component configurations and refine deployment checklists with periodic verification tasks"
+      },
+      {
+        "layer": "physical",
+        "sections": ["4-1", "4-3"],
+        "relationshipTypes": ["implements"],
+        "rationale": "Maintenance tasks implement physical technical standards with scheduled verification procedures"
+      }
+    ],
+    "exampleReferences": [
+      {
+        "upstreamSection": "POL-2025-004.component.5-1",
+        "relationshipType": "validates",
+        "rationale": "Weekly encryption coverage audit validates KMS key configurations by scanning all resources and generating compliance reports"
+      },
+      {
+        "upstreamSection": "POL-2025-004.component.5-3",
+        "relationshipType": "validates",
+        "rationale": "Monthly HSM backup verification validates automated compliance tests by testing backup restoration procedures"
+      },
+      {
+        "upstreamSection": "POL-2025-004.physical.4-3",
+        "relationshipType": "implements",
+        "rationale": "Annual policy review implements physical technical standards by updating cipher suite requirements and key rotation frequencies"
+      }
+    ]
+  },
+  "frameworkReferences": [
+    {
+      "framework": "ITIL 4",
+      "control": "Service Level Management",
+      "relevance": "Scheduled maintenance procedures and preventive maintenance practices"
+    },
+    {
+      "framework": "NIST SP 800-53",
+      "control": "MA-2",
+      "relevance": "Controlled maintenance procedures and scheduling"
+    },
+    {
+      "framework": "ISO 27001",
+      "control": "A.12.6.1",
+      "relevance": "Management of technical vulnerabilities through regular reviews and updates"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All six maintenance periods defined (introduction, daily, weekly, monthly, quarterly, annual)",
+      "Minimum word count met for each period (total 400-660 words)",
+      "All guiding questions addressed",
+      "At least 2 upstream traceability references"
+    ],
+    "schedulingClarity": [
+      "Specific times stated (06:00 UTC, 14:00 UTC, 02:00-06:00 UTC)",
+      "Frequencies clearly defined (daily, weekly, monthly, quarterly, annual)",
+      "Maintenance windows specified (4-hour window, Sunday 2-6 AM UTC)",
+      "Advance notification periods mentioned (48 hours prior)"
+    ],
+    "proceduralDetail": [
+      "Specific automated tasks with AWS commands",
+      "Manual review procedures with steps",
+      "Verification criteria for successful completion",
+      "Escalation triggers or failure conditions"
+    ],
+    "strategicAlignment": [
+      "Daily tasks focus on operational health (health checks, monitoring)",
+      "Weekly tasks focus on compliance and reporting",
+      "Monthly tasks focus on capacity and performance",
+      "Quarterly tasks focus on compliance audits and DR testing",
+      "Annual tasks focus on strategic security assessment and policy updates"
+    ]
+  },
+  "commonPitfalls": {
+    "avoid": [
+      "Vague maintenance schedules ('regularly', 'periodically')",
+      "Generic tasks without specific AWS service references",
+      "No time specifications for maintenance windows or tasks",
+      "Missing verification procedures or success criteria",
+      "No distinction between automated and manual tasks"
+    ],
+    "include": [
+      "Exact times and frequencies (06:00 UTC daily, first Sunday monthly)",
+      "Specific CloudWatch metrics or AWS CLI commands",
+      "Maintenance window specifications (4-hour window, Sunday 2-6 AM UTC)",
+      "Clear designation of automated vs manual tasks",
+      "Verification steps with measurable success criteria"
+    ]
+  },
+  "examplePolicyScenario": {
+    "policyId": "POL-2025-004",
+    "policyTitle": "Customer PII Encryption Policy",
+    "sectionExample": {
+      "introduction": "This section establishes maintenance procedures for AWS KMS encryption infrastructure: scheduled (routine at defined intervals), preventive (proactive failure prevention), corrective (issue remediation). Maintenance windows: Sunday 2-6 AM UTC with advance stakeholder notification.",
+      "dailySnippet": "**06:00 UTC - KMS Health Check** (Automated Lambda): (1) Test KMS API: `aws kms encrypt --key-id <test-key>`, (2) Verify key status: Query all keys, confirm `KeyState: Enabled`, (3) Check error rate: Review 24hr metrics (target: <0.1%), (4) Alert on failures: Email Security Ops.\n\n**08:00 UTC - Key Rotation Status**: Calculate key age, flag keys >83 days old, email owners rotation reminder.",
+      "monthlySnippet": "**First Sunday 02:00-06:00 UTC - HSM Backup**: (1) Execute CloudHSM backup to S3, (2) Test restoration in test env, (3) Transfer to offline storage, (4) Document in backup log.\n\n**Performance Review**: Analyze KMS API latency trends (P50/P95/P99), compare throughput to limits (1000 req/sec), forecast capacity needs.",
+      "quarterlySnippet": "**Quarterly - Comprehensive Key Rotation**: Rotate all keys per 90-day policy, coordinate with app teams, verify zero errors for 48 hours.\n\n**Compliance Audit Prep**: Run automated tests (section 5-5), gather manual evidence, generate audit report (coverage, rotation, access controls).\n\n**DR Test**: Simulate regional KMS outage, test failover to us-west-2, verify backup restoration."
+    }
+  }
+}

@@ -1,0 +1,189 @@
+{
+  "sectionId": "4-4",
+  "layerId": "physical",
+  "templateVersion": "1.0.0",
+  "title": "Integration Architecture",
+  "purpose": "Defines how security components integrate with each other and existing infrastructure - specifying interfaces, data flows, and integration patterns",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish integration scope and architecture approach",
+      "elements": ["integration_scope", "architecture_patterns", "integration_principles"],
+      "wordCount": {"min": 60, "max": 100},
+      "example": "This section defines integration architecture for encryption infrastructure components. Integration follows **envelope encryption pattern** (applications call KMS for data keys), **service-to-service authentication** (IAM roles with least privilege), and **centralized audit logging** (all KMS events to CloudTrail → SIEM). Architecture prioritizes loose coupling, fault isolation, and defense-in-depth."
+    },
+    "applicationKmsIntegration": {
+      "purpose": "Define how applications integrate with KMS for encryption operations",
+      "elements": ["sdk_integration", "api_patterns", "authentication_method", "error_handling"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "What SDKs do applications use to call KMS?",
+        "What API patterns implement envelope encryption?",
+        "How do applications authenticate to KMS?",
+        "How are KMS API failures handled in application code?"
+      ],
+      "example": "**SDK Integration**: Applications integrate via AWS Encryption SDK (Java, Python, Node.js versions), SDK abstracts KMS API calls and envelope encryption complexity. **API Patterns**: Application calls `GenerateDataKey` API to create plaintext + ciphertext DEK, encrypts data with plaintext DEK in memory, stores ciphertext DEK with encrypted data, calls `Decrypt` API to retrieve plaintext DEK for decryption. **Authentication Method**: Applications authenticate via IAM instance role (EC2) or execution role (Lambda), role policies grant `kms:GenerateDataKey` and `kms:Decrypt` permissions scoped to specific CMK ARN. **Error Handling**: SDK implements exponential backoff for KMS throttling (1s → 2s → 4s), application caches data keys (5-minute TTL) to reduce API calls, encryption failures log to CloudWatch and trigger PagerDuty alert."
+    },
+    "databaseHsmIntegration": {
+      "purpose": "Define how databases integrate with HSM for cryptographic operations",
+      "elements": ["pkcs11_interface", "key_retrieval", "connection_pooling", "failover_behavior"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "What interface does the database use to access HSM?",
+        "How does the database retrieve encryption keys from HSM?",
+        "How are HSM connections pooled for performance?",
+        "How does the database fail over to backup HSM?"
+      ],
+      "example": "**PKCS#11 Interface**: Oracle/PostgreSQL RDS instances integrate with CloudHSM via PKCS#11 cryptographic API, database TDE configuration references HSM key via PKCS#11 URI: `pkcs11:token=cloudhsm;object=master-key;type=private`. **Key Retrieval**: Database retrieves TDE master key from HSM at startup, authenticates via TLS mutual authentication with X.509 client certificate, master key cached in database memory (not persisted to disk). **Connection Pooling**: Database maintains persistent connection pool to HSM cluster (5 connections per instance), connection timeout 30 seconds with automatic retry. **Failover Behavior**: Primary HSM failure triggers automatic failover to secondary HSM in alternate Availability Zone (sub-second failover), database continues encryption operations without interruption."
+    },
+    "siemIntegration": {
+      "purpose": "Define how encryption events flow to SIEM for security monitoring",
+      "elements": ["event_sources", "data_pipeline", "event_filtering", "alert_triggers"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "What event sources feed encryption audit data to SIEM?",
+        "What data pipeline delivers events from AWS to SIEM?",
+        "How are events filtered to reduce noise?",
+        "What event patterns trigger security alerts?"
+      ],
+      "example": "**Event Sources**: CloudTrail KMS API events (Encrypt, Decrypt, GenerateDataKey, DisableKey), AWS Config compliance change events (encryption disabled on RDS instance), CloudWatch Logs for application encryption failures. **Data Pipeline**: CloudTrail logs stream to S3 → Kinesis Data Firehose → Splunk HTTP Event Collector (HEC) endpoint, 5-minute batch delivery with gzip compression. **Event Filtering**: Filter KMS data events to production keys only (exclude dev/test keys), suppress successful Decrypt events (high volume, low signal), include all administrative events (CreateKey, ScheduleKeyDeletion). **Alert Triggers**: SIEM correlation rule triggers P1 alert on: KMS key deletion scheduled, bulk Decrypt operations from unknown IP (>100 calls in 5 minutes), unauthorized GenerateDataKey calls (principal not in whitelist)."
+    },
+    "iamIntegration": {
+      "purpose": "Define how IAM roles integrate with encryption services for authentication/authorization",
+      "elements": ["role_assumption", "permission_scoping", "cross_account_access", "session_policies"],
+      "wordCount": {"min": 80, "max": 150},
+      "guidingQuestions": [
+        "How do services assume IAM roles to access KMS?",
+        "How are permissions scoped to least privilege?",
+        "How does cross-account KMS access work?",
+        "How are session policies applied to further restrict access?"
+      ],
+      "example": "**Role Assumption**: EC2 instances assume IAM instance role via EC2 metadata service (169.254.169.254), Lambda functions assume execution role at invocation, RDS assumes service-linked role for KMS integration. **Permission Scoping**: Role policies grant KMS permissions scoped to specific CMK ARN: `\"Resource\": \"arn:aws:kms:us-east-1:123456789012:key/abc-123\"`, deny wildcard resources. **Cross-Account Access**: KMS key policy grants access to IAM role in external account: `\"Principal\": {\"AWS\": \"arn:aws:iam::999999999999:role/ExternalAppRole\"}`, external account must also grant permissions in IAM policy (dual authorization). **Session Policies**: Applications can further restrict permissions via session policy passed to AssumeRole, session policy limits GenerateDataKey to specific encryption context."
+    },
+    "backupIntegration": {
+      "purpose": "Define how backup systems integrate with encryption infrastructure",
+      "elements": ["snapshot_encryption", "backup_key_access", "restore_permissions", "cross_region_backup"],
+      "wordCount": {"min": 80, "max": 150},
+      "guidingQuestions": [
+        "How are backups/snapshots encrypted?",
+        "How do backup systems access encryption keys?",
+        "What permissions enable restore operations?",
+        "How are backups encrypted when copied to DR region?"
+      ],
+      "example": "**Snapshot Encryption**: RDS automated snapshots inherit encryption from source database (same CMK), EBS snapshots encrypted with same CMK as source volume. **Backup Key Access**: AWS Backup service-linked role granted kms:CreateGrant permission on CMK, grants enable AWS Backup to call Decrypt for restore operations. **Restore Permissions**: Restore operation requires IAM principal to have kms:Decrypt and kms:DescribeKey on source CMK, restored resource can use different CMK (re-encryption during restore). **Cross-Region Backup**: CopySnapshot API re-encrypts snapshot with destination region CMK: `aws rds copy-db-snapshot --source-region us-east-1 --kms-key-id <dr-region-cmk> --target-snapshot <name>`, cross-region CMK access requires key policy grant to source account."
+    },
+    "monitoringIntegration": {
+      "purpose": "Define how monitoring systems collect encryption infrastructure metrics",
+      "elements": ["cloudwatch_metrics", "custom_metrics", "alarm_integration", "dashboard_visualization"],
+      "wordCount": {"min": 80, "max": 150},
+      "guidingQuestions": [
+        "What CloudWatch metrics are collected for KMS/HSM?",
+        "What custom metrics do applications publish?",
+        "How do CloudWatch alarms integrate with incident management?",
+        "How are encryption metrics visualized in dashboards?"
+      ],
+      "example": "**CloudWatch Metrics**: KMS publishes RequestCount, ThrottleCount, Latency metrics per CMK, CloudHSM publishes CPUUtilization, MemoryUtilization, ActiveSessions. **Custom Metrics**: Applications publish custom metrics via PutMetricData API: EncryptionOperationsPerSecond, DataKeyGenerationLatency, CacheMissRate. **Alarm Integration**: CloudWatch alarms trigger SNS topic → PagerDuty for P1 incidents (KMS throttling >10% of requests, HSM CPU >80%), SNS topic → Slack for warnings (key rotation overdue). **Dashboard Visualization**: CloudWatch dashboard displays: KMS API call volume (line chart), encryption operation success rate (gauge), HSM cluster health (status widget), recent KMS errors (log insights widget)."
+    },
+    "cicdPipelineIntegration": {
+      "purpose": "Define how CI/CD pipelines integrate encryption configuration into deployments",
+      "elements": ["infrastructure_as_code", "secret_injection", "deployment_validation", "rollback_mechanism"],
+      "wordCount": {"min": 80, "max": 150},
+      "guidingQuestions": [
+        "How does Infrastructure-as-Code define encryption resources?",
+        "How are encryption keys injected into deployed applications?",
+        "How is encryption validated during deployment?",
+        "How are encryption misconfigurations rolled back?"
+      ],
+      "example": "**Infrastructure-as-Code**: Terraform/CloudFormation templates define KMS CMK resources with required tags, rotation enabled, deletion window = 30 days. **Secret Injection**: CodePipeline retrieves application secrets from Secrets Manager, injects as environment variables during ECS task launch, secrets include KMS key ARN for application encryption. **Deployment Validation**: CodeBuild executes post-deployment tests: verify RDS encryption enabled, verify S3 default encryption = SSE-KMS, verify application can encrypt/decrypt test data. **Rollback Mechanism**: Deployment failure triggers automatic rollback via CloudFormation stack update cancellation, previous stack state restored, failed CMK creation triggers ScheduleKeyDeletion (7-day window allows recovery)."
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST SP 800-53 Rev 5",
+      "control": "SA-4, SC-7",
+      "relevance": "Acquisition process and boundary protection for integrated systems"
+    },
+    {
+      "framework": "AWS Well-Architected Framework",
+      "control": "Security Pillar - Infrastructure Protection",
+      "relevance": "Integration architecture best practices"
+    },
+    {
+      "framework": "CIS Controls v8",
+      "control": "3.3",
+      "relevance": "Data protection and integration requirements"
+    }
+  ],
+  "upstreamTraceability": {
+    "requiredReferences": [
+      {
+        "section": "4-1",
+        "layer": "physical",
+        "purpose": "Implementation specifications that define the components being integrated"
+      },
+      {
+        "section": "4-2",
+        "layer": "physical",
+        "purpose": "Procedures that execute integration operations"
+      },
+      {
+        "section": "3-3",
+        "layer": "logical",
+        "purpose": "Control specifications requiring these integrations"
+      }
+    ],
+    "relationshipTypes": {
+      "refines": "Integration architecture refines implementation specifications with connection details",
+      "implements": "Integration patterns implement logical control specifications"
+    }
+  },
+  "qualityChecks": {
+    "completeness": [
+      "All seven integration elements present (introduction through CI/CD pipeline)",
+      "Minimum word count met for each element (total 640+ words)",
+      "All guiding questions addressed with specific integration patterns"
+    ],
+    "architecturalClarity": [
+      "Integration patterns clearly named (envelope encryption, service-linked roles, dual authorization)",
+      "Data flows explicitly described (CloudTrail → S3 → Kinesis → Splunk)",
+      "Authentication mechanisms specified (IAM roles, TLS mutual auth, X.509 certificates)",
+      "Error handling and failover behavior defined"
+    ],
+    "technicalSpecificity": [
+      "Specific APIs named (GenerateDataKey, Decrypt, AssumeRole, CopySnapshot)",
+      "Specific AWS services identified (Kinesis Data Firehose, CloudWatch, AWS Backup)",
+      "Specific integration points documented (PKCS#11 URI, Splunk HEC endpoint, EC2 metadata service)",
+      "Specific configuration values provided (5-minute cache TTL, 30-second timeout, 7-day deletion window)"
+    ],
+    "traceability": [
+      "References to upstream physical sections 4-1, 4-2 (implementation specs, procedures)",
+      "References to logical section 3-3 (control specifications)",
+      "Framework citations present (minimum 3: NIST SP 800-53, AWS Well-Architected, CIS)",
+      "Rationale explains HOW integrations enable end-to-end encryption protection"
+    ]
+  },
+  "integrationGuidelines": {
+    "architecturalPatterns": {
+      "describeDataFlow": "Use arrows and sequence: Component A → Component B → Component C",
+      "namePatterns": "Identify integration pattern by name (envelope encryption, dual authorization)",
+      "specifyProtocols": "Identify protocols/interfaces (PKCS#11, TLS mutual auth, HTTP API)"
+    },
+    "authenticationAuthorization": {
+      "explicitlyState": "Always specify authentication method (IAM role, X.509 cert, API key)",
+      "leastPrivilege": "Show how permissions are scoped (specific resource ARN, not wildcard)",
+      "crossAccountHandling": "Explain dual authorization requirement (key policy + IAM policy)"
+    }
+  },
+  "examplePolicyContext": {
+    "policyId": "POL-2025-004",
+    "policyTitle": "Customer PII Encryption Policy",
+    "integrationDomains": [
+      "Application-KMS integration (envelope encryption, SDK usage)",
+      "Database-HSM integration (PKCS#11, TDE master keys)",
+      "SIEM integration (CloudTrail event streaming)",
+      "IAM integration (role assumption, permission scoping)",
+      "Backup integration (snapshot encryption, cross-region)",
+      "Monitoring integration (CloudWatch metrics, alarms)",
+      "CI/CD integration (IaC, deployment validation)"
+    ]
+  }
+}

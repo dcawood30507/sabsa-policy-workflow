@@ -1,0 +1,328 @@
+{
+  "layerId": "logical",
+  "layerName": "Logical",
+  "layerNumber": 3,
+  "version": "1.0.0",
+  "purpose": "Defines formal security policies, standards, and control specifications from the designer's perspective - technology-agnostic but prescriptive and compliance-focused",
+  "formatting": {
+    "fonts": {
+      "headings": {
+        "family": "Arial",
+        "sizes": {
+          "h1": 18,
+          "h2": 14,
+          "h3": 12
+        }
+      },
+      "body": {
+        "family": "Calibri",
+        "size": 11
+      },
+      "code": {
+        "family": "Courier New",
+        "size": 10
+      }
+    },
+    "colors": {
+      "primary": "#1E3A8A",
+      "accent": "#10B981",
+      "headings": {
+        "h1": "#1E3A8A",
+        "h2": "#059669",
+        "h3": "#047857"
+      }
+    },
+    "spacing": {
+      "paragraphBefore": 6,
+      "paragraphAfter": 6,
+      "lineSpacing": 1.15
+    }
+  },
+  "sections": {
+    "3-1": {
+      "id": "3-1",
+      "title": "Security Policies",
+      "layout": {
+        "structure": [
+          "introduction",
+          "policy_statements",
+          "scope_and_applicability",
+          "compliance_requirements"
+        ],
+        "requiredElements": [
+          "formalPolicyStatements",
+          "scopeDefinition",
+          "enforcementMechanisms",
+          "complianceMandates"
+        ],
+        "optionalElements": [
+          "policyExceptions",
+          "reviewCycles"
+        ]
+      },
+      "contentGuidelines": {
+        "tone": "formal, authoritative, compliance-focused, mandatory language",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {
+          "min": 500,
+          "max": 1000
+        },
+        "requiredTopics": [
+          "What are the formal policy statements?",
+          "What is the scope and applicability of each policy?",
+          "What compliance frameworks does this policy satisfy?",
+          "How will policy compliance be enforced?"
+        ],
+        "examples": [
+          "**Data Encryption Policy**: All customer personally identifiable information (PII) SHALL be encrypted using approved cryptographic algorithms...",
+          "This policy applies to all systems, applications, and databases that process, store, or transmit customer PII...",
+          "Satisfies NIST SP 800-53 SC-28 (Protection of Information at Rest) and ISO 27001 A.10.1.1..."
+        ]
+      }
+    },
+    "3-2": {
+      "id": "3-2",
+      "title": "Security Standards",
+      "layout": {
+        "structure": [
+          "introduction",
+          "cryptographic_standards",
+          "key_management_standards",
+          "compliance_mapping"
+        ],
+        "requiredElements": [
+          "technicalStandards",
+          "mandatoryRequirements",
+          "measurementCriteria"
+        ],
+        "optionalElements": [
+          "standardsHierarchy",
+          "exceptionCriteria"
+        ]
+      },
+      "contentGuidelines": {
+        "tone": "technical, prescriptive, standards-based, precise",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {
+          "min": 500,
+          "max": 1000
+        },
+        "requiredTopics": [
+          "What technical standards must be followed?",
+          "What are the mandatory requirements for each standard?",
+          "How do standards map to compliance frameworks?",
+          "What measurement criteria validate compliance?"
+        ],
+        "examples": [
+          "**Algorithm Requirements**: Symmetric: AES-256-GCM, Asymmetric: RSA-4096 or ECC P-384...",
+          "**Key Rotation**: Encryption keys SHALL be rotated every 90 days maximum...",
+          "Aligns with NIST SP 800-175B cryptographic algorithm recommendations and PCI DSS 4.0 Requirement 3.5.1..."
+        ]
+      }
+    },
+    "3-3": {
+      "id": "3-3",
+      "title": "Logical Control Specifications",
+      "layout": {
+        "structure": [
+          "introduction",
+          "preventive_controls",
+          "detective_controls",
+          "corrective_controls"
+        ],
+        "requiredElements": [
+          "controlDefinitions",
+          "controlObjectives",
+          "effectivenessCriteria"
+        ],
+        "optionalElements": [
+          "controlInteractions",
+          "compensatingControls"
+        ]
+      },
+      "contentGuidelines": {
+        "tone": "control-oriented, objective-based, implementation-independent",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {
+          "min": 500,
+          "max": 1000
+        },
+        "requiredTopics": [
+          "What controls are required (preventive, detective, corrective)?",
+          "What are the control objectives?",
+          "How will control effectiveness be measured?",
+          "How do controls map to security objectives?"
+        ],
+        "examples": [
+          "**Encryption Control**: Cryptographic protection SHALL be applied to customer PII at rest...",
+          "**Access Control**: Multi-factor authentication SHALL be required for all cryptographic key management operations...",
+          "**Audit Control**: All cryptographic operations SHALL be logged with timestamp, user, and operation type..."
+        ]
+      }
+    },
+    "3-4": {
+      "id": "3-4",
+      "title": "Information Classification",
+      "layout": {
+        "structure": [
+          "introduction",
+          "classification_scheme",
+          "handling_requirements",
+          "lifecycle_management"
+        ],
+        "requiredElements": [
+          "classificationLevels",
+          "labelingRequirements",
+          "handlingInstructions"
+        ],
+        "optionalElements": [
+          "classificationExamples",
+          "reclassificationCriteria"
+        ]
+      },
+      "contentGuidelines": {
+        "tone": "categorical, precise, data-centric",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {
+          "min": 400,
+          "max": 850
+        },
+        "requiredTopics": [
+          "What are the data classification levels?",
+          "What handling requirements apply to each level?",
+          "How is data classified and labeled?",
+          "What are the lifecycle requirements for each classification?"
+        ],
+        "examples": [
+          "**Confidential - Customer PII**: Contains personally identifiable information subject to regulatory protection...",
+          "**Handling Requirements**: AES-256 encryption at rest, TLS 1.2+ in transit, HSM-based key storage...",
+          "**Retention**: 7 years from last customer interaction, then secure deletion with cryptographic erasure..."
+        ]
+      }
+    },
+    "3-5": {
+      "id": "3-5",
+      "title": "Logical Access Model",
+      "layout": {
+        "structure": [
+          "introduction",
+          "role_definitions",
+          "access_rules",
+          "authorization_logic"
+        ],
+        "requiredElements": [
+          "roleSpecifications",
+          "accessPolicies",
+          "authorizationRules"
+        ],
+        "optionalElements": [
+          "accessMatrices",
+          "delegationRules"
+        ]
+      },
+      "contentGuidelines": {
+        "tone": "access-focused, role-based, authorization-oriented",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {
+          "min": 400,
+          "max": 900
+        },
+        "requiredTopics": [
+          "Who can access what under which conditions?",
+          "What roles and responsibilities are defined?",
+          "What are the authorization rules?",
+          "How is privileged access controlled?"
+        ],
+        "examples": [
+          "**Security Operations Role**: Read access to encryption audit logs, no access to encryption keys...",
+          "**Key Management Role**: Create, rotate, and revoke encryption keys with multi-factor authentication...",
+          "**Authorization Rule**: Key management operations require approval from two authorized personnel..."
+        ]
+      }
+    }
+  },
+  "contentQuality": {
+    "traceability": {
+      "upstreamReferences": {
+        "required": true,
+        "minimumCount": 2,
+        "format": "Section references must use format: {policy-id}.conceptual.{section} (e.g., POL-2025-001.conceptual.2-1)"
+      }
+    },
+    "frameworkAlignment": {
+      "required": [
+        "NIST SP 800-53",
+        "ISO 27001"
+      ],
+      "optional": [
+        "CIS Controls",
+        "PCI DSS",
+        "SOC 2 Trust Services Criteria",
+        "GDPR",
+        "NIST SP 800-175B",
+        "FIPS 140-2"
+      ],
+      "citationFormat": "Framework Name + Control ID (e.g., NIST SP 800-53 SC-28, ISO 27001 A.10.1.1, PCI DSS 4.0 Requirement 3.5.1)"
+    },
+    "technicalDepth": {
+      "level": "detailed",
+      "avoidance": [
+        "vendor names",
+        "specific products",
+        "implementation code",
+        "configuration details"
+      ],
+      "inclusion": [
+        "technical standards",
+        "control specifications",
+        "compliance requirements",
+        "formal policy statements",
+        "classification schemes",
+        "access models"
+      ]
+    }
+  },
+  "validation": {
+    "structure": {
+      "requiredSections": [
+        "3-1",
+        "3-2",
+        "3-3",
+        "3-4",
+        "3-5"
+      ],
+      "sectionOrder": "sequential",
+      "allowSkip": false
+    },
+    "content": {
+      "checks": [
+        {
+          "type": "wordCount",
+          "min": 400,
+          "max": 1000,
+          "appliesTo": "each section"
+        },
+        {
+          "type": "traceability",
+          "minReferences": 2,
+          "appliesTo": "sections 3-1, 3-2, 3-3"
+        },
+        {
+          "type": "framework",
+          "minCitations": 3,
+          "appliesTo": "all sections"
+        }
+      ]
+    },
+    "rationale": {
+      "required": true,
+      "minLength": 120,
+      "purpose": "Explain WHY this policy/standard/control is necessary using framework requirements and upstream security objectives"
+    }
+  }
+}

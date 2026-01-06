@@ -1,0 +1,133 @@
+{
+  "sectionId": "3-1",
+  "layerId": "logical",
+  "templateVersion": "1.0.0",
+  "title": "Security Policies",
+  "purpose": "Defines formal, mandatory security policy statements with SHALL/SHALL NOT language that enforce security objectives from the Conceptual layer",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish the authoritative nature and scope of security policies",
+      "elements": ["policy_purpose", "policy_scope", "authority_statement"],
+      "wordCount": {"min": 75, "max": 125},
+      "example": "This section establishes formal security policies governing the protection of customer personally identifiable information (PII). These policies are **mandatory** and apply to all systems, applications, personnel, and third-party service providers that collect, process, store, transmit, or dispose of customer PII. These policies derive from regulatory requirements (GDPR, SOC 2 Type II) and organizational security objectives."
+    },
+    "dataProtectionPolicies": {
+      "purpose": "Define mandatory data protection requirements using formal policy language",
+      "elements": ["encryption_policies", "data_handling_policies", "data_lifecycle_policies"],
+      "wordCount": {"min": 150, "max": 250},
+      "guidingQuestions": [
+        "What are the mandatory encryption requirements?",
+        "What data handling practices are required or forbidden?",
+        "What are the data lifecycle management requirements?",
+        "What SHALL be enforced for data protection?"
+      ],
+      "policyLanguage": {
+        "mandatory": "SHALL, MUST, REQUIRED",
+        "prohibited": "SHALL NOT, MUST NOT, FORBIDDEN",
+        "recommended": "SHOULD, RECOMMENDED",
+        "optional": "MAY, OPTIONAL"
+      },
+      "example": "**Encryption Policy**: All customer PII SHALL be encrypted at rest using approved cryptographic algorithms (minimum AES-256-GCM). All customer PII in transit SHALL be protected using TLS 1.2 or higher with approved cipher suites. Encryption keys SHALL be stored in FIPS 140-2 Level 2 or higher validated hardware security modules. **Data Handling Policy**: Customer PII SHALL NOT be stored in unapproved locations including developer laptops, personal devices, or non-production environments without explicit written authorization and equivalent security controls."
+    },
+    "accessControlPolicies": {
+      "purpose": "Define mandatory access control requirements",
+      "elements": ["authentication_policies", "authorization_policies", "privileged_access_policies"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "What authentication mechanisms are required?",
+        "What authorization rules SHALL be enforced?",
+        "How SHALL privileged access be controlled?",
+        "What access control principles are mandatory?"
+      ],
+      "example": "**Authentication Policy**: Multi-factor authentication (MFA) SHALL be required for all access to encryption key management systems and customer PII databases. MFA SHALL use hardware tokens or authenticator applications; SMS-based authentication SHALL NOT be used for privileged access. **Privileged Access Policy**: Access to encryption keys SHALL require approval from two authorized personnel (dual control). All privileged access sessions SHALL be logged with full audit trail including user identity, timestamp, actions performed, and data accessed."
+    },
+    "auditAndCompliancePolicies": {
+      "purpose": "Define logging, monitoring, and compliance requirements",
+      "elements": ["logging_policies", "audit_trail_policies", "compliance_reporting_policies"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "What SHALL be logged and audited?",
+        "What are the audit retention requirements?",
+        "How SHALL compliance be demonstrated and reported?",
+        "What monitoring is mandatory?"
+      ],
+      "example": "**Logging Policy**: All cryptographic operations (key generation, rotation, access, deletion) SHALL be logged with immutable audit trails. Logs SHALL include timestamp, user identity, operation type, resource identifier, and success/failure status. Audit logs SHALL be retained for minimum 7 years in tamper-evident storage. **Compliance Reporting Policy**: Compliance status SHALL be reported monthly to the Data Protection Officer and quarterly to executive leadership. All policy violations SHALL be reported within 24 hours of detection."
+    },
+    "keyManagementPolicies": {
+      "purpose": "Define cryptographic key lifecycle management requirements",
+      "elements": ["key_generation_policies", "key_rotation_policies", "key_destruction_policies"],
+      "wordCount": {"min": 100, "max": 175},
+      "guidingQuestions": [
+        "How SHALL encryption keys be generated?",
+        "What are the key rotation requirements?",
+        "How SHALL keys be securely destroyed?",
+        "What key lifecycle controls are mandatory?"
+      ],
+      "example": "**Key Generation Policy**: Encryption keys SHALL be generated using cryptographically secure random number generators (FIPS 140-2 Annex C compliant). Key generation SHALL occur exclusively within hardware security modules. **Key Rotation Policy**: Data encryption keys SHALL be rotated every 90 days maximum. Master keys SHALL be rotated annually. Emergency key rotation SHALL be performed within 24 hours upon detection of potential compromise. **Key Destruction Policy**: Retired encryption keys SHALL be securely destroyed using cryptographic erasure methods that render encrypted data permanently unrecoverable."
+    },
+    "enforcementAndExceptions": {
+      "purpose": "Define policy enforcement mechanisms and exception handling procedures",
+      "elements": ["enforcement_mechanisms", "exception_criteria", "exception_approval_process"],
+      "wordCount": {"min": 75, "max": 150},
+      "guidingQuestions": [
+        "How will policy compliance be enforced?",
+        "Under what conditions may exceptions be granted?",
+        "Who can approve policy exceptions?",
+        "What compensating controls are required for exceptions?"
+      ],
+      "example": "**Enforcement**: Policy compliance SHALL be enforced through automated controls (validation gates in CI/CD pipelines), manual reviews (security architecture reviews for new systems), and continuous monitoring (Wiz policy violations). **Exceptions**: Policy exceptions MAY be granted only for documented business-critical requirements with executive approval and equivalent compensating controls. All exceptions SHALL be reviewed quarterly and automatically expire after 90 days unless renewed."
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST SP 800-53 Rev 5",
+      "controls": ["SC-28 (Protection of Information at Rest)", "SC-8 (Transmission Confidentiality)", "AC-3 (Access Enforcement)", "AU-2 (Event Logging)"],
+      "relevance": "Federal cryptographic and access control standards"
+    },
+    {
+      "framework": "ISO 27001:2022",
+      "controls": ["A.8.24 (Use of cryptography)", "A.5.15 (Access control)", "A.5.28 (Collection of evidence)"],
+      "relevance": "International information security management standards"
+    },
+    {
+      "framework": "PCI DSS 4.0",
+      "controls": ["Requirement 3.5.1 (Cryptographic keys)", "Requirement 8.3 (MFA for privileged access)"],
+      "relevance": "Payment card industry data protection requirements"
+    },
+    {
+      "framework": "GDPR",
+      "controls": ["Article 32 (Security of processing)", "Article 5(1)(f) (Integrity and confidentiality)"],
+      "relevance": "EU data protection regulation requirements"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All six structural elements present (introduction, data protection, access control, audit/compliance, key management, enforcement)",
+      "Minimum word count met for each element",
+      "All guiding questions addressed with SHALL/SHALL NOT statements"
+    ],
+    "policyLanguage": [
+      "Mandatory requirements use SHALL/MUST terminology",
+      "Prohibited actions use SHALL NOT/MUST NOT terminology",
+      "Clear distinction between mandatory (SHALL), recommended (SHOULD), and optional (MAY) requirements",
+      "No ambiguous language (avoid 'try to', 'consider', 'generally')"
+    ],
+    "traceability": [
+      "References minimum 2 Conceptual layer sections (typically 2-1, 2-2, 2-3)",
+      "Cites minimum 3 compliance framework controls (NIST, ISO, PCI, GDPR)",
+      "Rationale explains WHY each policy is necessary using security objectives and regulatory requirements"
+    ],
+    "compliance": [
+      "Each policy statement maps to at least one compliance framework control",
+      "Framework citations use full control identifiers (e.g., NIST SP 800-53 SC-28, not just SC-28)",
+      "Policy satisfies stated compliance frameworks from Contextual layer"
+    ]
+  },
+  "commonPitfalls": [
+    "Using weak language ('should consider', 'may want to') instead of mandatory SHALL/SHALL NOT",
+    "Including implementation details (specific tools, vendor products) that belong in Physical layer",
+    "Omitting enforcement mechanisms or exception procedures",
+    "Failing to map policies to compliance framework controls",
+    "Creating policies without clear upstream traceability to security objectives"
+  ]
+}

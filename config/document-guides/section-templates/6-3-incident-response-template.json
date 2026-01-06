@@ -1,0 +1,172 @@
+{
+  "sectionId": "6-3",
+  "layerId": "operational",
+  "templateVersion": "1.0.0",
+  "title": "Incident Response Playbooks",
+  "purpose": "Defines incident response procedures for security events, encryption failures, and key compromise scenarios from the operations perspective",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish incident response framework and scope",
+      "elements": ["incident_response_overview", "severity_classification", "response_objectives"],
+      "wordCount": {"min": 50, "max": 100},
+      "example": "This section provides **incident response playbooks** for encryption-related security events, including suspected key compromise, encryption service outages, unauthorized access, and data breach scenarios. Playbooks define incident classification, immediate response procedures, communication protocols, forensic investigation steps, and recovery actions. Response objectives: contain incidents within 15 minutes, notify stakeholders within 30 minutes, restore service within 4 hours, complete root cause analysis within 48 hours."
+    },
+    "suspectedKeyCompromise": {
+      "purpose": "Immediate response procedure for suspected encryption key compromise",
+      "elements": ["detection_indicators", "immediate_actions", "forensic_analysis", "recovery_steps", "communication_protocol"],
+      "wordCount": {"min": 150, "max": 250},
+      "guidingQuestions": [
+        "What indicators suggest key compromise?",
+        "What immediate containment actions are required?",
+        "What forensic analysis is performed?",
+        "What recovery steps restore secure operations?",
+        "Who is notified and when?"
+      ],
+      "example": "**INCIDENT**: Suspected KMS Key Compromise\n\n**SEVERITY**: CRITICAL (P0)\n\n**DETECTION INDICATORS**: (1) Unusual KMS API calls from unknown IP addresses, (2) Multiple failed authentication attempts followed by successful access, (3) Key usage from unauthorized AWS accounts, (4) CloudTrail events showing unexpected key policy modifications, (5) Security team notification of potential credential leak.\n\n**IMMEDIATE RESPONSE (0-15 min)**: (1) ISOLATE: Disable suspected compromised key: `aws kms disable-key --key-id <key-id>`, (2) NOTIFY: Page CISO + Security Lead + Incident Commander immediately via PagerDuty, (3) PRESERVE: Create CloudTrail snapshot for forensic analysis: `aws cloudtrail lookup-events --lookup-attributes AttributeKey=ResourceName,AttributeValue=<key-id>`, (4) CONTAIN: Revoke all active sessions for accounts with key access: Force IAM credential rotation.\n\n**FORENSIC ANALYSIS (15-120 min)**: (1) Timeline reconstruction: Analyze CloudTrail logs for all KMS API calls involving compromised key (last 90 days), (2) Access pattern analysis: Identify all principals that accessed key, correlate with authorized user list, (3) Data exposure assessment: Determine what encrypted data was accessed using compromised key, (4) Root cause identification: Investigate how key or credentials were compromised (phishing, leaked credentials, insider threat).\n\n**RECOVERY (2-4 hours)**: (1) Create new encryption key with different credentials, (2) Re-encrypt all data previously encrypted with compromised key using new key, (3) Update all application configurations to use new key ARN, (4) Verify no continued use of old compromised key in CloudWatch metrics, (5) Schedule old key for deletion (7-day waiting period).\n\n**COMMUNICATION**: (1) **T+0 min**: Page CISO + Security Lead + Incident Commander, (2) **T+30 min**: Email executive team with incident summary and estimated impact, (3) **T+2 hours**: Update all stakeholders on recovery progress, (4) **T+4 hours**: Confirm service restoration and issue all-clear, (5) **T+48 hours**: Deliver incident post-mortem with root cause analysis and preventive measures."
+    },
+    "encryptionServiceOutage": {
+      "purpose": "Response procedure for KMS or encryption service failures",
+      "elements": ["outage_symptoms", "immediate_response", "failover_procedure", "stakeholder_communication"],
+      "wordCount": {"min": 150, "max": 250},
+      "guidingQuestions": [
+        "What symptoms indicate service outage?",
+        "What immediate response actions are taken?",
+        "What failover procedures restore service?",
+        "How are stakeholders notified?"
+      ],
+      "example": "**INCIDENT**: AWS KMS Service Outage\n\n**SEVERITY**: HIGH (P1)\n\n**SYMPTOMS**: (1) Applications unable to decrypt data, returning 'ServiceUnavailableException', (2) CloudWatch alarm 'KMS-API-Availability' triggered (success rate <95%), (3) Spike in application errors related to encryption operations, (4) AWS Service Health Dashboard shows KMS degradation in region.\n\n**IMMEDIATE RESPONSE (0-15 min)**: (1) VERIFY OUTAGE: Check AWS Service Health Dashboard for KMS status in us-east-1, (2) ASSESS IMPACT: Identify affected applications via CloudWatch logs (filter for KMS errors), (3) ENGAGE ON-CALL: Page DevOps Lead + Database Administrator, (4) ACTIVATE INCIDENT: Create P1 incident ticket, open Slack channel #incident-kms-outage, (5) NOTIFY: Email service owners of affected applications.\n\n**FAILOVER PROCEDURE**: (1) Enable cached encryption keys (if implemented): Applications use locally cached data encryption keys for 4-hour window, (2) Redirect to secondary region: For multi-region deployments, fail over to KMS in us-west-2, update application KMS endpoint configuration, (3) Temporary key escrow: For critical operations, retrieve emergency backup keys from HSM (requires CISO approval + 2-person control).\n\n**MONITORING**: (1) Track KMS API availability every 5 minutes: CloudWatch metric `kms:Decrypt` success rate, (2) Monitor AWS Service Health Dashboard for updates, (3) Test service restoration: Attempt KMS API calls every 15 minutes: `aws kms encrypt --key-id <key-id> --plaintext 'test'`.\n\n**RECOVERY**: (1) Once AWS reports KMS service restored, verify full functionality: Run encryption test suite against primary region, (2) Fail back from secondary region: Redirect applications back to primary us-east-1 KMS endpoint, (3) Clear cached keys: Force applications to retrieve fresh keys from KMS, (4) Verify all applications operational: Monitor error rates for 2 hours post-recovery.\n\n**COMMUNICATION**: (1) **T+0**: Slack #incident-kms-outage + email service owners: 'KMS outage detected, investigating', (2) **T+15 min**: Update with impact assessment and failover status, (3) **Hourly**: Status updates until resolution, (4) **T+restoration**: Announce service restored, continue monitoring."
+    },
+    "unauthorizedKMSAccess": {
+      "purpose": "Response procedure for unauthorized access attempts to KMS keys",
+      "elements": ["access_detection", "threat_assessment", "containment_actions", "investigation_procedure"],
+      "wordCount": {"min": 100, "max": 150},
+      "guidingQuestions": [
+        "How is unauthorized access detected?",
+        "What threat assessment is performed?",
+        "What containment actions are taken?",
+        "What investigation procedure is followed?"
+      ],
+      "example": "**INCIDENT**: Unauthorized KMS Access Attempt\n\n**SEVERITY**: HIGH (P1)\n\n**DETECTION**: CloudWatch alarm 'KMS-Unauthorized-Access' triggered by CloudTrail event: 'AccessDeniedException' from unfamiliar principal attempting `kms:Decrypt` on production key.\n\n**THREAT ASSESSMENT (0-15 min)**: (1) Identify principal: Extract IAM role ARN or user from CloudTrail, determine if internal or external, (2) Access pattern: Review all KMS API attempts from this principal (last 7 days), (3) Success vs failures: Determine if any unauthorized access succeeded, (4) Data exposure: If successful access, identify which encrypted data was potentially accessed.\n\n**CONTAINMENT**: (1) Revoke credentials: If internal user, disable IAM user immediately: `aws iam update-access-key --access-key-id <key> --status Inactive`, (2) Update key policy: Add explicit deny for unauthorized principal to KMS key policy, (3) Alert Security Operations: Email security-ops@company.com with principal details, (4) Monitor: Track for continued access attempts from same or related principals.\n\n**INVESTIGATION**: (1) Determine intent: Contact user/team if internal, investigate if account compromise, (2) Review related activity: Search CloudTrail for other suspicious API calls from this principal, (3) Escalate if malicious: Create security incident ticket, engage threat intelligence team, (4) Document findings: Update incident timeline with all evidence."
+    },
+    "dataBreachScenario": {
+      "purpose": "Response procedure for data breach involving encrypted customer PII",
+      "elements": ["breach_confirmation", "data_impact_assessment", "regulatory_notification", "remediation_steps"],
+      "wordCount": {"min": 100, "max": 150},
+      "guidingQuestions": [
+        "How is data breach confirmed?",
+        "What data impact assessment is performed?",
+        "What regulatory notifications are required?",
+        "What remediation steps are taken?"
+      ],
+      "example": "**INCIDENT**: Unencrypted Customer PII Discovered\n\n**SEVERITY**: CRITICAL (P0)\n\n**BREACH CONFIRMATION**: (1) Automated scan detects S3 bucket with customer PII lacking encryption, (2) Verify data content: Sample files confirm presence of names, addresses, payment info, (3) Determine exposure window: Review S3 bucket access logs to identify if data was accessed by unauthorized parties.\n\n**DATA IMPACT ASSESSMENT**: (1) Scope: Identify total customer records affected (e.g., 12,450 records), (2) Sensitivity: Categorize data types (PII: names, addresses; PCI: payment card numbers), (3) Duration: Determine how long data existed unencrypted (e.g., 45 days), (4) Access: Confirm whether unauthorized access occurred via CloudTrail S3 data events.\n\n**IMMEDIATE REMEDIATION (0-30 min)**: (1) QUARANTINE: Restrict bucket access: Update S3 bucket policy to deny all reads except Security Ops, (2) ENCRYPT: Enable S3 default encryption with KMS key immediately, (3) NOTIFY LEADERSHIP: Page CISO + CPO + General Counsel within 15 minutes.\n\n**REGULATORY NOTIFICATION**: (1) **GDPR** (if EU customers): 72-hour notification to supervisory authority, (2) **CCPA** (if CA customers): Customer notification if high risk of harm, (3) **State breach laws**: Notify affected customers per state requirements (varies by state), (4) Coordinate with Legal: General Counsel determines notification timing and content.\n\n**RECOVERY**: (1) Re-encrypt all affected data, (2) Rotate all encryption keys as precautionary measure, (3) Implement automated compliance checks to prevent recurrence, (4) Conduct full security audit of all data storage locations."
+    }
+  },
+  "upstreamTraceability": {
+    "required": true,
+    "minimumReferences": 2,
+    "expectedSources": [
+      {
+        "layer": "component",
+        "sections": ["5-1", "5-3", "5-4"],
+        "relationshipTypes": ["validates", "implements"],
+        "rationale": "Incident response playbooks validate component configurations and implement deployment safeguards with emergency procedures"
+      },
+      {
+        "layer": "physical",
+        "sections": ["4-2", "4-5"],
+        "relationshipTypes": ["implements"],
+        "rationale": "Playbooks implement physical incident response procedures and exception handling with detailed operational steps"
+      }
+    ],
+    "exampleReferences": [
+      {
+        "upstreamSection": "POL-2025-004.component.5-1",
+        "relationshipType": "validates",
+        "rationale": "Key compromise playbook validates KMS key policy configurations by testing emergency key disablement procedures"
+      },
+      {
+        "upstreamSection": "POL-2025-004.component.5-3",
+        "relationshipType": "validates",
+        "rationale": "Unauthorized access playbook validates automated compliance tests by demonstrating detection and response to policy violations"
+      },
+      {
+        "upstreamSection": "POL-2025-004.physical.4-2",
+        "relationshipType": "implements",
+        "rationale": "Incident response procedures from Physical layer implemented through detailed playbooks with forensic analysis and recovery steps"
+      },
+      {
+        "upstreamSection": "POL-2025-004.physical.4-5",
+        "relationshipType": "implements",
+        "rationale": "Exception handling procedures implemented through data breach scenario playbook with regulatory notification requirements"
+      }
+    ]
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST SP 800-61 Rev. 2",
+      "control": "Computer Security Incident Handling Guide",
+      "relevance": "Incident response phases: preparation, detection, containment, eradication, recovery, post-incident analysis"
+    },
+    {
+      "framework": "ISO 27035",
+      "control": "Information Security Incident Management",
+      "relevance": "Structured approach to incident response and security event management"
+    },
+    {
+      "framework": "GDPR",
+      "control": "Article 33",
+      "relevance": "72-hour breach notification requirement for personal data breaches"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All five playbooks present (introduction, key compromise, service outage, unauthorized access, data breach)",
+      "Minimum word count met for each playbook (total 550-900 words)",
+      "All guiding questions addressed",
+      "At least 2 upstream traceability references"
+    ],
+    "incidentStructure": [
+      "Incident severity clearly stated (P0/P1/P2)",
+      "Detection indicators or symptoms listed",
+      "Immediate response actions with time windows (0-15 min, 15-120 min)",
+      "Communication protocol with stakeholders and timing"
+    ],
+    "operationalRealism": [
+      "Specific AWS commands for containment (aws kms disable-key)",
+      "Actual CloudWatch alarms referenced by name",
+      "Time-based response phases (0-15 min, 15-120 min, 2-4 hours)",
+      "Realistic forensic analysis steps with CloudTrail queries"
+    ],
+    "regulatoryCompliance": [
+      "GDPR 72-hour notification requirement mentioned",
+      "State breach notification laws referenced",
+      "Legal counsel involvement for regulatory decisions",
+      "Data impact assessment procedures defined"
+    ]
+  },
+  "commonPitfalls": {
+    "avoid": [
+      "Generic incident procedures without specific severity levels",
+      "Playbooks without time-based response phases",
+      "Missing communication protocols or stakeholder notification",
+      "No forensic analysis or root cause investigation steps",
+      "Ignoring regulatory notification requirements (GDPR, CCPA)"
+    ],
+    "include": [
+      "Specific severity levels (P0 CRITICAL, P1 HIGH)",
+      "Time-windowed response phases (0-15 min immediate, 15-120 min forensics)",
+      "Detailed communication protocol (who, when, how)",
+      "AWS CLI commands for containment and forensics",
+      "Regulatory notification requirements with timelines (72 hours)"
+    ]
+  },
+  "examplePolicyScenario": {
+    "policyId": "POL-2025-004",
+    "policyTitle": "Customer PII Encryption Policy",
+    "sectionExample": {
+      "introduction": "This section provides incident response playbooks for encryption-related security events. Objectives: contain within 15 min, notify within 30 min, restore within 4 hours, root cause analysis within 48 hours.",
+      "keyCompromiseSnippet": "**SEVERITY**: CRITICAL (P0)\n\n**IMMEDIATE RESPONSE (0-15 min)**: (1) Disable key: `aws kms disable-key --key-id <key-id>`, (2) Page CISO + Security Lead, (3) Snapshot CloudTrail: `aws cloudtrail lookup-events`, (4) Revoke active sessions.\n\n**FORENSIC ANALYSIS (15-120 min)**: Reconstruct timeline from CloudTrail (90 days), identify unauthorized principals, assess data exposure.\n\n**RECOVERY (2-4 hours)**: Create new key, re-encrypt data, update app configs, schedule old key deletion (7-day waiting period).",
+      "dataBreachSnippet": "**SEVERITY**: CRITICAL (P0)\n\n**BREACH CONFIRMATION**: Unencrypted S3 bucket detected with 12,450 customer PII records exposed for 45 days.\n\n**IMMEDIATE REMEDIATION (0-30 min)**: (1) Restrict bucket access, (2) Enable S3 default encryption, (3) Page CISO + CPO + General Counsel.\n\n**REGULATORY NOTIFICATION**: GDPR 72-hour notification to supervisory authority, CCPA customer notification if high risk, coordinate with Legal."
+    }
+  }
+}

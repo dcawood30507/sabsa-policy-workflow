@@ -1,0 +1,188 @@
+{
+  "sectionId": "4-2",
+  "layerId": "physical",
+  "templateVersion": "1.0.0",
+  "title": "Security Procedures",
+  "purpose": "Defines step-by-step operational procedures for implementing and maintaining security controls from the builder's perspective",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish scope and purpose of operational procedures",
+      "elements": ["procedure_scope", "audience", "execution_frequency"],
+      "wordCount": {"min": 60, "max": 100},
+      "example": "This section defines operational procedures for managing encryption infrastructure and keys. **Target Audience**: Platform engineering teams, security operations, database administrators. **Execution Context**: Procedures executed during initial setup, routine maintenance (quarterly key rotation), and incident response (emergency key revocation)."
+    },
+    "keyRotationProcedure": {
+      "purpose": "Define step-by-step key rotation process",
+      "elements": ["rotation_trigger", "step_by_step_instructions", "verification_steps", "rollback_procedure"],
+      "wordCount": {"min": 120, "max": 200},
+      "guidingQuestions": [
+        "What triggers key rotation (scheduled vs. emergency)?",
+        "What are the exact steps to rotate keys?",
+        "How is successful rotation verified?",
+        "What is the rollback procedure if rotation fails?"
+      ],
+      "example": "**Trigger**: Automated 90-day rotation via KMS key rotation policy OR emergency rotation upon suspected compromise. **Steps**: 1. Navigate to AWS KMS console → select CMK → enable automatic key rotation, 2. For manual rotation: create new CMK → update application configuration with new key ARN → create alias pointing to new CMK, 3. Test encryption/decryption with new key, 4. Update IAM policies to grant permissions to new CMK, 5. Monitor CloudTrail for encryption failures. **Verification**: Execute test encryption via AWS CLI: `aws kms encrypt --key-id <new-cmk-id> --plaintext 'test'`, verify application logs show successful encryption operations. **Rollback**: Revert alias to previous CMK, restore application configuration from backup."
+    },
+    "encryptionSetupProcedure": {
+      "purpose": "Define procedure for enabling encryption on new resources",
+      "elements": ["prerequisite_checks", "configuration_steps", "testing_steps", "documentation_updates"],
+      "wordCount": {"min": 120, "max": 200},
+      "guidingQuestions": [
+        "What prerequisites must be verified before enabling encryption?",
+        "What are the configuration steps for each resource type?",
+        "How is encryption validated after setup?",
+        "What documentation must be updated?"
+      ],
+      "example": "**Prerequisites**: Verify KMS CMK exists in target region, verify IAM roles have `kms:Decrypt` and `kms:GenerateDataKey` permissions, verify application has AWS Encryption SDK installed. **Configuration Steps (RDS)**: 1. Create RDS snapshot of source database, 2. Copy snapshot with encryption enabled: `aws rds copy-db-snapshot --source-snapshot <id> --target-snapshot <id> --kms-key-id <cmk-arn>`, 3. Restore encrypted snapshot to new RDS instance, 4. Update application connection strings, 5. Verify application connectivity. **Testing**: Execute database queries, verify CloudTrail shows `kms:Decrypt` events from RDS service, verify RDS console shows 'Encrypted: Yes'. **Documentation**: Update CMDB with encrypted instance details, update runbooks with new instance endpoint."
+    },
+    "hsmBackupProcedure": {
+      "purpose": "Define Hardware Security Module backup and recovery procedure",
+      "elements": ["backup_schedule", "backup_steps", "offsite_storage", "recovery_testing"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "How often are HSM backups performed?",
+        "What are the cryptographic backup steps?",
+        "How is backup material stored securely offsite?",
+        "How is recovery tested without production impact?"
+      ],
+      "example": "**Backup Schedule**: Weekly automated backups, quarterly manual verification backups. **Backup Steps**: 1. Authenticate to CloudHSM cluster as crypto officer (3 of 5 required), 2. Execute `cloudhsm_mgmt_util` → `createBackup` command, 3. Verify backup file creation in S3 bucket, 4. Download encrypted backup to hardware token (YubiKey HSM), 5. Store hardware token in offsite safe deposit box. **Offsite Storage**: Encrypted backup stored on FIPS 140-2 Level 3 hardware token, stored in bank vault with dual-custody access requirement. **Recovery Testing**: Quarterly restore HSM backup to isolated test cluster, verify key material accessibility, execute test signing operation."
+    },
+    "emergencyKeyRevocationProcedure": {
+      "purpose": "Define emergency procedure for compromised key revocation",
+      "elements": ["detection_triggers", "immediate_actions", "revocation_steps", "incident_response_integration"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "What events trigger emergency key revocation?",
+        "What immediate containment actions are required?",
+        "What are the key revocation/disablement steps?",
+        "How does this integrate with incident response process?"
+      ],
+      "example": "**Detection Triggers**: CloudTrail alert for unauthorized KMS API calls from unknown IP, SIEM alert for bulk key material export, security team notification of suspected insider threat. **Immediate Actions**: 1. Disable compromised CMK via AWS console (Key Actions → Disable), 2. Notify incident commander via PagerDuty, 3. Isolate affected systems (EC2 instance stop, Lambda function disable). **Revocation Steps**: 1. Schedule CMK for deletion (7-day waiting period minimum), 2. Rotate to new CMK using key rotation procedure, 3. Re-encrypt affected data with new key, 4. Update all application references. **Incident Response Integration**: Open P1 incident ticket, engage forensics team to capture CloudTrail logs, initiate root cause analysis."
+    },
+    "accessProvisioningProcedure": {
+      "purpose": "Define procedure for granting KMS key access to users and services",
+      "elements": ["access_request_process", "approval_workflow", "provisioning_steps", "access_review"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "How do users/services request KMS key access?",
+        "What is the approval workflow and criteria?",
+        "What are the technical steps to grant access?",
+        "How often is access reviewed and recertified?"
+      ],
+      "example": "**Access Request Process**: User submits ServiceNow ticket with business justification, requested key ARN, and required permissions (encrypt, decrypt, generate data key). **Approval Workflow**: Manager approval → security team review (verify least privilege) → CISO approval for production keys. **Provisioning Steps**: 1. Update KMS key policy to add IAM principal ARN, 2. Grant IAM permissions via inline policy or role, 3. Test access via AWS CLI: `aws kms encrypt --key-id <arn> --plaintext 'test'`, 4. Document access grant in CMDB. **Access Review**: Quarterly access certification via automated report, users must re-justify access, unused grants revoked after 90 days."
+    },
+    "certificateRenewalProcedure": {
+      "purpose": "Define procedure for TLS certificate renewal and deployment",
+      "elements": ["renewal_trigger", "renewal_steps", "deployment_validation", "expiration_monitoring"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "What triggers certificate renewal (expiration, revocation)?",
+        "What are the steps to renew certificates?",
+        "How is certificate deployment validated?",
+        "How are upcoming expirations monitored?"
+      ],
+      "example": "**Renewal Trigger**: Automatic renewal 60 days before expiration (ACM managed), manual renewal for externally-issued certificates 30 days before expiration. **Renewal Steps**: 1. For ACM certificates: automatic renewal via DNS validation (no action required), 2. For external certificates: generate new CSR → submit to CA → download new certificate → import to ACM, 3. Update ALB listener with new certificate ARN, 4. Remove old certificate after 7-day transition period. **Deployment Validation**: Verify ALB health checks pass, test HTTPS endpoint via curl, verify certificate chain via `openssl s_client -connect <endpoint>:443`. **Expiration Monitoring**: CloudWatch alarm triggers 30 days before ACM certificate expiration, weekly automated scan of external certificates."
+    },
+    "databaseEncryptionValidationProcedure": {
+      "purpose": "Define procedure for validating database encryption status",
+      "elements": ["validation_scope", "validation_commands", "reporting_format", "remediation_actions"],
+      "wordCount": {"min": 80, "max": 150},
+      "guidingQuestions": [
+        "What databases/instances are in scope for validation?",
+        "What commands or tools validate encryption status?",
+        "How are validation results reported?",
+        "What actions remediate unencrypted databases?"
+      ],
+      "example": "**Validation Scope**: All RDS instances, DynamoDB tables, S3 buckets storing PII. **Validation Commands**: `aws rds describe-db-instances --query 'DBInstances[*].[DBInstanceIdentifier,StorageEncrypted,KmsKeyId]'`, `aws dynamodb describe-table --table-name <name> --query 'Table.SSEDescription'`, `aws s3api get-bucket-encryption --bucket <name>`. **Reporting Format**: Weekly automated report listing unencrypted resources, shared with security and engineering teams via Slack. **Remediation Actions**: For RDS: snapshot → copy encrypted → restore, for DynamoDB: create new encrypted table → migrate data via DMS, for S3: enable SSE-KMS encryption via bucket policy."
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST SP 800-53 Rev 5",
+      "control": "SC-28",
+      "relevance": "Protection of information at rest - operational procedures"
+    },
+    {
+      "framework": "NIST SP 800-57 Part 2",
+      "control": "Key Management Guidance",
+      "relevance": "Operational key lifecycle procedures"
+    },
+    {
+      "framework": "CIS Controls v8",
+      "control": "3.11",
+      "relevance": "Encrypt sensitive data at rest"
+    },
+    {
+      "framework": "ISO 27001:2022",
+      "control": "A.8.24",
+      "relevance": "Use of cryptography"
+    }
+  ],
+  "upstreamTraceability": {
+    "requiredReferences": [
+      {
+        "section": "4-1",
+        "layer": "physical",
+        "purpose": "Implementation specifications that these procedures operationalize"
+      },
+      {
+        "section": "3-2",
+        "layer": "logical",
+        "purpose": "Security standards requiring these operational procedures"
+      },
+      {
+        "section": "3-3",
+        "layer": "logical",
+        "purpose": "Control specifications defining what these procedures enforce"
+      }
+    ],
+    "relationshipTypes": {
+      "refines": "These procedures refine implementation specifications with step-by-step execution details",
+      "implements": "Procedures implement logical standards and control specifications"
+    }
+  },
+  "qualityChecks": {
+    "completeness": [
+      "All eight procedural elements present (introduction through database validation)",
+      "Minimum word count met for each procedure (total 760+ words)",
+      "All guiding questions addressed with specific steps"
+    ],
+    "actionability": [
+      "Each procedure includes numbered step-by-step instructions",
+      "Commands are executable (specific AWS CLI commands provided)",
+      "Verification steps confirm successful execution",
+      "Rollback/remediation procedures included where applicable"
+    ],
+    "roleClarity": [
+      "Target audience identified (platform engineering, security ops, DBAs)",
+      "Responsibilities clear (who executes, who approves)",
+      "Escalation paths defined (incident commander, CISO approval)"
+    ],
+    "traceability": [
+      "References to upstream physical section 4-1 (implementation specs)",
+      "References to logical sections 3-2, 3-3 (standards, controls)",
+      "Framework citations present (minimum 3: NIST SP 800-53, CIS, ISO 27001)",
+      "Rationale explains WHY procedures are necessary to maintain security controls"
+    ]
+  },
+  "proceduralGuidelines": {
+    "voiceTone": "Imperative (command form) or instructional (numbered steps)",
+    "verbUsage": "Action verbs: Navigate, Execute, Verify, Update, Monitor, Test",
+    "stepFormat": "1. Action → 2. Verification → 3. Documentation",
+    "errorHandling": "Include 'If error occurs' steps with troubleshooting guidance",
+    "timingGuidance": "Specify execution duration where known (e.g., 'Backup takes ~10 minutes')"
+  },
+  "examplePolicyContext": {
+    "policyId": "POL-2025-004",
+    "policyTitle": "Customer PII Encryption Policy",
+    "procedureTypes": [
+      "Key rotation (scheduled maintenance)",
+      "Encryption setup (new resource provisioning)",
+      "HSM backup (disaster recovery preparation)",
+      "Emergency revocation (incident response)",
+      "Access provisioning (IAM lifecycle)",
+      "Certificate renewal (TLS management)",
+      "Validation (compliance verification)"
+    ]
+  }
+}

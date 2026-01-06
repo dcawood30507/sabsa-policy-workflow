@@ -1,0 +1,172 @@
+{
+  "sectionId": "1-3",
+  "layerId": "contextual",
+  "templateVersion": "1.0.0",
+  "title": "Risk Context",
+  "purpose": "Establishes the threat landscape, vulnerability assessment, organizational risk appetite, and potential impact scenarios that inform security architecture decisions",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Frame the risk environment for the policy",
+      "elements": ["risk_overview", "threat_categories", "assessment_scope"],
+      "wordCount": {"min": 50, "max": 100},
+      "example": "This policy addresses a complex risk environment characterized by sophisticated external threats, internal vulnerabilities, and low organizational risk tolerance for customer PII exposure. The risk assessment encompasses threat actor analysis, current vulnerability inventory, and quantified impact scenarios across financial, reputational, and operational dimensions."
+    },
+    "mainContent": {
+      "subsections": [
+        {
+          "name": "threatLandscape",
+          "title": "Threat Landscape",
+          "requiredPoints": [
+            "External threat actors (APTs, ransomware groups, nation-states, cybercriminals)",
+            "Internal threats (privileged users, developers, contractors)",
+            "Attack vectors relevant to the policy scope",
+            "Current threat intelligence or industry trends"
+          ],
+          "guidingQuestions": [
+            "Who are the threat actors targeting our organization or industry?",
+            "What are their motivations and capabilities?",
+            "What attack vectors are most relevant to this policy?",
+            "What current threat intelligence informs this assessment?"
+          ],
+          "wordCount": {"min": 150, "max": 300},
+          "example": "**External Threats**: Advanced Persistent Threats (APTs) targeting customer databases through SQL injection and privilege escalation attacks, with 47% increase in financial sector attacks per Q3 2024 threat intelligence. Ransomware groups (e.g., LockBit, BlackCat) specifically targeting backup systems and encryption key infrastructure, demanding average ransoms of $4.2M. Nation-state actors conducting espionage against customer PII for competitive intelligence.\n\n**Internal Threats**: Privileged users with excessive access to unencrypted customer data (15% of administrative accounts lack MFA). Developers inadvertently exposing PII in logs, code repositories, or non-production environments (8 incidents in past 12 months). Third-party vendors and contractors with insufficient data protection controls (23% lack encryption requirements in contracts)."
+        },
+        {
+          "name": "vulnerabilityAssessment",
+          "title": "Current Vulnerabilities",
+          "requiredPoints": [
+            "Specific vulnerability findings (from penetration tests, scans, audits)",
+            "Technical gaps or weaknesses",
+            "Process or procedural vulnerabilities",
+            "Third-party or supply chain risks"
+          ],
+          "guidingQuestions": [
+            "What vulnerabilities currently exist in systems, processes, or controls?",
+            "What security assessment findings are relevant?",
+            "What gaps were identified in recent audits or tests?",
+            "What third-party or supply chain vulnerabilities exist?"
+          ],
+          "wordCount": {"min": 150, "max": 300},
+          "example": "**Data-at-Rest Encryption Gaps**: Q3 2024 penetration testing identified 23% of customer PII repositories lacking encryption protection, concentrated in staging environments (35% coverage) and development databases (12% coverage). Critical finding: production backup systems lack encryption-at-rest for customer data archives.\n\n**Key Management Weaknesses**: Decentralized key storage across 17 application silos, manual rotation processes requiring 40 hours per cycle, and insufficient access controls (only 42% of key operations require MFA). Single points of failure identified in key backup and recovery procedures.\n\n**Transit Encryption Inconsistencies**: 12 legacy API endpoints using deprecated TLS 1.0/1.1 protocols. Internal service-to-service communications lacking encryption (estimated 35% of internal traffic unencrypted). Database connection strings stored in plaintext configuration files (identified in 8 applications).\n\n**Audit Trail Deficiencies**: Incomplete logging of key access events (65% coverage), cryptographic operations not centralized in SIEM, and insufficient retention periods (current 90 days vs. required 7 years for compliance)."
+        },
+        {
+          "name": "riskAppetite",
+          "title": "Risk Appetite & Tolerance",
+          "requiredPoints": [
+            "Organizational risk appetite statement",
+            "Specific risk tolerance levels for this policy area",
+            "Acceptable vs. unacceptable residual risks",
+            "Risk acceptance criteria or thresholds"
+          ],
+          "guidingQuestions": [
+            "What is the organization's overall risk appetite?",
+            "What specific risks are acceptable vs. unacceptable?",
+            "What residual risks can be tolerated after controls?",
+            "What are the decision criteria for risk acceptance?"
+          ],
+          "wordCount": {"min": 100, "max": 200},
+          "example": "The organization maintains a **low risk tolerance** for customer PII exposure, accepting only residual risks after implementing defense-in-depth controls and compensating measures. **Zero tolerance** for unencrypted customer PII in production environments or backup systems. **Limited acceptance** of controlled risks in non-production environments under strict conditions: (1) synthetic or anonymized data only, (2) network isolation from production, (3) enhanced access controls and monitoring, (4) maximum 90-day data retention.\n\n**Risk Acceptance Criteria**: Residual risks may be accepted only when: likelihood reduces to <5% annually, financial impact <$250K, compensating controls provide equivalent protection, and CISO/CTO approval documented. Unacceptable risks trigger mandatory remediation within 90 days for critical findings, 180 days for high-severity vulnerabilities."
+        },
+        {
+          "name": "impactAnalysis",
+          "title": "Potential Impact of Policy Failure",
+          "requiredPoints": [
+            "Financial impact (fines, lawsuits, remediation costs)",
+            "Reputational damage and customer trust impacts",
+            "Operational disruption scenarios",
+            "Quantified impact estimates where possible"
+          ],
+          "guidingQuestions": [
+            "What are the financial consequences if this policy fails?",
+            "How would reputation and customer trust be affected?",
+            "What operational disruptions could occur?",
+            "What are the quantified impact estimates for each scenario?"
+          ],
+          "wordCount": {"min": 150, "max": 300},
+          "example": "**Financial Impact**: GDPR fines up to €20M or 4% of global annual revenue ($23M based on current financials), class-action lawsuits averaging $7.91M per breach (based on 2023 industry data), and cyber insurance policy cancellation worth $1.2M annually. Breach notification costs estimated at $2.1M per incident (forensics, legal, customer notification, credit monitoring). Total worst-case financial exposure: $34.2M for single major breach.\n\n**Reputational Damage**: Customer churn estimated at 15-25% following PII breach based on industry benchmarks, with average customer lifetime value of $4,800 translating to $28.8M-$48M revenue loss. Brand trust metrics require 18-24 month recovery period. Enterprise customer losses estimated at 40% of pipeline ($18M in at-risk contracts) due to failed security assessments.\n\n**Operational Disruption**: Regulatory investigations requiring 40% of security team capacity for 6-12 months, diverting resources from strategic initiatives. Potential service suspensions in regulated markets (EU, healthcare sector) affecting 35% of revenue base. Mandatory breach remediation activities consuming 60% of engineering capacity for 90 days minimum. Mean time to recovery from encryption-related incidents: 72 hours without proper key management, risking SLA violations and customer penalties."
+        }
+      ]
+    },
+    "conclusion": {
+      "purpose": "Synthesize the risk context and justify policy urgency",
+      "elements": ["risk_synthesis", "control_imperative", "mitigation_preview"],
+      "wordCount": {"min": 50, "max": 100},
+      "example": "The confluence of sophisticated threat actors, identified vulnerabilities in encryption coverage, and low organizational risk tolerance creates an urgent imperative for comprehensive customer PII encryption controls. Potential impacts ranging from €20M regulatory fines to 25% customer churn demand immediate risk mitigation through systematic encryption implementation."
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST RMF",
+      "control": "Steps 1-2 (Categorize and Select)",
+      "relevance": "Risk categorization and control selection based on impact assessment"
+    },
+    {
+      "framework": "NIST SP 800-30",
+      "control": "Risk Assessment Methodology",
+      "relevance": "Systematic approach to identifying threats, vulnerabilities, and impacts"
+    },
+    {
+      "framework": "ISO 27001",
+      "control": "Clause 6.1.2",
+      "relevance": "Information security risk assessment requirements"
+    },
+    {
+      "framework": "NIST CSF",
+      "control": "ID.RA-1 through ID.RA-6",
+      "relevance": "Comprehensive risk assessment framework (asset vulnerabilities, threats, likelihood, response)"
+    },
+    {
+      "framework": "ISO 27005",
+      "control": "Risk Management Framework",
+      "relevance": "Risk identification, analysis, evaluation, and treatment"
+    }
+  ],
+  "upstreamDependencies": [
+    {
+      "section": "summary.md",
+      "relationship": "derives_from",
+      "rationale": "Risk context must align with policy summary scope and objectives"
+    },
+    {
+      "section": "1-2",
+      "relationship": "constrained_by",
+      "rationale": "Regulatory drivers establish mandatory risk treatment requirements"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All four subsections present (threat landscape, vulnerabilities, risk appetite, impact analysis)",
+      "Minimum word count met for each subsection",
+      "All guiding questions addressed",
+      "Both external and internal threats identified",
+      "Current vulnerabilities from actual assessments referenced",
+      "Risk tolerance levels clearly stated",
+      "Financial impacts quantified with dollar amounts"
+    ],
+    "clarity": [
+      "Threat actors categorized (external vs. internal)",
+      "Vulnerabilities linked to specific assessment findings (dates, percentages)",
+      "Risk appetite statement uses clear tolerance levels (zero, low, moderate, high)",
+      "Impact scenarios quantified (dollar amounts, percentages, timeframes)",
+      "Current state gaps identified with metrics (e.g., 23% unencrypted)"
+    ],
+    "traceability": [
+      "References policy summary and business drivers",
+      "Framework citations present (minimum 3)",
+      "Rationale explains risk context using framework alignment",
+      "Assessment findings dated and sourced"
+    ],
+    "frameworkAlignment": [
+      "NIST RMF risk categorization addressed",
+      "ISO 27001 Clause 6.1.2 risk assessment methodology followed",
+      "NIST CSF Identify (ID.RA) functions covered",
+      "Threat and vulnerability pairing for each risk scenario"
+    ]
+  },
+  "exampleContent": {
+    "threatSection": "**External Threats**:\n- **Advanced Persistent Threats (APTs)**: Targeting customer databases through SQL injection, privilege escalation, and lateral movement attacks. Financial sector saw 47% increase in APT activity in Q3 2024 per CISA threat intelligence.\n- **Ransomware Groups**: LockBit, BlackCat, and Royal ransomware families specifically targeting backup systems and encryption key infrastructure. Average ransom demand: $4.2M (up from $1.8M in 2023). 62% of attacks exploit unencrypted backups.\n- **Nation-State Actors**: Espionage campaigns against customer PII for competitive intelligence and geopolitical advantage. Attributed attacks from APT29, APT40 groups targeting SaaS providers.\n- **Cybercriminal Organizations**: Monetizing stolen PII through identity theft ($15 per full identity on dark web), financial fraud, and credential stuffing attacks.\n\n**Internal Threats**:\n- **Privileged Users**: 15% of administrative accounts lack MFA controls, creating insider threat risk. Average privileged user has access to 2.3M customer PII records.\n- **Developers**: Inadvertent PII exposure in application logs, code repositories, and debugging environments. 8 incidents in past 12 months requiring breach assessment.\n- **Third-Party Vendors**: 23% of vendor contracts lack encryption requirements or security audit rights. 12 active vendors with production database access.",
+    "vulnerabilitySection": "**Data-at-Rest Encryption Gaps**: Q3 2024 penetration testing identified:\n- 23% of customer PII repositories lack encryption protection\n- Production environments: 95% coverage (5% gap in legacy systems)\n- Staging environments: 65% coverage (35% gap)\n- Development databases: 12% coverage (88% gap)\n- Backup systems: Critical finding - 0% encryption for customer data archives\n\n**Key Management Weaknesses**:\n- Decentralized key storage across 17 application silos\n- Manual rotation processes requiring 40 hours per quarterly cycle\n- Insufficient access controls: only 42% of key operations require MFA\n- Single points of failure in key backup procedures (no geographic redundancy)\n- Key escrow lacking for 65% of encryption implementations\n\n**Transit Encryption Inconsistencies**:\n- 12 legacy API endpoints using deprecated TLS 1.0/1.1 protocols (critical severity)\n- Internal service communications: estimated 35% of traffic unencrypted\n- Database connection strings stored in plaintext configuration files (8 applications)\n- Certificate management ad-hoc: 30% of certificates expired in past 6 months before renewal",
+    "riskAppetiteSection": "The organization maintains a **low risk tolerance** for customer PII exposure based on:\n1. Regulatory obligations (GDPR, SOC 2) requiring stringent controls\n2. High-value customer contracts with security requirements\n3. Brand reputation sensitivity in privacy-conscious markets\n4. Cyber insurance policy requirements\n\n**Specific Tolerance Levels**:\n- **Zero Tolerance**: Unencrypted customer PII in production or backup systems. Any detection triggers immediate incident response and mandatory remediation.\n- **Low Tolerance**: Encryption gaps in non-production environments acceptable only with: (1) synthetic or anonymized data, (2) network isolation, (3) enhanced access controls, (4) ≤90-day retention.\n- **Moderate Tolerance**: Residual risks from technical constraints (legacy systems) acceptable with compensating controls and documented remediation plan ≤12 months.\n\n**Risk Acceptance Criteria**:\nResidual risks acceptable only when:\n- Likelihood reduces to <5% annually (based on threat modeling)\n- Financial impact <$250K (below insurance deductible)\n- Compensating controls provide equivalent protection (defense-in-depth)\n- CISO/CTO approval documented with review date\n- Unacceptable risks trigger mandatory remediation: 90 days (critical), 180 days (high-severity)",
+    "impactSection": "**Financial Impact Scenarios**:\n\n*Regulatory Fines*:\n- GDPR: Up to €20M or 4% of global revenue ($23M based on current financials)\n- CCPA: $7,500 per violation (estimated 500K affected consumers = $3.75B maximum exposure)\n- State privacy laws: Combined exposure $12M for multi-state breach\n\n*Litigation and Legal Costs*:\n- Class-action lawsuits: Average settlement $7.91M per breach (2023 industry benchmark)\n- Legal defense costs: $2.1M minimum for breach response\n- Customer compensation: $150-$250 per affected customer (credit monitoring, identity theft insurance)\n\n*Operational Costs*:\n- Breach notification: $2.1M (forensics $800K, legal $600K, customer notification $500K, PR crisis management $200K)\n- Cyber insurance cancellation: $1.2M annual premium loss\n- Total worst-case exposure: **$34.2M for single major breach**\n\n**Reputational Impact**:\n- Customer churn: 15-25% following PII breach (industry benchmark)\n- Average customer lifetime value: $4,800\n- Revenue loss: $28.8M-$48M (based on 100K customer base)\n- Brand trust recovery: 18-24 months to return to pre-breach NPS scores\n- Enterprise pipeline impact: 40% of prospects ($18M) require passing security assessments\n\n**Operational Disruption**:\n- Regulatory investigations: 40% of security team capacity for 6-12 months\n- Service suspensions: Potential in EU markets (35% of revenue base)\n- Breach remediation: 60% of engineering capacity for 90 days minimum\n- SLA violations: Mean time to recovery 72 hours without proper key management (vs. 4-hour SLA)"
+  }
+}

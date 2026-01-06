@@ -1,0 +1,197 @@
+{
+  "sectionId": "4-1",
+  "layerId": "physical",
+  "templateVersion": "1.0.0",
+  "title": "Control Implementation Specifications",
+  "purpose": "Defines how logical controls will be technically implemented - specifying technologies, platforms, and architectures from the builder's perspective",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Set context for implementation approach and technology selection",
+      "elements": ["implementation_scope", "architecture_overview", "technology_strategy"],
+      "wordCount": {"min": 80, "max": 120},
+      "example": "This section specifies the technical implementation approach for customer PII encryption controls, detailing the **AWS-native encryption infrastructure** utilizing Key Management Service (KMS), Hardware Security Modules (HSM), and transparent data encryption (TDE) capabilities."
+    },
+    "encryptionTechnologyStack": {
+      "purpose": "Specify encryption technologies and cryptographic implementations",
+      "elements": ["encryption_algorithms", "key_management_platform", "cryptographic_libraries", "hsm_integration"],
+      "wordCount": {"min": 120, "max": 200},
+      "guidingQuestions": [
+        "What encryption algorithms and cipher suites will be used?",
+        "What key management platform will manage encryption keys?",
+        "What cryptographic libraries support encryption operations?",
+        "How will Hardware Security Modules be integrated?"
+      ],
+      "example": "**Encryption Algorithms**: AES-256-GCM for data-at-rest encryption, TLS 1.2+ with ECDHE-RSA-AES256-GCM-SHA384 cipher suite for data-in-transit. **Key Management Platform**: AWS Key Management Service (KMS) for centralized key lifecycle management with customer-managed keys (CMKs). **HSM Integration**: AWS CloudHSM provides FIPS 140-2 Level 3 validated hardware for root key material generation and storage. **Cryptographic Libraries**: AWS Encryption SDK, OpenSSL 1.1.1+, AWS SDK cryptography modules."
+    },
+    "keyManagementArchitecture": {
+      "purpose": "Define the key hierarchy and management architecture",
+      "elements": ["key_hierarchy", "key_lifecycle", "key_storage", "key_rotation_mechanism"],
+      "wordCount": {"min": 120, "max": 200},
+      "guidingQuestions": [
+        "What is the key hierarchy (root keys, master keys, data keys)?",
+        "How are keys generated, distributed, rotated, and destroyed?",
+        "Where are keys stored at each tier of the hierarchy?",
+        "What mechanisms automate key rotation?"
+      ],
+      "example": "**Key Hierarchy**: (1) Root keys stored in CloudHSM FIPS boundary, (2) Customer Master Keys (CMKs) managed in KMS with HSM backing, (3) Data Encryption Keys (DEKs) generated per-resource via envelope encryption. **Key Lifecycle**: CMKs generated via KMS API with CloudHSM-backed key material, DEKs generated on-demand via GenerateDataKey API, automated 90-day rotation via KMS key rotation policy. **Key Storage**: Root keys never leave HSM, CMKs stored encrypted within KMS service boundary, DEKs stored encrypted alongside ciphertext (envelope encryption pattern)."
+    },
+    "hsmSpecifications": {
+      "purpose": "Specify Hardware Security Module requirements and configuration",
+      "elements": ["hsm_type", "hsm_deployment", "hsm_redundancy", "hsm_authentication"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "What HSM platform will be deployed?",
+        "How will HSMs be deployed for high availability?",
+        "What redundancy mechanisms ensure key availability?",
+        "How will HSM authentication and access control work?"
+      ],
+      "example": "**HSM Platform**: AWS CloudHSM deployed as multi-AZ cluster for high availability. **Deployment**: Minimum 2 HSM instances across separate Availability Zones with automatic failover. **Redundancy**: Key material synchronized across cluster members, backup HSM maintained in DR region. **Authentication**: M-of-N authentication (3 of 5 crypto officers required for administrative operations), application authentication via TLS mutual authentication with PKCS#11 interface."
+    },
+    "databaseEncryptionImplementation": {
+      "purpose": "Specify database-layer encryption implementation",
+      "elements": ["tde_implementation", "column_encryption", "backup_encryption", "key_integration"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "How will Transparent Data Encryption (TDE) be implemented?",
+        "What column-level encryption applies to sensitive fields?",
+        "How are database backups encrypted?",
+        "How do databases integrate with KMS for key retrieval?"
+      ],
+      "example": "**TDE Implementation**: Amazon RDS encrypted instances using customer-managed CMKs, encryption enabled at instance creation (cannot be added retroactively). **Column Encryption**: Application-layer field encryption for PII columns using AWS Encryption SDK with data key caching (5-minute TTL). **Backup Encryption**: Automated RDS snapshots encrypted with same CMK as source database, manual snapshots inherit encryption. **Key Integration**: RDS integrates with KMS via service-linked role, DEKs retrieved on database startup and cached in memory."
+    },
+    "applicationEncryptionIntegration": {
+      "purpose": "Specify how applications integrate encryption capabilities",
+      "elements": ["sdk_integration", "envelope_encryption", "key_caching", "error_handling"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "What SDKs and libraries do applications use for encryption?",
+        "How is envelope encryption implemented in application code?",
+        "What key caching strategies improve performance?",
+        "How are encryption failures handled in applications?"
+      ],
+      "example": "**SDK Integration**: Applications use AWS Encryption SDK (Java, Python, Node.js) with KMS master key provider. **Envelope Encryption**: SDK automatically generates DEKs via KMS GenerateDataKey API, encrypts data with DEK, stores encrypted DEK with ciphertext. **Key Caching**: Data key caching with 5-minute TTL and 100-message limit reduces KMS API calls by 95%. **Error Handling**: KMS throttling triggers exponential backoff (1s → 2s → 4s), encryption failures logged to CloudWatch with PagerDuty alert."
+    },
+    "tlsImplementation": {
+      "purpose": "Specify TLS configuration for data-in-transit protection",
+      "elements": ["tls_termination", "certificate_management", "cipher_suites", "protocol_versions"],
+      "wordCount": {"min": 100, "max": 180},
+      "guidingQuestions": [
+        "Where is TLS terminated in the architecture?",
+        "How are TLS certificates provisioned and rotated?",
+        "What cipher suites are enabled/disabled?",
+        "What TLS protocol versions are allowed?"
+      ],
+      "example": "**TLS Termination**: Application Load Balancers (ALBs) terminate TLS, backend connections use VPC PrivateLink (encrypted by default). **Certificate Management**: AWS Certificate Manager (ACM) provisions certificates with automatic 60-day renewal, wildcard certificates for subdomains. **Cipher Suites**: Whitelist ECDHE-RSA-AES256-GCM-SHA384, ECDHE-RSA-AES128-GCM-SHA256; blacklist RC4, 3DES, MD5-based ciphers. **Protocol Versions**: TLS 1.2 minimum (policy enforcement via ALB security policy: ELBSecurityPolicy-TLS-1-2-2017-01), TLS 1.3 preferred."
+    },
+    "cloudServiceSelection": {
+      "purpose": "Specify cloud services selected for encryption implementation",
+      "elements": ["storage_services", "compute_services", "security_services", "service_rationale"],
+      "wordCount": {"min": 80, "max": 150},
+      "guidingQuestions": [
+        "What AWS storage services will store encrypted data?",
+        "What compute services will process encrypted data?",
+        "What security services support encryption operations?",
+        "Why were these services selected?"
+      ],
+      "example": "**Storage Services**: Amazon RDS (encrypted databases), Amazon S3 (encrypted object storage with SSE-KMS), Amazon EBS (encrypted volumes). **Compute Services**: Amazon EC2 (encryption processing), AWS Lambda (serverless encryption functions). **Security Services**: AWS KMS (key management), AWS CloudHSM (root keys), AWS Certificate Manager (TLS certificates), AWS Secrets Manager (application credentials). **Rationale**: Native AWS integrations reduce operational overhead, managed services provide automatic patching and high availability."
+    },
+    "implementationDependencies": {
+      "purpose": "Identify dependencies and prerequisites for implementation",
+      "elements": ["infrastructure_prerequisites", "service_dependencies", "integration_points", "migration_requirements"],
+      "wordCount": {"min": 80, "max": 150},
+      "guidingQuestions": [
+        "What infrastructure must exist before implementation?",
+        "What service dependencies exist between components?",
+        "What integration points require coordination?",
+        "What migration steps transition from current to desired state?"
+      ],
+      "example": "**Infrastructure Prerequisites**: VPC with private subnets for HSM deployment, IAM roles with KMS permissions, CloudTrail logging enabled. **Service Dependencies**: KMS requires CloudHSM cluster operational, RDS encryption requires KMS CMK pre-created, application deployment requires AWS Encryption SDK installed. **Integration Points**: SIEM integration for CloudTrail KMS events, monitoring integration for KMS API metrics. **Migration Requirements**: Database re-encryption via snapshot-restore for existing RDS instances (no in-place encryption upgrade path)."
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST SP 800-53 Rev 5",
+      "control": "SC-28(1)",
+      "relevance": "Cryptographic protection of information at rest"
+    },
+    {
+      "framework": "NIST SP 800-57 Part 1",
+      "control": "Key Management",
+      "relevance": "Key lifecycle and hierarchy guidance"
+    },
+    {
+      "framework": "CIS AWS Foundations Benchmark",
+      "control": "2.1, 2.8",
+      "relevance": "Encryption at rest and key rotation requirements"
+    },
+    {
+      "framework": "AWS Well-Architected Framework",
+      "control": "Security Pillar - Data Protection",
+      "relevance": "Encryption implementation best practices"
+    }
+  ],
+  "upstreamTraceability": {
+    "requiredReferences": [
+      {
+        "section": "3-1",
+        "layer": "logical",
+        "purpose": "Security policies that mandate encryption requirements"
+      },
+      {
+        "section": "3-2",
+        "layer": "logical",
+        "purpose": "Security standards specifying cryptographic algorithms and key lengths"
+      },
+      {
+        "section": "3-3",
+        "layer": "logical",
+        "purpose": "Control specifications defining encryption scope and implementation controls"
+      },
+      {
+        "section": "2-4",
+        "layer": "conceptual",
+        "purpose": "Trust model defining trust boundaries requiring encryption"
+      }
+    ],
+    "relationshipTypes": {
+      "implements": "This section implements logical policies and control specifications",
+      "constrained_by": "Implementation constrained by logical standards (algorithms, key lengths, protocols)"
+    }
+  },
+  "qualityChecks": {
+    "completeness": [
+      "All nine structural elements present (introduction through implementation dependencies)",
+      "Minimum word count met for each element (total 850+ words)",
+      "All guiding questions addressed with specific technology selections"
+    ],
+    "specificity": [
+      "Specific AWS services named (KMS, CloudHSM, RDS, ACM, etc.)",
+      "Specific algorithms and protocols identified (AES-256-GCM, TLS 1.2, ECDHE-RSA)",
+      "Specific integration patterns described (envelope encryption, data key caching)",
+      "Specific configuration parameters provided (90-day rotation, 5-minute cache TTL)"
+    ],
+    "traceability": [
+      "References to upstream logical sections (minimum 3 from 3-1, 3-2, 3-3)",
+      "Framework citations present (minimum 3: NIST SP 800-53, CIS, AWS Well-Architected)",
+      "Rationale explains WHY technology selections satisfy logical controls"
+    ],
+    "avoidVagueness": [
+      "No generic statements like 'industry-standard encryption' without specifics",
+      "No placeholder values (use realistic configuration examples)",
+      "No 'to be determined' sections (provide concrete specifications)"
+    ]
+  },
+  "examplePolicyContext": {
+    "policyId": "POL-2025-004",
+    "policyTitle": "Customer PII Encryption Policy",
+    "technologyStack": "AWS-native (KMS, CloudHSM, RDS, S3, ACM)",
+    "keyRequirements": [
+      "AES-256 encryption for data at rest",
+      "TLS 1.2+ for data in transit",
+      "90-day key rotation",
+      "HSM-backed root keys",
+      "Centralized key management",
+      "Automated compliance validation"
+    ]
+  }
+}

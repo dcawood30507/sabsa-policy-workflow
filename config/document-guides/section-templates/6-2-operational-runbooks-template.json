@@ -1,0 +1,166 @@
+{
+  "sectionId": "6-2",
+  "layerId": "operational",
+  "templateVersion": "1.0.0",
+  "title": "Operational Runbooks",
+  "purpose": "Defines step-by-step operational procedures for routine operations, troubleshooting, and maintenance tasks from the operations perspective",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish runbook structure and operational context",
+      "elements": ["runbook_overview", "scope_statement", "operational_audience"],
+      "wordCount": {"min": 50, "max": 100},
+      "example": "This section provides **operational runbooks** for AWS KMS key lifecycle management, encryption operations, and troubleshooting procedures. Each runbook contains step-by-step instructions, verification checkpoints, error handling procedures, and escalation criteria. Runbooks target Security Operations, DevOps Engineers, and Database Administrators responsible for day-to-day encryption service operations."
+    },
+    "keyRotationRunbook": {
+      "purpose": "Step-by-step procedure for rotating encryption keys",
+      "elements": ["prerequisites", "execution_steps", "verification_steps", "rollback_procedure"],
+      "wordCount": {"min": 150, "max": 250},
+      "guidingQuestions": [
+        "What are the pre-rotation prerequisites?",
+        "What are the exact execution steps?",
+        "How is successful rotation verified?",
+        "What is the rollback procedure if rotation fails?"
+      ],
+      "example": "**Key Rotation Runbook (90-Day Cycle)**\n\n**PREREQUISITES**: (1) Verify current key status: `aws kms describe-key --key-id <key-id>`, (2) Confirm no in-flight encryption operations: Check CloudWatch metric `kms:Encrypt` <100 ops/min, (3) Schedule maintenance window: 2-hour window during low-traffic period, (4) Notify stakeholders: Email service owners 48 hours prior.\n\n**EXECUTION**: (1) Create new key version: `aws kms enable-key-rotation --key-id <key-id>`, (2) Update application configurations: Deploy updated KMS key ARN to all services via parameter store, (3) Verify new key usage: Monitor CloudWatch `kms:Decrypt` calls using new key version, (4) Deactivate old key version: Wait 7 days for cache expiration, then disable previous version.\n\n**VERIFICATION**: (1) Confirm new key active: `aws kms list-key-rotations --key-id <key-id>`, (2) Check encryption operations: CloudWatch `kms:Encrypt` success rate >99.9%, (3) Verify application health: Zero encryption-related errors in application logs for 24 hours.\n\n**ROLLBACK**: If failure detected, revert to previous key version: `aws kms disable-key-rotation --key-id <key-id>`, restore previous parameter store values, verify applications revert to old key successfully."
+    },
+    "encryptionTroubleshooting": {
+      "purpose": "Troubleshooting procedure for encryption failures",
+      "elements": ["symptom_identification", "diagnostic_steps", "resolution_actions", "escalation_criteria"],
+      "wordCount": {"min": 150, "max": 250},
+      "guidingQuestions": [
+        "What symptoms indicate encryption failures?",
+        "What diagnostic steps identify root cause?",
+        "What resolution actions fix common issues?",
+        "When should issues be escalated?"
+      ],
+      "example": "**Troubleshooting Runbook: Encryption Failures**\n\n**SYMPTOMS**: Application errors 'KMS.NotFoundException', 'KMS.AccessDeniedException', or 'KMS.InvalidStateException'. CloudWatch alarm 'KMS-API-Error-Rate' triggered.\n\n**DIAGNOSTICS**: (1) Check KMS key status: `aws kms describe-key --key-id <key-id>` → Verify `KeyState: Enabled`, (2) Review IAM permissions: Check service role has `kms:Decrypt`, `kms:Encrypt`, `kms:GenerateDataKey`, (3) Examine CloudTrail logs: Filter for KMS API calls from affected service, identify error codes, (4) Test key manually: `aws kms encrypt --key-id <key-id> --plaintext 'test'` → Verify successful encryption.\n\n**RESOLUTION**: (1) **Key Disabled**: Re-enable key: `aws kms enable-key --key-id <key-id>`, (2) **Permission Denied**: Update IAM role policy to grant required KMS permissions, (3) **Key Not Found**: Verify correct key ARN in application configuration, update if incorrect, (4) **Regional Mismatch**: Confirm application and KMS key in same AWS region.\n\n**ESCALATION**: If unresolved after 30 minutes of troubleshooting → Escalate to Security Architecture team. If data access impacted → Page CISO + CTO immediately."
+    },
+    "accessProvisioningRunbook": {
+      "purpose": "Procedure for provisioning and revoking KMS key access",
+      "elements": ["access_request_process", "provisioning_steps", "verification_process", "revocation_procedure"],
+      "wordCount": {"min": 100, "max": 150},
+      "guidingQuestions": [
+        "What is the access request process?",
+        "What steps provision key access?",
+        "How is access verified?",
+        "How is access revoked?"
+      ],
+      "example": "**Access Provisioning Runbook**\n\n**REQUEST**: Service owner submits Jira ticket with: (1) Service name + AWS account ID, (2) Required KMS operations (Encrypt/Decrypt/GenerateDataKey), (3) Business justification, (4) Manager approval.\n\n**PROVISIONING**: (1) Create/update IAM role: Add `kms:Decrypt`, `kms:GenerateDataKey` to service role policy, (2) Update KMS key policy: Add service role ARN to key policy `Principal` list, (3) Verify access: Test encryption from service account: `aws kms encrypt --key-id <key-id> --plaintext 'test'`, (4) Document access: Update access matrix in Confluence.\n\n**REVOCATION**: (1) Remove from IAM policy: Delete KMS permissions from service role, (2) Remove from key policy: Delete service role ARN from key policy `Principal`, (3) Verify revocation: Test encryption fails with AccessDeniedException, (4) Update documentation: Mark access revoked in access matrix."
+    },
+    "auditLogReviewRunbook": {
+      "purpose": "Procedure for reviewing CloudTrail audit logs for KMS events",
+      "elements": ["log_collection", "review_frequency", "analysis_procedure", "reporting_process"],
+      "wordCount": {"min": 100, "max": 150},
+      "guidingQuestions": [
+        "What logs are reviewed?",
+        "How frequently are logs reviewed?",
+        "What analysis is performed?",
+        "How are findings reported?"
+      ],
+      "example": "**Audit Log Review Runbook (Weekly)**\n\n**LOG COLLECTION**: CloudTrail logs filtered for KMS events: `eventName: (CreateKey OR DeleteKey OR DisableKey OR PutKeyPolicy)`. Query CloudWatch Logs Insights with time range: Last 7 days.\n\n**ANALYSIS**: (1) Key Creation Events: Review `CreateKey` events, verify authorized personnel (Security Ops or DevOps teams), (2) Key Deletion Attempts: Investigate any `ScheduleKeyDeletion` events, confirm manager approval in Jira, (3) Policy Changes: Review `PutKeyPolicy` events, verify changes align with approved access requests, (4) Unusual Access Patterns: Identify API calls from unexpected IP addresses or unfamiliar principals.\n\n**REPORTING**: (1) Generate weekly summary: Total keys created/deleted, policy changes, unusual events, (2) Email Security Leadership: Weekly digest every Monday, (3) Escalate anomalies: Create Jira security incident ticket for any unauthorized access attempts."
+    }
+  },
+  "upstreamTraceability": {
+    "required": true,
+    "minimumReferences": 2,
+    "expectedSources": [
+      {
+        "layer": "component",
+        "sections": ["5-1", "5-2", "5-4"],
+        "relationshipTypes": ["refines", "implements"],
+        "rationale": "Runbooks refine component configurations and implement deployment checklists with operational procedures"
+      },
+      {
+        "layer": "physical",
+        "sections": ["4-2", "4-3"],
+        "relationshipTypes": ["implements"],
+        "rationale": "Runbooks implement physical procedures and technical standards with step-by-step instructions"
+      }
+    ],
+    "exampleReferences": [
+      {
+        "upstreamSection": "POL-2025-004.component.5-1",
+        "relationshipType": "refines",
+        "rationale": "Key rotation runbook refines KMS key configurations by providing step-by-step operational procedure for enabling automatic key rotation"
+      },
+      {
+        "upstreamSection": "POL-2025-004.component.5-4",
+        "relationshipType": "implements",
+        "rationale": "Deployment checklist items implemented through operational runbooks, providing executable procedures for each verification step"
+      },
+      {
+        "upstreamSection": "POL-2025-004.physical.4-2",
+        "relationshipType": "implements",
+        "rationale": "Key rotation procedure from Physical layer implemented through detailed runbook with prerequisites, execution steps, verification, and rollback"
+      }
+    ]
+  },
+  "frameworkReferences": [
+    {
+      "framework": "ITIL 4",
+      "control": "Service Operation",
+      "relevance": "Runbook procedures for routine operations and troubleshooting"
+    },
+    {
+      "framework": "NIST SP 800-53",
+      "control": "CP-2",
+      "relevance": "Contingency planning procedures and operational guides"
+    },
+    {
+      "framework": "SRE Principles",
+      "control": "Runbook Automation",
+      "relevance": "Step-by-step operational procedures for reliability"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All five runbooks present (introduction, key rotation, troubleshooting, access provisioning, audit review)",
+      "Minimum word count met for each runbook (total 550-900 words)",
+      "All guiding questions addressed",
+      "At least 2 upstream traceability references"
+    ],
+    "proceduralClarity": [
+      "Step-by-step numbered instructions (minimum 10 steps for key rotation)",
+      "Prerequisites clearly stated before execution steps",
+      "Verification steps with success criteria",
+      "Rollback/escalation procedures included"
+    ],
+    "technicalSpecificity": [
+      "Actual AWS CLI commands with placeholders (aws kms describe-key --key-id <key-id>)",
+      "CloudWatch metric names (kms:Encrypt, kms:Decrypt)",
+      "Error codes referenced (KMS.NotFoundException, AccessDeniedException)",
+      "Time windows specified (30 minutes, 48 hours, 7 days)"
+    ],
+    "operationalRealism": [
+      "Realistic time estimates (2-hour window, 30 min troubleshooting)",
+      "Escalation criteria with time thresholds",
+      "Notification requirements (email stakeholders 48 hours prior)",
+      "Verification checkpoints at key decision points"
+    ]
+  },
+  "commonPitfalls": {
+    "avoid": [
+      "Generic procedures without specific AWS commands",
+      "Runbooks without numbered steps or verification points",
+      "Missing prerequisites or rollback procedures",
+      "Vague escalation criteria ('if problems occur')",
+      "No time estimates for operations or troubleshooting"
+    ],
+    "include": [
+      "Exact AWS CLI commands with parameter placeholders",
+      "Numbered steps with verification at each stage",
+      "Specific CloudWatch metrics and thresholds for verification",
+      "Time-based escalation paths (30 min → 60 min → immediate page)",
+      "Prerequisites, execution, verification, and rollback for each runbook"
+    ]
+  },
+  "examplePolicyScenario": {
+    "policyId": "POL-2025-004",
+    "policyTitle": "Customer PII Encryption Policy",
+    "sectionExample": {
+      "introduction": "This section provides step-by-step runbooks for AWS KMS key management operations, targeting Security Operations and DevOps teams. Each runbook includes prerequisites, execution steps, verification checkpoints, and rollback procedures for safe operational execution.",
+      "keyRotationSnippet": "**PREREQUISITES**: (1) Verify key status: `aws kms describe-key --key-id <key-id>`, (2) Check in-flight ops: CloudWatch `kms:Encrypt` <100 ops/min, (3) Schedule 2-hour maintenance window.\n\n**EXECUTION**: (1) Enable rotation: `aws kms enable-key-rotation --key-id <key-id>`, (2) Update app configs: Deploy new key ARN via parameter store, (3) Monitor new key usage: CloudWatch `kms:Decrypt` with new version.\n\n**VERIFICATION**: (1) Confirm rotation: `aws kms list-key-rotations`, (2) Check API success rate: >99.9% for 24 hours.",
+      "troubleshootingSnippet": "**SYMPTOMS**: 'KMS.NotFoundException' errors, CloudWatch alarm 'KMS-API-Error-Rate' triggered.\n\n**DIAGNOSTICS**: (1) Check key state: `aws kms describe-key`, verify `KeyState: Enabled`, (2) Review IAM: Confirm `kms:Decrypt` permission, (3) Check CloudTrail: Filter KMS API errors.\n\n**RESOLUTION**: Key Disabled → `aws kms enable-key`, Permission Denied → Update IAM role policy.\n\n**ESCALATION**: Unresolved after 30 min → Escalate to Security Architecture."
+    }
+  }
+}

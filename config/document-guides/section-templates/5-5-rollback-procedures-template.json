@@ -1,0 +1,148 @@
+{
+  "sectionId": "5-5",
+  "layerId": "component",
+  "templateVersion": "1.0.0",
+  "title": "Rollback Procedures",
+  "purpose": "Defines rollback triggers, procedures, and recovery validation to safely revert deployment in case of failures",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Set context for rollback strategy and emergency response approach",
+      "elements": ["rollback_philosophy", "decision_authority", "communication_plan"],
+      "wordCount": {"min": 50, "max": 100},
+      "example": "This section defines rollback triggers and procedures for safely reverting Customer PII Encryption Policy infrastructure deployment in case of critical failures. Rollback authority rests with the Incident Commander (Engineering Manager or on-call senior engineer) in consultation with Security Architect. All rollback decisions and actions are logged in incident ticket (JIRA project: INC) with real-time communication via Slack channel #incident-pol-2025-004. Rollback procedures prioritize data preservation and service availability over deployment completion."
+    },
+    "rollbackTriggers": {
+      "purpose": "Define specific conditions that mandate immediate rollback",
+      "elements": ["critical_triggers", "warning_conditions", "decision_criteria", "escalation_thresholds"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "What conditions immediately trigger rollback (no questions asked)?",
+        "What warning conditions require evaluation for potential rollback?",
+        "Who makes the rollback decision?",
+        "What metrics determine rollback vs. troubleshooting?"
+      ],
+      "example": "**Critical Rollback Triggers (Immediate Action Required)**\n\n**Data Access Failures:**\n- [ ] **TRIGGER:** Application unable to decrypt PII data (error rate >1% of operations)\n  - **Threshold:** >10 decryption failures per minute\n  - **Detection:** CloudWatch alarm `pii-encryption-kms-decrypt-failures-prod` in ALARM state\n  - **Impact:** Critical - customer-facing services degraded\n  - **Decision:** Automatic rollback, no approval required\n\n- [ ] **TRIGGER:** Database connection failures due to encryption migration\n  - **Threshold:** RDS connection error rate >5%\n  - **Detection:** Application error logs show \"encryption/decryption errors\"\n  - **Impact:** Critical - data access blocked\n  - **Decision:** Immediate rollback\n\n- [ ] **TRIGGER:** S3 object retrieval failures (403 Forbidden errors)\n  - **Threshold:** >50 S3 access denied errors per minute\n  - **Detection:** CloudWatch Logs show KMS authorization failures\n  - **Impact:** High - file uploads/downloads blocked\n  - **Decision:** Immediate rollback\n\n**Service Availability Degradation:**\n- [ ] **TRIGGER:** Application availability drops below 99.9%\n  - **Threshold:** Uptime monitoring shows <99.9% availability for >5 minutes\n  - **Detection:** Application health checks failing\n  - **Impact:** Critical - SLA breach imminent\n  - **Decision:** Immediate rollback\n\n- [ ] **TRIGGER:** API response time exceeds 2x baseline\n  - **Threshold:** 95th percentile latency >200ms (baseline: <100ms)\n  - **Detection:** CloudWatch metrics show latency spike correlated with encryption deployment\n  - **Impact:** High - user experience degraded\n  - **Decision:** Rollback after 15-minute evaluation window\n\n**Security/Compliance Violations:**\n- [ ] **TRIGGER:** Unencrypted PII detected in production storage\n  - **Threshold:** Wiz policy WIZ-POL-2025-004-001 detects >0 unencrypted RDS instances with PII\n  - **Detection:** Wiz alert or manual validation\n  - **Impact:** Critical - compliance violation (GDPR, SOC 2)\n  - **Decision:** Immediate rollback and incident investigation\n\n- [ ] **TRIGGER:** KMS key deletion or disablement (accidental or malicious)\n  - **Threshold:** KMS key state = \"PendingDeletion\" or \"Disabled\"\n  - **Detection:** CloudTrail logs show DisableKey or ScheduleKeyDeletion API calls\n  - **Impact:** Critical - all encrypted data inaccessible\n  - **Decision:** Emergency key recovery, not rollback (rollback won't restore key)\n\n**Warning Conditions (Evaluate for Rollback):**\n- [ ] **WARNING:** Increased KMS API throttling (>100 ThrottlingException errors per hour)\n  - **Action:** Evaluate if data key caching can mitigate, otherwise rollback\n\n- [ ] **WARNING:** CloudWatch alarm `kms-key-rotation-failure` triggered\n  - **Action:** Investigate rotation failure, rollback if rotation is irrecoverable\n\n- [ ] **WARNING:** 10-20% increase in AWS KMS costs (unexpected)\n  - **Action:** Evaluate if cost increase is acceptable, optimize data key caching"
+    },
+    "rollbackSteps": {
+      "purpose": "Define ordered rollback procedure steps with validation checkpoints",
+      "elements": ["halt_deployment", "revert_configurations", "restore_backups", "verification_steps"],
+      "wordCount": {"min": 150, "max": 300},
+      "guidingQuestions": [
+        "What is the first action when rollback is triggered?",
+        "What is the rollback sequence (reverse of deployment order)?",
+        "How are backups restored without data loss?",
+        "What validation confirms rollback success?"
+      ],
+      "example": "**Rollback Procedure (Execute in Order)**\n\n**Phase 1: Halt Deployment & Incident Declaration (5 minutes)**\n- [ ] **Step 1.1:** STOP all in-progress Terraform applies immediately\n  ```bash\n  # Press Ctrl+C if running, or\n  terraform destroy -target=<last-deployed-resource>\n  ```\n\n- [ ] **Step 1.2:** Declare incident and create JIRA ticket\n  ```bash\n  # Create incident ticket\n  JIRA_TICKET=\"INC-$(date +%Y%m%d-%H%M)\"\n  echo \"Incident: POL-2025-004 rollback triggered - $JIRA_TICKET\"\n  ```\n\n- [ ] **Step 1.3:** Notify stakeholders via Slack #incident-pol-2025-004\n  **Message Template:**\n  ```\n  🚨 INCIDENT: POL-2025-004 Deployment Rollback Initiated\n  \n  Trigger: [DATA_ACCESS_FAILURE | AVAILABILITY_DEGRADATION | SECURITY_VIOLATION]\n  Incident Ticket: [JIRA_TICKET]\n  Incident Commander: @[name]\n  Started: [timestamp]\n  \n  Rollback procedure in progress. Updates every 10 minutes.\n  ```\n\n- [ ] **Step 1.4:** Enable enhanced monitoring\n  ```bash\n  # Increase CloudWatch Logs verbosity\n  aws logs put-retention-policy --log-group-name /aws/kms/pii-encryption-prod --retention-in-days 1\n  ```\n\n**Phase 2: Revert Application Configuration (10 minutes)**\n- [ ] **Step 2.1:** Revert application to use previous encryption configuration\n  ```bash\n  # If application deployed via Docker/K8s\n  kubectl rollout undo deployment/customer-api -n production\n  \n  # If application deployed via AWS ECS\n  aws ecs update-service --cluster prod-cluster \\\n    --service customer-api \\\n    --task-definition customer-api:PREVIOUS_VERSION\n  ```\n  **Validation:** Application logs show \"Using previous encryption config\"\n\n- [ ] **Step 2.2:** Update application environment variables (remove new KMS key references)\n  ```bash\n  # Revert to previous KMS key alias (if different)\n  kubectl set env deployment/customer-api KMS_KEY_ALIAS=alias/pii-encryption-old -n production\n  ```\n  **Validation:** `kubectl get deployment customer-api -o yaml | grep KMS_KEY_ALIAS`\n\n**Phase 3: Revert Storage Encryption (30 minutes - RDS critical path)**\n- [ ] **Step 3.1:** Revert S3 bucket encryption to previous configuration\n  ```bash\n  # Restore previous S3 encryption configuration from backup\n  aws s3api put-bucket-encryption --bucket pii-customer-data-prod \\\n    --server-side-encryption-configuration file://s3-encryption-backup.json\n  ```\n  **Validation:** `aws s3api get-bucket-encryption --bucket pii-customer-data-prod`\n\n- [ ] **Step 3.2:** Revert RDS encryption (restore from pre-deployment snapshot)\n  ```bash\n  # Rename current (problematic) RDS instance\n  aws rds modify-db-instance --db-instance-identifier pii-database-prod \\\n    --new-db-instance-identifier pii-database-prod-failed \\\n    --apply-immediately\n  \n  # Wait for rename to complete (5-10 minutes)\n  aws rds wait db-instance-available --db-instance-identifier pii-database-prod-failed\n  \n  # Restore from pre-deployment snapshot\n  aws rds restore-db-instance-from-db-snapshot \\\n    --db-instance-identifier pii-database-prod \\\n    --db-snapshot-identifier pii-database-prod-pre-encryption-YYYY-MM-DD\n  \n  # Wait for restoration to complete (15-20 minutes)\n  aws rds wait db-instance-available --db-instance-identifier pii-database-prod\n  ```\n  **CRITICAL:** Verify no data loss - compare row counts before/after\n  ```bash\n  # Connect to restored database\n  psql -h pii-database-prod.region.rds.amazonaws.com -U master -d customer_pii\n  \n  # Verify row count matches pre-deployment\n  SELECT COUNT(*) FROM customers;  -- Should match pre-deployment count\n  ```\n\n- [ ] **Step 3.3:** Update application connection strings to restored RDS instance\n  ```bash\n  kubectl set env deployment/customer-api \\\n    DB_HOST=pii-database-prod.region.rds.amazonaws.com -n production\n  ```\n\n**Phase 4: Revert IAM & KMS Configuration (10 minutes)**\n- [ ] **Step 4.1:** Remove new IAM policies (if causing permission issues)\n  ```bash\n  # Detach new policy from application role\n  aws iam detach-role-policy \\\n    --role-name pii-encryption-app-role-prod \\\n    --policy-arn arn:aws:iam::123456789012:policy/pii-encryption-app-policy-prod\n  \n  # Reattach previous policy from backup\n  aws iam attach-role-policy \\\n    --role-name pii-encryption-app-role-prod \\\n    --policy-arn arn:aws:iam::123456789012:policy/previous-encryption-policy\n  ```\n\n- [ ] **Step 4.2:** Disable new KMS key (do NOT delete - data may still be encrypted)\n  ```bash\n  aws kms disable-key --key-id alias/pii-encryption-prod\n  ```\n  **WARNING:** Do NOT delete KMS key - encrypted data would become permanently inaccessible\n\n- [ ] **Step 4.3:** Re-enable previous KMS key (if disabled during migration)\n  ```bash\n  aws kms enable-key --key-id alias/pii-encryption-old\n  ```\n\n**Phase 5: Remove Monitoring Resources (5 minutes)**\n- [ ] **Step 5.1:** Delete new CloudWatch alarms\n  ```bash\n  aws cloudwatch delete-alarms \\\n    --alarm-names pii-encryption-kms-decrypt-failures-prod\n  ```\n\n- [ ] **Step 5.2:** Unsubscribe from new SNS topics\n  ```bash\n  aws sns unsubscribe --subscription-arn <subscription-arn>\n  ```\n\n**Phase 6: Terraform State Cleanup (10 minutes)**\n- [ ] **Step 6.1:** Remove deployed resources from Terraform state\n  ```bash\n  # List Terraform resources to remove\n  terraform state list | grep pii-encryption\n  \n  # Remove resources individually (CAREFUL - this doesn't delete AWS resources)\n  terraform state rm module.kms_encryption.aws_kms_key.pii_encryption\n  terraform state rm module.kms_encryption.aws_kms_alias.pii_encryption\n  terraform state rm module.s3_encrypted_storage.aws_s3_bucket.pii_storage\n  ```\n\n- [ ] **Step 6.2:** Restore Terraform state from pre-deployment backup\n  ```bash\n  # Copy backup state file to current state\n  aws s3 cp s3://terraform-state-pii-encryption/backups/prod-pre-pol-2025-004.tfstate \\\n    s3://terraform-state-pii-encryption/prod/terraform.tfstate\n  ```"
+    },
+    "recoveryValidation": {
+      "purpose": "Define validation steps confirming successful rollback and service recovery",
+      "elements": ["service_health_checks", "data_integrity_validation", "security_posture_check", "performance_verification"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "How is service health validated post-rollback?",
+        "How is data integrity confirmed (no data loss)?",
+        "How is security posture verified (no new vulnerabilities introduced)?",
+        "How is performance confirmed back to baseline?"
+      ],
+      "example": "**Recovery Validation Checklist**\n\n**Service Health Verification:**\n- [ ] **Check 1:** Application health checks passing\n  ```bash\n  curl -f https://api.example.com/health\n  # Expected: HTTP 200, {\"status\": \"healthy\"}\n  ```\n  **Success Criteria:** All health endpoints return 200 OK\n\n- [ ] **Check 2:** Database connectivity restored\n  ```bash\n  psql -h pii-database-prod.region.rds.amazonaws.com -U master -c \"SELECT 1;\"\n  # Expected: 1 row returned\n  ```\n  **Success Criteria:** Database queries execute without errors\n\n- [ ] **Check 3:** S3 object retrieval functional\n  ```bash\n  aws s3 cp s3://pii-customer-data-prod/smoke-test/test.txt -\n  # Expected: File contents displayed\n  ```\n  **Success Criteria:** No S3 access errors\n\n- [ ] **Check 4:** Application logs show no encryption errors (last 30 minutes)\n  ```bash\n  kubectl logs deployment/customer-api -n production --since=30m | grep -i \"encrypt\\|decrypt\\|kms\"\n  # Expected: No ERROR level messages\n  ```\n\n**Data Integrity Validation:**\n- [ ] **Check 5:** Database row count matches pre-deployment baseline\n  ```sql\n  SELECT 'customers' AS table_name, COUNT(*) FROM customers\n  UNION ALL\n  SELECT 'orders', COUNT(*) FROM orders\n  UNION ALL\n  SELECT 'payments', COUNT(*) FROM payments;\n  ```\n  **Success Criteria:** Row counts match documented pre-deployment values\n\n- [ ] **Check 6:** Sample customer record retrieval (verify data readable)\n  ```sql\n  SELECT customer_id, email, created_at FROM customers LIMIT 10;\n  ```\n  **Success Criteria:** PII data decrypts correctly and displays expected values\n\n- [ ] **Check 7:** S3 object count matches pre-deployment (no objects lost)\n  ```bash\n  aws s3 ls s3://pii-customer-data-prod --recursive --summarize | tail -2\n  # Compare Total Objects count to pre-deployment baseline\n  ```\n\n**Security Posture Verification:**\n- [ ] **Check 8:** Wiz policies passing (no new violations introduced)\n  - Run WIZ-POL-2025-004-001: RDS Encryption at Rest Validation\n  - Run WIZ-POL-2025-004-002: S3 Bucket KMS Encryption Validation\n  **Success Criteria:** Wiz shows same compliance status as pre-deployment\n\n- [ ] **Check 9:** AWS Config compliance status unchanged\n  ```bash\n  aws configservice get-compliance-summary-by-config-rule\n  ```\n  **Success Criteria:** Compliance summary matches pre-deployment baseline\n\n- [ ] **Check 10:** CloudTrail logs show no unauthorized KMS access\n  ```bash\n  aws cloudtrail lookup-events --lookup-attributes AttributeKey=ResourceType,AttributeValue=AWS::KMS::Key \\\n    --start-time $(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%S) | jq '.Events[] | select(.EventName | contains(\"Delete\"))'\n  ```\n  **Success Criteria:** No unexpected KMS key deletion/disablement events\n\n**Performance Verification:**\n- [ ] **Check 11:** API response latency back to baseline\n  ```bash\n  # Run load test for 5 minutes\n  ab -n 10000 -c 100 https://api.example.com/customers/12345\n  ```\n  **Success Criteria:** 95th percentile latency <100ms (matches pre-deployment)\n\n- [ ] **Check 12:** Database query performance restored\n  ```sql\n  EXPLAIN ANALYZE SELECT * FROM customers WHERE email = 'test@example.com';\n  ```\n  **Success Criteria:** Query execution time matches pre-deployment baseline\n\n**Incident Closure:**\n- [ ] **Check 13:** All validation checks passed\n- [ ] **Check 14:** Incident Commander approves service recovery\n- [ ] **Check 15:** Post-incident review scheduled (within 48 hours)\n- [ ] **Check 16:** Root cause analysis document created\n- [ ] **Check 17:** JIRA incident ticket updated with rollback summary\n- [ ] **Check 18:** Stakeholders notified via Slack #incident-pol-2025-004:\n  ```\n  ✅ RESOLVED: POL-2025-004 Deployment Rollback Complete\n  \n  Incident Ticket: [JIRA_TICKET]\n  Rollback Completed: [timestamp]\n  Service Status: Healthy\n  Data Integrity: Validated (no data loss)\n  \n  Post-incident review: [date/time]\n  ```"
+    },
+    "communicationPlan": {
+      "purpose": "Define communication requirements during rollback incident",
+      "elements": ["stakeholder_notifications", "status_updates", "escalation_procedures"],
+      "wordCount": {"min": 50, "max": 100},
+      "guidingQuestions": [
+        "Who must be notified when rollback is triggered?",
+        "What is the status update frequency during rollback?",
+        "When is executive escalation required?"
+      ],
+      "example": "**Communication Requirements**\n\n**Immediate Notifications (within 5 minutes of rollback trigger):**\n- [ ] Incident Commander (Engineering Manager or on-call senior engineer)\n- [ ] Security Architect\n- [ ] Application team leads (all services using encrypted PII)\n- [ ] On-call SRE team\n- [ ] Slack channel: #incident-pol-2025-004 (broadcast)\n\n**Status Updates (every 10 minutes during rollback):**\n- [ ] Post progress update to #incident-pol-2025-004\n- [ ] Update JIRA incident ticket with current phase\n- [ ] Example update:\n  ```\n  🔄 ROLLBACK IN PROGRESS (10:35 AM)\n  \n  Phase: Reverting RDS encryption (Step 3.2)\n  ETA: 15 minutes remaining\n  Status: RDS snapshot restoration started\n  Next: Application connection string update\n  ```\n\n**Executive Escalation (if any of these conditions occur):**\n- [ ] Rollback duration exceeds 1 hour\n- [ ] Data loss detected during rollback\n- [ ] Service unavailable for >30 minutes\n- [ ] Customer-facing impact confirmed\n- **Escalation Path:** Incident Commander → VP Engineering → CTO\n\n**Post-Rollback Communication:**\n- [ ] Resolution announcement in #incident-pol-2025-004\n- [ ] Incident summary email to stakeholders\n- [ ] Post-incident review meeting invitation (within 48 hours)\n- [ ] Executive summary to CTO/CISO (if customer impact occurred)"
+    }
+  },
+  "upstreamTraceability": {
+    "requiredReferences": [
+      {
+        "section": "5-4",
+        "relationship": "derives_from",
+        "rationale": "Rollback procedures are reverse of deployment checklist steps"
+      },
+      {
+        "section": "5-2",
+        "relationship": "refines",
+        "rationale": "Rollback reverses IaC template deployments in correct order"
+      },
+      {
+        "section": "4-2",
+        "relationship": "implements",
+        "rationale": "Rollback implements exception handling and incident response procedures"
+      }
+    ],
+    "exampleTraceabilityEntry": {
+      "sectionId": "5-5",
+      "references": [
+        {
+          "targetSection": "POL-2025-004.component.5-4",
+          "relationship": "derives_from",
+          "description": "Rollback Phase 3 reverses Section 5-4 deployment Phase 3 (Storage Encryption) by restoring RDS from pre-deployment snapshot and reverting S3 encryption configuration"
+        },
+        {
+          "targetSection": "POL-2025-004.physical.4-2",
+          "relationship": "implements",
+          "description": "Rollback communication plan implements Section 4-2 incident response procedure with defined stakeholder notifications and escalation paths"
+        }
+      ]
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST SP 800-53A",
+      "control": "CP-10",
+      "relevance": "Information system recovery and reconstitution"
+    },
+    {
+      "framework": "NIST SP 800-53A",
+      "control": "IR-4",
+      "relevance": "Incident handling including rollback procedures"
+    },
+    {
+      "framework": "CIS Controls",
+      "control": "11.3",
+      "relevance": "Data recovery capability testing"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All rollback sections present (triggers, steps, validation, communication)",
+      "Minimum word count met for each element (400-900 total)",
+      "Minimum 5 critical rollback triggers defined",
+      "Minimum 15 rollback steps across 6 phases",
+      "Minimum 10 recovery validation checks"
+    ],
+    "technicalAccuracy": [
+      "All AWS CLI commands are syntactically correct",
+      "Rollback steps are in reverse order of deployment (Section 5-4)",
+      "Data preservation steps included (RDS snapshot restore, S3 versioning)",
+      "Validation commands verify service health and data integrity"
+    ],
+    "traceability": [
+      "Minimum 2 upstream references to Layer 5 sections (5-2, 5-4)",
+      "Rollback steps reverse Section 5-4 deployment checklist",
+      "Communication plan implements Section 4-2 incident response"
+    ],
+    "frameworkAlignment": [
+      "Minimum 2 framework citations (NIST, CIS)",
+      "Rollback procedures satisfy disaster recovery requirements"
+    ]
+  },
+  "commonPitfalls": [
+    "Not preserving data during rollback (deleting instead of renaming/disabling resources)",
+    "Missing validation steps to confirm rollback success",
+    "Vague rollback triggers (e.g., 'if something goes wrong' instead of specific metrics)",
+    "No communication plan (stakeholders unaware of incident)",
+    "Deleting KMS keys (CRITICAL: encrypted data becomes permanently inaccessible)",
+    "Not documenting incident for post-mortem analysis"
+  ],
+  "exampleOutput": {
+    "rationale": "The rollback procedures specified in this section provide a safe, ordered reversal of the Customer PII Encryption Policy deployment defined in Section 5-4. Critical rollback triggers (>1% decryption failures, <99.9% availability) are derived from Section 4-2 service availability requirements and provide objective criteria for rollback decisions. Rollback steps reverse the deployment sequence from Section 5-4 in correct order (halt deployment → revert application → revert storage → revert IAM/KMS → remove monitoring → cleanup Terraform state), with data preservation as the highest priority (RDS snapshot restoration, S3 versioning). Recovery validation checks confirm service health, data integrity, and security posture are restored to pre-deployment state by executing Section 5-3 validation tests (Wiz policies, AWS Config rules). The communication plan implements Section 4-2 incident response procedures with defined stakeholder notifications and executive escalation paths. This rollback approach aligns with NIST SP 800-53A CP-10 (information system recovery) and IR-4 (incident handling)."
+  }
+}

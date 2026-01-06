@@ -1,0 +1,164 @@
+{
+  "sectionId": "5-2",
+  "layerId": "component",
+  "templateVersion": "1.0.0",
+  "title": "Infrastructure-as-Code Templates",
+  "purpose": "Provides executable IaC code (Terraform, CloudFormation, CDK) implementing upstream physical specifications as deployable infrastructure",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Set context for IaC templates and deployment approach",
+      "elements": ["iac_philosophy", "tool_selection", "module_organization"],
+      "wordCount": {"min": 50, "max": 100},
+      "example": "This section provides Terraform modules and AWS CloudFormation templates implementing the Customer PII Encryption Policy infrastructure requirements. All IaC code is modular, reusable, and parameterized for multi-environment deployment (dev, staging, production). Templates deploy AWS KMS customer master keys, IAM policies, S3 bucket encryption configurations, RDS encryption settings, and CloudWatch monitoring resources."
+    },
+    "kmsInfrastructure": {
+      "purpose": "Define IaC code for KMS customer master keys and key policies",
+      "elements": ["kms_key_resources", "key_alias_resources", "key_policy_attachment", "iam_role_resources"],
+      "wordCount": {"min": 200, "max": 400},
+      "guidingQuestions": [
+        "What Terraform/CloudFormation resources create KMS CMKs?",
+        "What key aliases are defined for human-readable references?",
+        "What IAM roles and policies grant key access?",
+        "What are the resource dependencies and outputs?"
+      ],
+      "example": "**Terraform Module: KMS Customer Master Key**\n\n```hcl\n# modules/kms-pii-encryption/main.tf\n\nresource \"aws_kms_key\" \"pii_encryption\" {\n  description             = \"Customer PII encryption master key - ${var.policy_id}\"\n  deletion_window_in_days = 30\n  enable_key_rotation     = true\n  \n  tags = {\n    Name               = \"pii-encryption-cmk-${var.environment}\"\n    Policy             = var.policy_id\n    DataClassification = \"PII\"\n    Compliance         = \"GDPR-SOC2\"\n    Environment        = var.environment\n    ManagedBy          = \"Terraform\"\n  }\n}\n\nresource \"aws_kms_alias\" \"pii_encryption\" {\n  name          = \"alias/pii-encryption-${var.environment}\"\n  target_key_id = aws_kms_key.pii_encryption.key_id\n}\n\nresource \"aws_kms_key_policy\" \"pii_encryption\" {\n  key_id = aws_kms_key.pii_encryption.key_id\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [\n      {\n        Sid    = \"Enable IAM User Permissions\"\n        Effect = \"Allow\"\n        Principal = {\n          AWS = \"arn:aws:iam::${data.aws_caller_identity.current.account_id}:root\"\n        }\n        Action   = \"kms:*\"\n        Resource = \"*\"\n      },\n      {\n        Sid    = \"Allow Application Role Encryption\"\n        Effect = \"Allow\"\n        Principal = {\n          AWS = aws_iam_role.app_encryption.arn\n        }\n        Action = [\n          \"kms:Encrypt\",\n          \"kms:Decrypt\",\n          \"kms:GenerateDataKey\",\n          \"kms:DescribeKey\"\n        ]\n        Resource = \"*\"\n        Condition = {\n          StringEquals = {\n            \"kms:ViaService\" = [\n              \"s3.${var.region}.amazonaws.com\",\n              \"rds.${var.region}.amazonaws.com\"\n            ]\n          }\n        }\n      },\n      {\n        Sid    = \"Allow CloudTrail Encryption\"\n        Effect = \"Allow\"\n        Principal = {\n          Service = \"cloudtrail.amazonaws.com\"\n        }\n        Action = [\n          \"kms:GenerateDataKey\",\n          \"kms:DecryptDataKey\"\n        ]\n        Resource = \"*\"\n      }\n    ]\n  })\n}\n\nresource \"aws_iam_role\" \"app_encryption\" {\n  name = \"pii-encryption-app-role-${var.environment}\"\n  \n  assume_role_policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [\n      {\n        Action = \"sts:AssumeRole\"\n        Effect = \"Allow\"\n        Principal = {\n          Service = \"ec2.amazonaws.com\"\n        }\n      }\n    ]\n  })\n  \n  tags = {\n    Name      = \"pii-encryption-app-role-${var.environment}\"\n    Policy    = var.policy_id\n    ManagedBy = \"Terraform\"\n  }\n}\n\ndata \"aws_caller_identity\" \"current\" {}\n```\n\n**Variables (modules/kms-pii-encryption/variables.tf):**\n\n```hcl\nvariable \"policy_id\" {\n  description = \"SABSA policy identifier (e.g., POL-2025-004)\"\n  type        = string\n}\n\nvariable \"environment\" {\n  description = \"Deployment environment (dev, staging, prod)\"\n  type        = string\n  validation {\n    condition     = contains([\"dev\", \"staging\", \"prod\"], var.environment)\n    error_message = \"Environment must be dev, staging, or prod.\"\n  }\n}\n\nvariable \"region\" {\n  description = \"AWS region for deployment\"\n  type        = string\n  default     = \"us-east-1\"\n}\n```\n\n**Outputs (modules/kms-pii-encryption/outputs.tf):**\n\n```hcl\noutput \"kms_key_id\" {\n  description = \"KMS customer master key ID\"\n  value       = aws_kms_key.pii_encryption.key_id\n}\n\noutput \"kms_key_arn\" {\n  description = \"KMS customer master key ARN\"\n  value       = aws_kms_key.pii_encryption.arn\n}\n\noutput \"kms_alias_name\" {\n  description = \"KMS key alias\"\n  value       = aws_kms_alias.pii_encryption.name\n}\n\noutput \"app_role_arn\" {\n  description = \"Application IAM role ARN for encryption operations\"\n  value       = aws_iam_role.app_encryption.arn\n}\n```"
+    },
+    "storageEncryption": {
+      "purpose": "Define IaC code for S3 bucket and RDS instance encryption",
+      "elements": ["s3_bucket_encryption", "rds_encryption_config", "backup_encryption"],
+      "wordCount": {"min": 150, "max": 300},
+      "guidingQuestions": [
+        "What Terraform/CloudFormation resources configure S3 bucket encryption?",
+        "What resources enable RDS encryption at rest?",
+        "How are automated backups encrypted?",
+        "What are the KMS key dependencies?"
+      ],
+      "example": "**Terraform Module: S3 Bucket with KMS Encryption**\n\n```hcl\n# modules/s3-encrypted-bucket/main.tf\n\nresource \"aws_s3_bucket\" \"pii_storage\" {\n  bucket = \"pii-customer-data-${var.environment}-${data.aws_caller_identity.current.account_id}\"\n  \n  tags = {\n    Name               = \"pii-customer-data-${var.environment}\"\n    Policy             = var.policy_id\n    DataClassification = \"PII\"\n    Environment        = var.environment\n    ManagedBy          = \"Terraform\"\n  }\n}\n\nresource \"aws_s3_bucket_server_side_encryption_configuration\" \"pii_storage\" {\n  bucket = aws_s3_bucket.pii_storage.id\n  \n  rule {\n    apply_server_side_encryption_by_default {\n      sse_algorithm     = \"aws:kms\"\n      kms_master_key_id = var.kms_key_arn\n    }\n    bucket_key_enabled = true\n  }\n}\n\nresource \"aws_s3_bucket_versioning\" \"pii_storage\" {\n  bucket = aws_s3_bucket.pii_storage.id\n  \n  versioning_configuration {\n    status = \"Enabled\"\n  }\n}\n\nresource \"aws_s3_bucket_public_access_block\" \"pii_storage\" {\n  bucket = aws_s3_bucket.pii_storage.id\n  \n  block_public_acls       = true\n  block_public_policy     = true\n  ignore_public_acls      = true\n  restrict_public_buckets = true\n}\n\nresource \"aws_s3_bucket_logging\" \"pii_storage\" {\n  bucket = aws_s3_bucket.pii_storage.id\n  \n  target_bucket = var.logging_bucket_id\n  target_prefix = \"s3-access-logs/pii-storage/\"\n}\n```\n\n**Terraform Module: RDS with Encryption**\n\n```hcl\n# modules/rds-encrypted/main.tf\n\nresource \"aws_db_instance\" \"pii_database\" {\n  identifier     = \"pii-database-${var.environment}\"\n  engine         = \"postgres\"\n  engine_version = \"15.4\"\n  instance_class = var.instance_class\n  \n  allocated_storage     = 100\n  max_allocated_storage = 500\n  storage_type          = \"gp3\"\n  storage_encrypted     = true\n  kms_key_id            = var.kms_key_arn\n  \n  db_name  = \"customer_pii\"\n  username = var.master_username\n  password = var.master_password  # Should come from AWS Secrets Manager\n  \n  backup_retention_period = 30\n  backup_window           = \"03:00-04:00\"\n  maintenance_window      = \"sun:04:00-sun:05:00\"\n  \n  enabled_cloudwatch_logs_exports = [\"postgresql\", \"upgrade\"]\n  \n  deletion_protection = true\n  skip_final_snapshot = false\n  final_snapshot_identifier = \"pii-database-${var.environment}-final-snapshot\"\n  \n  tags = {\n    Name               = \"pii-database-${var.environment}\"\n    Policy             = var.policy_id\n    DataClassification = \"PII\"\n    Environment        = var.environment\n    ManagedBy          = \"Terraform\"\n  }\n}\n```"
+    },
+    "iamPolicies": {
+      "purpose": "Define IaC code for IAM policies controlling encryption operations",
+      "elements": ["encryption_policies", "key_access_policies", "service_role_policies"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "What IAM policies grant encryption/decryption permissions?",
+        "What policies control KMS key administrative access?",
+        "How are service roles configured for automated encryption?"
+      ],
+      "example": "**Terraform: IAM Policy for Application Encryption**\n\n```hcl\nresource \"aws_iam_policy\" \"app_encryption_policy\" {\n  name        = \"pii-encryption-app-policy-${var.environment}\"\n  description = \"Allows application to encrypt/decrypt PII using KMS\"\n  \n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [\n      {\n        Sid    = \"KMSEncryptDecrypt\"\n        Effect = \"Allow\"\n        Action = [\n          \"kms:Encrypt\",\n          \"kms:Decrypt\",\n          \"kms:GenerateDataKey\",\n          \"kms:GenerateDataKeyWithoutPlaintext\",\n          \"kms:DescribeKey\"\n        ]\n        Resource = var.kms_key_arn\n        Condition = {\n          StringEquals = {\n            \"kms:EncryptionContext:purpose\" = \"customer-pii-encryption\"\n          }\n        }\n      },\n      {\n        Sid    = \"S3EncryptedObjectAccess\"\n        Effect = \"Allow\"\n        Action = [\n          \"s3:GetObject\",\n          \"s3:PutObject\"\n        ]\n        Resource = \"${var.s3_bucket_arn}/*\"\n        Condition = {\n          StringEquals = {\n            \"s3:x-amz-server-side-encryption\" = \"aws:kms\"\n          }\n        }\n      }\n    ]\n  })\n}\n\nresource \"aws_iam_role_policy_attachment\" \"app_encryption\" {\n  role       = var.app_role_name\n  policy_arn = aws_iam_policy.app_encryption_policy.arn\n}\n```"
+    },
+    "monitoringResources": {
+      "purpose": "Define IaC code for CloudWatch alarms and logging infrastructure",
+      "elements": ["cloudwatch_alarms", "log_groups", "metric_filters", "sns_topics"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "What CloudWatch alarms monitor encryption operations?",
+        "What log groups capture encryption-related events?",
+        "What SNS topics handle alarm notifications?",
+        "What metric filters detect encryption failures?"
+      ],
+      "example": "**Terraform: CloudWatch Monitoring for KMS**\n\n```hcl\nresource \"aws_cloudwatch_log_group\" \"kms_operations\" {\n  name              = \"/aws/kms/pii-encryption-${var.environment}\"\n  retention_in_days = 2555  # 7 years for compliance\n  kms_key_id        = var.log_encryption_key_arn\n  \n  tags = {\n    Policy      = var.policy_id\n    Environment = var.environment\n  }\n}\n\nresource \"aws_cloudwatch_metric_alarm\" \"kms_decrypt_failures\" {\n  alarm_name          = \"pii-encryption-kms-decrypt-failures-${var.environment}\"\n  comparison_operator = \"GreaterThanThreshold\"\n  evaluation_periods  = 2\n  metric_name         = \"UserErrorCount\"\n  namespace           = \"AWS/KMS\"\n  period              = 300\n  statistic           = \"Sum\"\n  threshold           = 10\n  alarm_description   = \"KMS decryption failures exceed threshold\"\n  \n  dimensions = {\n    KeyId = var.kms_key_id\n  }\n  \n  alarm_actions = [aws_sns_topic.encryption_alerts.arn]\n  \n  tags = {\n    Policy      = var.policy_id\n    Severity    = \"High\"\n    Environment = var.environment\n  }\n}\n\nresource \"aws_sns_topic\" \"encryption_alerts\" {\n  name              = \"pii-encryption-alerts-${var.environment}\"\n  kms_master_key_id = var.kms_key_arn\n  \n  tags = {\n    Policy      = var.policy_id\n    Environment = var.environment\n  }\n}\n```"
+    },
+    "deploymentExample": {
+      "purpose": "Provide example root module showing how to compose infrastructure modules",
+      "elements": ["root_main_tf", "backend_config", "provider_config", "module_composition"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "How are modules composed in a root Terraform configuration?",
+        "What backend configuration stores Terraform state securely?",
+        "What provider configurations are required?",
+        "What are the deployment dependencies (module ordering)?"
+      ],
+      "example": "**Root Terraform Configuration (environments/prod/main.tf):**\n\n```hcl\nterraform {\n  required_version = \">= 1.6.0\"\n  \n  backend \"s3\" {\n    bucket         = \"terraform-state-pii-encryption\"\n    key            = \"prod/terraform.tfstate\"\n    region         = \"us-east-1\"\n    encrypt        = true\n    kms_key_id     = \"arn:aws:kms:us-east-1:123456789012:key/terraform-state-key\"\n    dynamodb_table = \"terraform-state-lock\"\n  }\n  \n  required_providers {\n    aws = {\n      source  = \"hashicorp/aws\"\n      version = \"~> 5.0\"\n    }\n  }\n}\n\nprovider \"aws\" {\n  region = \"us-east-1\"\n  \n  default_tags {\n    tags = {\n      ManagedBy   = \"Terraform\"\n      Policy      = \"POL-2025-004\"\n      Environment = \"prod\"\n    }\n  }\n}\n\nmodule \"kms_encryption\" {\n  source = \"../../modules/kms-pii-encryption\"\n  \n  policy_id   = \"POL-2025-004\"\n  environment = \"prod\"\n  region      = \"us-east-1\"\n}\n\nmodule \"s3_encrypted_storage\" {\n  source = \"../../modules/s3-encrypted-bucket\"\n  \n  policy_id         = \"POL-2025-004\"\n  environment       = \"prod\"\n  kms_key_arn       = module.kms_encryption.kms_key_arn\n  logging_bucket_id = module.logging.bucket_id\n}\n\nmodule \"rds_encrypted\" {\n  source = \"../../modules/rds-encrypted\"\n  \n  policy_id       = \"POL-2025-004\"\n  environment     = \"prod\"\n  kms_key_arn     = module.kms_encryption.kms_key_arn\n  instance_class  = \"db.r6g.xlarge\"\n  master_username = var.db_master_username\n  master_password = var.db_master_password  # From AWS Secrets Manager\n}\n```"
+    }
+  },
+  "upstreamTraceability": {
+    "requiredReferences": [
+      {
+        "section": "4-1",
+        "relationship": "implements",
+        "rationale": "IaC templates implement implementation specifications as deployable infrastructure"
+      },
+      {
+        "section": "4-2",
+        "relationship": "refines",
+        "rationale": "Terraform/CloudFormation code refines procedural specifications into executable automation"
+      },
+      {
+        "section": "4-3",
+        "relationship": "constrained_by",
+        "rationale": "All IaC resources must comply with technical standards (encryption algorithms, TLS versions)"
+      }
+    ],
+    "exampleTraceabilityEntry": {
+      "sectionId": "5-2",
+      "references": [
+        {
+          "targetSection": "POL-2025-004.physical.4-1",
+          "relationship": "implements",
+          "description": "Terraform KMS module implements Section 4-1 AWS KMS specification by creating aws_kms_key resource with enable_key_rotation=true and complete key policy"
+        },
+        {
+          "targetSection": "POL-2025-004.physical.4-2",
+          "relationship": "refines",
+          "description": "CloudWatch alarm configuration refines Section 4-2 monitoring procedures into executable metric_alarm resources with automated SNS notifications"
+        }
+      ]
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST SP 800-53A",
+      "control": "CM-2",
+      "relevance": "Baseline configuration - IaC provides versioned infrastructure baseline"
+    },
+    {
+      "framework": "NIST SP 800-53A",
+      "control": "CM-3",
+      "relevance": "Configuration change control - Terraform state tracks all changes"
+    },
+    {
+      "framework": "CIS Controls",
+      "control": "3.11",
+      "relevance": "Encrypt sensitive data at rest - S3/RDS encryption configurations"
+    },
+    {
+      "framework": "AWS Well-Architected Framework",
+      "control": "Security Pillar",
+      "relevance": "Infrastructure as code for repeatable security controls"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All IaC subsections present (KMS, storage, IAM, monitoring, deployment example)",
+      "Minimum word count met for each element (500-1200 total)",
+      "Complete Terraform/CloudFormation code provided (not pseudocode)",
+      "Variables, outputs, and dependencies documented"
+    ],
+    "technicalAccuracy": [
+      "All HCL/JSON syntax is valid and executable",
+      "Resource dependencies correctly defined (depends_on, references)",
+      "No hardcoded credentials or secrets in code",
+      "Parameterization supports multi-environment deployment"
+    ],
+    "traceability": [
+      "Minimum 2 upstream references to Layer 4 sections",
+      "IaC code demonstrably implements upstream specifications",
+      "Rationale explains how code translates specs to infrastructure"
+    ],
+    "frameworkAlignment": [
+      "Minimum 2 framework citations (NIST, CIS, cloud provider best practices)",
+      "IaC patterns follow security best practices (least privilege, encryption by default)"
+    ]
+  },
+  "commonPitfalls": [
+    "Hardcoding account IDs, regions, or secrets in Terraform code",
+    "Providing incomplete modules (missing variables.tf or outputs.tf)",
+    "Not defining resource dependencies (causing deployment failures)",
+    "Omitting backend configuration for state management",
+    "Failing to parameterize for multi-environment deployment",
+    "Not including tags for cost allocation and policy traceability"
+  ],
+  "exampleOutput": {
+    "rationale": "The Terraform modules specified in this section implement the physical layer implementation specifications defined in Section 4-1 by creating deployable AWS infrastructure resources (aws_kms_key, aws_s3_bucket, aws_db_instance). The KMS module refines the key rotation procedure from Section 4-2 by automating rotation through the enable_key_rotation parameter. All encryption configurations are constrained by the AES-256 and TLS 1.2+ technical standards from Section 4-3. The IaC approach aligns with NIST SP 800-53A CM-2 (baseline configuration) by maintaining versioned infrastructure definitions in Git, and satisfies CIS Control 3.11 by enforcing encryption at rest through S3 and RDS resource configurations."
+  }
+}

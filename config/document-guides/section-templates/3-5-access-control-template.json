@@ -1,0 +1,144 @@
+{
+  "sectionId": "3-5",
+  "layerId": "logical",
+  "templateVersion": "1.0.0",
+  "title": "Logical Access Model",
+  "purpose": "Defines the logical access control model including roles, permissions, authorization rules, and access control policies that specify who can access what resources under which conditions",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish the access control model and its relationship to security objectives",
+      "elements": ["access_control_model", "model_scope", "policy_alignment"],
+      "wordCount": {"min": 75, "max": 125},
+      "example": "This section establishes the logical access control model that governs access to customer PII, encryption keys, and cryptographic systems. The model implements Role-Based Access Control (RBAC) with mandatory multi-factor authentication for privileged operations. Access decisions are based on the principle of least privilege with explicit deny-by-default policy. This model implements Access Control Policy (Section 3-1) and supports Security Objective SO-3: Access Control (Section 2-1). All access control decisions SHALL be logged for audit purposes per Logging Policy requirements."
+    },
+    "accessControlPrinciples": {
+      "purpose": "Define fundamental access control principles governing the model",
+      "elements": ["least_privilege", "separation_of_duties", "need_to_know", "deny_by_default"],
+      "wordCount": {"min": 100, "max": 175},
+      "guidingQuestions": [
+        "What core access control principles apply?",
+        "How is least privilege enforced?",
+        "What separation of duties requirements exist?",
+        "How does deny-by-default work?"
+      ],
+      "example": "**Principle 1: Least Privilege** - Users and services SHALL be granted the minimum permissions necessary to perform their authorized functions. Privileged access (encryption key access, administrative functions) SHALL be time-limited to specific tasks with automatic expiration. **Principle 2: Separation of Duties** - No single individual SHALL have authority to complete critical security operations independently. Encryption key generation, rotation, and deletion SHALL require approval from two authorized personnel (dual control). **Principle 3: Need-to-Know** - Access to customer PII and encryption keys SHALL be restricted to personnel with documented business need. Access requests SHALL specify business justification and be approved by data owner. **Principle 4: Deny-by-Default** - All access SHALL be explicitly denied unless explicitly permitted by role assignment and authorization policy. Unknown principals SHALL NOT be granted any access to protected resources."
+    },
+    "roleDefinitions": {
+      "purpose": "Define roles, responsibilities, and associated permissions",
+      "elements": ["role_specifications", "role_responsibilities", "permission_assignments", "role_hierarchy"],
+      "wordCount": {"min": 150, "max": 250},
+      "guidingQuestions": [
+        "What roles exist in the access control model?",
+        "What are the responsibilities of each role?",
+        "What permissions are assigned to each role?",
+        "Is there a role hierarchy or inheritance?"
+      ],
+      "example": "**Role 1: Security Operations Analyst** - **Responsibilities**: Monitor encryption system health, review audit logs, investigate security incidents. **Permissions**: Read access to CloudWatch logs, CloudTrail events, encryption system metrics. Read access to key metadata (key IDs, rotation status) but NOT access to key material. Create security incidents, generate audit reports. **Prohibited Actions**: Cannot generate, rotate, or delete encryption keys. Cannot modify key policies. **MFA Required**: Yes. **Role 2: Key Management Administrator** - **Responsibilities**: Generate encryption keys, configure key rotation schedules, manage key policies. **Permissions**: Create and configure customer master keys (CMKs) in KMS, enable/disable automatic key rotation, update key policies and grants. Read access to key usage audit logs. **Prohibited Actions**: Cannot delete encryption keys without approval (dual control required). Cannot disable CloudTrail logging. **MFA Required**: Yes (hardware token). **Role 3: Senior Key Management Administrator** - **Responsibilities**: Emergency key operations, key deletion approval, disaster recovery. **Permissions**: All Key Management Administrator permissions PLUS approve key deletion requests, perform emergency key rotation, access HSM backup keys. **Prohibited Actions**: Cannot unilaterally delete keys (requires second approver from same role). **MFA Required**: Yes (hardware token with PIN). **Dual Control**: Required for key deletion and emergency operations. **Role 4: Data Protection Officer** - **Responsibilities**: Access control policy oversight, exception approval, compliance validation. **Permissions**: Read-only access to all key management operations and audit logs. Approve access exceptions. Review and modify key policies. **Prohibited Actions**: Cannot perform cryptographic operations. **MFA Required**: Yes."
+    },
+    "permissionMatrix": {
+      "purpose": "Define detailed permissions matrix mapping roles to resources and operations",
+      "elements": ["resource_types", "operation_types", "role_permission_mapping"],
+      "wordCount": {"min": 125, "max": 200},
+      "guidingQuestions": [
+        "What resources are protected by access control?",
+        "What operations can be performed on each resource?",
+        "Which roles can perform which operations?",
+        "What are the permission precedence rules?"
+      ],
+      "example": "**Resource Types**: (1) Customer PII Data (databases, S3 buckets), (2) Encryption Keys (KMS CMKs, HSM keys), (3) Key Policies (KMS key policies), (4) Audit Logs (CloudTrail, CloudWatch Logs), (5) Administrative Functions (IAM policies, CloudFormation templates). **Operations**: (1) Read (view data/metadata), (2) Write (create/modify data), (3) Delete (remove data/keys), (4) Execute (perform cryptographic operations), (5) Admin (modify policies/permissions). **Permission Matrix**: | Resource | Read | Write | Delete | Execute | Admin | |----------|------|-------|--------|---------|-------| | **Customer PII Data** | | | | | | | Security Ops Analyst | Logs only | Deny | Deny | Deny | Deny | | Application Service | Deny | Allow | Deny | Deny | Deny | | Data Protection Officer | Allow (audit) | Deny | Deny | Deny | Policy only | | **Encryption Keys** | | | | | | | Security Ops Analyst | Metadata | Deny | Deny | Deny | Deny | | Key Mgmt Admin | Metadata | Allow | Deny | Allow | Allow | | Senior Key Mgmt Admin | Full | Allow | Require Dual Control | Allow | Allow | | **Audit Logs** | | | | | | | Security Ops Analyst | Allow | Deny | Deny | N/A | Deny | | Data Protection Officer | Allow | Deny | Deny | N/A | Allow |"
+    },
+    "authorizationRules": {
+      "purpose": "Define authorization logic and decision criteria",
+      "elements": ["authentication_requirements", "authorization_conditions", "dynamic_access_policies", "context_based_rules"],
+      "wordCount": {"min": 125, "max": 200},
+      "guidingQuestions": [
+        "What authentication is required for each access level?",
+        "What conditions affect authorization decisions?",
+        "What context-based access rules apply (time, location, etc.)?",
+        "How are authorization conflicts resolved?"
+      ],
+      "example": "**Authentication Requirements**: (1) Standard users: Username/password + MFA for access to customer PII. (2) Privileged users (Key Management): Hardware MFA token required. (3) Service accounts: X.509 client certificate with key stored in HSM. (4) Emergency access: Break-glass accounts require dual approval plus audit notification. **Authorization Conditions**: (1) Time-based: Privileged access limited to business hours (0800-1800) unless emergency approved. (2) Location-based: Key management operations restricted to approved corporate networks or VPN. Access from untrusted networks SHALL be denied. (3) Risk-based: Anomalous access patterns (unusual time/location/volume) SHALL trigger step-up authentication (additional MFA challenge). **Dynamic Access Policies**: (1) Recently-failed-login policy: Users with 3+ failed login attempts in 15 minutes SHALL be locked out for 30 minutes. (2) Concurrent-session policy: Privileged users SHALL NOT have more than one active session simultaneously. **Authorization Conflict Resolution**: Explicit Deny overrides all Allow statements. Most restrictive permission applies when multiple roles assigned."
+    },
+    "privilegedAccessManagement": {
+      "purpose": "Define controls for privileged access to cryptographic systems and customer data",
+      "elements": ["privileged_user_identification", "just_in_time_access", "dual_control_requirements", "privileged_session_monitoring"],
+      "wordCount": {"min": 125, "max": 200},
+      "guidingQuestions": [
+        "Who are the privileged users?",
+        "How is privileged access granted and revoked?",
+        "What dual control requirements apply?",
+        "How are privileged sessions monitored?"
+      ],
+      "example": "**Privileged User Identification**: Privileged users include Key Management Administrators (8 personnel), Senior Key Management Administrators (3 personnel), Data Protection Officers (2 personnel), and Emergency Break-Glass Accounts (4 accounts). Privileged user list SHALL be reviewed monthly by CISO. **Just-In-Time Access**: Privileged access SHALL be granted on-demand for specific tasks with automatic expiration. Key Management Administrators SHALL request time-limited access (max 4 hours) with business justification. Approval workflow SHALL complete within 15 minutes during business hours. Access SHALL automatically expire at end of approved time window. **Dual Control Requirements**: (1) Encryption key deletion SHALL require approval from two Senior Key Management Administrators within 24-hour window. (2) Emergency key rotation SHALL require initiation by one administrator and approval by second administrator. (3) HSM administrative operations SHALL require quorum (2 of 3 administrators). **Privileged Session Monitoring**: All privileged sessions SHALL be recorded with keystroke logging for audit purposes. Session recordings SHALL be retained for 7 years in tamper-evident storage. Real-time monitoring SHALL alert security operations on anomalous privileged activity (unusual commands, bulk key operations, access to multiple customer records)."
+    },
+    "accessReviewAndCertification": {
+      "purpose": "Define access review and certification requirements",
+      "elements": ["periodic_review_requirements", "recertification_process", "access_anomaly_detection", "deprovisioning_requirements"],
+      "wordCount": {"min": 75, "max": 150},
+      "guidingQuestions": [
+        "How frequently SHALL access be reviewed?",
+        "What is the recertification process?",
+        "How are access anomalies detected?",
+        "What are the deprovisioning requirements?"
+      ],
+      "example": "**Periodic Review**: Access SHALL be reviewed quarterly by data owners and role owners. Privileged access SHALL be recertified monthly. Reviews SHALL identify unused access (no activity in 90 days) for revocation. **Recertification Process**: Role owners SHALL certify that each user still requires their assigned role and permissions. Uncertified access SHALL be automatically revoked after 30-day grace period. **Access Anomaly Detection**: Automated monitoring SHALL detect dormant accounts (no login in 90 days), privilege creep (accumulation of roles), orphaned accounts (departed employees), and shared credentials (concurrent sessions from different locations). Detected anomalies SHALL trigger investigation within 24 hours. **Deprovisioning**: Access SHALL be revoked within 1 hour of employee termination or role change. Privileged access SHALL be revoked immediately (within 15 minutes). Deprovisioned accounts SHALL be retained in disabled state for 90 days for audit/investigation before deletion."
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST SP 800-53 Rev 5",
+      "controls": ["AC-2 (Account Management)", "AC-3 (Access Enforcement)", "AC-5 (Separation of Duties)", "AC-6 (Least Privilege)", "IA-2 (Identification and Authentication)", "IA-2(1) (MFA for privileged access)", "IA-4 (Identifier Management)"],
+      "relevance": "Federal access control standards"
+    },
+    {
+      "framework": "ISO 27001:2022",
+      "controls": ["A.5.15 (Access control)", "A.5.16 (Identity management)", "A.5.17 (Authentication information)", "A.5.18 (Access rights)", "A.8.2 (Privileged access rights)", "A.8.5 (Secure authentication)"],
+      "relevance": "International access control and identity management standards"
+    },
+    {
+      "framework": "CIS Controls v8",
+      "controls": ["5.3 (Disable dormant accounts)", "5.4 (Restrict administrator privileges)", "6.1 (Establish access control management)", "6.2 (Establish access based on need to know)", "6.5 (MFA for privileged access)", "6.7 (Centralize access control)"],
+      "relevance": "Industry consensus access control best practices"
+    },
+    {
+      "framework": "PCI DSS 4.0",
+      "controls": ["Requirement 7.2.2 (Access based on job classification)", "Requirement 7.2.4 (Review user access)", "Requirement 8.2.2 (MFA for access to cardholder data)", "Requirement 8.3.1 (MFA for privileged access)"],
+      "relevance": "Payment industry access control requirements"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All seven structural elements present (introduction, principles, roles, permission matrix, authorization rules, privileged access, access review)",
+      "Minimum word count met for each element",
+      "All guiding questions addressed",
+      "Minimum 3 roles defined with clear permission boundaries"
+    ],
+    "accessControlModel": [
+      "Access control model clearly identified (RBAC, ABAC, MAC, DAC)",
+      "Roles have clear responsibilities and permission assignments",
+      "Permission matrix provides concrete mappings of roles to resources and operations",
+      "Dual control and separation of duties requirements specified for critical operations",
+      "MFA requirements specified for privileged access"
+    ],
+    "traceability": [
+      "References Access Control Policy (Section 3-1)",
+      "References Security Objectives (Section 2-1, particularly access control objectives)",
+      "Cites minimum 3 compliance frameworks (NIST, ISO, CIS, PCI)",
+      "Rationale explains WHY this access control model is designed this way"
+    ],
+    "implementationClarity": [
+      "Authorization rules are specific and unambiguous",
+      "Permission precedence and conflict resolution clearly defined",
+      "Access review frequency and recertification process specified",
+      "Deprovisioning timeline defined with concrete SLAs"
+    ]
+  },
+  "commonPitfalls": [
+    "Creating too many granular roles (aim for 5-10 key roles, not 50+)",
+    "Omitting dual control requirements for critical operations",
+    "Failing to specify MFA requirements for privileged access",
+    "Not defining permission precedence and conflict resolution",
+    "Missing access review and recertification requirements",
+    "Including implementation details (specific IAM policies, LDAP schemas) that belong in Physical layer"
+  ]
+}

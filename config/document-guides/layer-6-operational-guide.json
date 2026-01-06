@@ -1,0 +1,217 @@
+{
+  "layerId": "operational",
+  "layerName": "Operational",
+  "layerNumber": 6,
+  "version": "1.0.0",
+  "purpose": "Defines day-to-day operational procedures, monitoring, incident response, and continuous improvement from the operations perspective - executable, measurable, and operationally focused",
+  "formatting": {
+    "fonts": {
+      "headings": {"family": "Arial", "sizes": {"h1": 18, "h2": 14, "h3": 12}},
+      "body": {"family": "Calibri", "size": 11},
+      "code": {"family": "Courier New", "size": 10}
+    },
+    "colors": {
+      "primary": "#1E3A8A",
+      "accent": "#10B981",
+      "headings": {"h1": "#1E3A8A", "h2": "#059669", "h3": "#047857"}
+    },
+    "spacing": {"paragraphBefore": 6, "paragraphAfter": 6, "lineSpacing": 1.15}
+  },
+  "sections": {
+    "6-1": {
+      "id": "6-1",
+      "title": "Monitoring & Alerting",
+      "layout": {
+        "structure": ["introduction", "monitoring_metrics", "alert_definitions", "dashboard_specifications"],
+        "requiredElements": ["metricsDefinitions", "alertThresholds", "escalationPaths"],
+        "optionalElements": ["dashboardLayouts", "slaDefinitions"]
+      },
+      "contentGuidelines": {
+        "tone": "operational, metrics-focused, monitoring-oriented",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {"min": 500, "max": 1100},
+        "requiredTopics": [
+          "What metrics are monitored?",
+          "What alert thresholds trigger notifications?",
+          "What are the escalation paths?",
+          "What dashboards visualize operational status?"
+        ],
+        "examples": [
+          "**KMS Key Usage**: Monitor GetDataKey, Encrypt, Decrypt API calls, alert on >10% failure rate, critical severity...",
+          "**Key Rotation Status**: Monitor key age, alert 7 days before 90-day rotation deadline, warning severity...",
+          "**CloudTrail KMS Events**: Monitor console sign-ins accessing KMS, alert on unusual access patterns, high severity...",
+          "**Escalation Path**: L1 Operations (5 min) → L2 Security Operations (15 min) → Security Architect (30 min) → CISO (1 hour)..."
+        ]
+      }
+    },
+    "6-2": {
+      "id": "6-2",
+      "title": "Operational Runbooks",
+      "layout": {
+        "structure": ["introduction", "routine_operations", "troubleshooting_procedures", "maintenance_tasks"],
+        "requiredElements": ["stepByStepInstructions", "verificationSteps", "errorConditions"],
+        "optionalElements": ["flowcharts", "decisionTrees", "commandExamples"]
+      },
+      "contentGuidelines": {
+        "tone": "procedural, step-by-step, operations-focused",
+        "perspective": "second-person or imperative",
+        "tense": "present",
+        "lengthRange": {"min": 600, "max": 1300},
+        "requiredTopics": [
+          "What are the routine operational procedures?",
+          "What troubleshooting steps resolve common issues?",
+          "What verification confirms successful operations?",
+          "What error conditions require escalation?"
+        ],
+        "examples": [
+          "**Key Rotation Runbook**: 1. Review key usage metrics 2. Execute rotation script 3. Verify application functionality 4. Update documentation 5. Confirm CloudWatch metrics...",
+          "**Troubleshooting - Encryption Failures**: 1. Check KMS key status 2. Verify IAM permissions 3. Review CloudTrail logs 4. Confirm network connectivity 5. Escalate if unresolved...",
+          "**Monthly HSM Backup**: 1. Schedule maintenance window 2. Execute backup script 3. Verify backup integrity 4. Transfer to offline storage 5. Update backup log..."
+        ]
+      }
+    },
+    "6-3": {
+      "id": "6-3",
+      "title": "Incident Response Playbooks",
+      "layout": {
+        "structure": ["introduction", "incident_classification", "response_procedures", "recovery_steps"],
+        "requiredElements": ["incidentTypes", "responseProcedures", "communicationProtocols"],
+        "optionalElements": ["incidentTimeline", "postIncidentReview"]
+      },
+      "contentGuidelines": {
+        "tone": "emergency-focused, incident-oriented, response-centric",
+        "perspective": "second-person or imperative",
+        "tense": "present",
+        "lengthRange": {"min": 600, "max": 1300},
+        "requiredTopics": [
+          "What incident types are covered?",
+          "What are the immediate response steps?",
+          "What communication protocols apply?",
+          "What recovery and restoration procedures are followed?"
+        ],
+        "examples": [
+          "**Suspected Key Compromise**: SEVERITY: CRITICAL, RESPONSE: Immediate key disablement, forensic analysis initiation, incident commander notification...",
+          "**Encryption Service Outage**: SEVERITY: HIGH, RESPONSE: Engage on-call engineer, execute failover procedure, notify stakeholders, assess impact...",
+          "**Unauthorized KMS Access**: SEVERITY: HIGH, RESPONSE: Revoke suspicious access, review CloudTrail logs, verify data integrity, escalate to security team..."
+        ]
+      }
+    },
+    "6-4": {
+      "id": "6-4",
+      "title": "Maintenance Procedures",
+      "layout": {
+        "structure": ["introduction", "scheduled_maintenance", "preventive_maintenance", "corrective_maintenance"],
+        "requiredElements": ["maintenanceSchedule", "maintenanceTasks", "verificationCriteria"],
+        "optionalElements": ["maintenanceWindows", "rollbackProcedures"]
+      },
+      "contentGuidelines": {
+        "tone": "maintenance-focused, scheduled, preventive",
+        "perspective": "second-person or imperative",
+        "tense": "present",
+        "lengthRange": {"min": 450, "max": 950},
+        "requiredTopics": [
+          "What scheduled maintenance tasks are required?",
+          "What preventive maintenance prevents issues?",
+          "What corrective maintenance addresses problems?",
+          "What verification confirms successful maintenance?"
+        ],
+        "examples": [
+          "**Quarterly KMS Key Review**: Review key usage patterns, identify unused keys, confirm rotation schedules, update key policies...",
+          "**Monthly HSM Health Check**: Verify HSM cluster status, check partition utilization, test backup/restore, review security logs...",
+          "**Annual Security Assessment**: Penetration testing of encryption controls, compliance validation, policy review, documentation updates..."
+        ]
+      }
+    },
+    "6-5": {
+      "id": "6-5",
+      "title": "Metrics & Reporting",
+      "layout": {
+        "structure": ["introduction", "performance_metrics", "compliance_metrics", "reporting_requirements"],
+        "requiredElements": ["kpiDefinitions", "reportingFrequency", "audienceSpecifications"],
+        "optionalElements": ["reportTemplates", "dashboardExamples"]
+      },
+      "contentGuidelines": {
+        "tone": "metrics-focused, measurement-oriented, reporting-centric",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {"min": 450, "max": 950},
+        "requiredTopics": [
+          "What KPIs measure operational effectiveness?",
+          "What compliance metrics are tracked?",
+          "What reporting frequency is required?",
+          "Who are the report audiences?"
+        ],
+        "examples": [
+          "**Encryption Coverage KPI**: Target: 100% of PII encrypted, Measured: Weekly automated discovery scan, Report: Monthly to CISO...",
+          "**Key Rotation Compliance**: Target: 100% keys rotated within 90 days, Measured: Daily KMS API query, Report: Weekly to Security Operations...",
+          "**Incident Response MTTR**: Target: <24 hours mean time to resolution, Measured: Incident ticket system, Report: Monthly to Security Leadership..."
+        ]
+      }
+    },
+    "6-6": {
+      "id": "6-6",
+      "title": "Continuous Improvement",
+      "layout": {
+        "structure": ["introduction", "feedback_mechanisms", "improvement_process", "lessons_learned"],
+        "requiredElements": ["feedbackChannels", "improvementWorkflow", "lessonsLearnedProcess"],
+        "optionalElements": ["improvementMetrics", "innovationProgram"]
+      },
+      "contentGuidelines": {
+        "tone": "improvement-focused, iterative, learning-oriented",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {"min": 400, "max": 850},
+        "requiredTopics": [
+          "What feedback mechanisms capture improvement opportunities?",
+          "What process evaluates and implements improvements?",
+          "How are lessons learned documented and shared?",
+          "What metrics track improvement effectiveness?"
+        ],
+        "examples": [
+          "**Feedback Channels**: Incident post-mortems, operational metrics reviews, compliance audit findings, user feedback surveys...",
+          "**Improvement Process**: 1. Capture improvement opportunity 2. Evaluate impact and effort 3. Prioritize in backlog 4. Implement change 5. Measure effectiveness...",
+          "**Lessons Learned**: Quarterly review of incidents, identification of systemic issues, documentation of best practices, training updates..."
+        ]
+      }
+    }
+  },
+  "contentQuality": {
+    "traceability": {
+      "upstreamReferences": {
+        "required": true,
+        "minimumCount": 2,
+        "format": "Section references must use format: {policy-id}.component.{section} and {policy-id}.physical.{section}"
+      }
+    },
+    "frameworkAlignment": {
+      "required": ["ITIL", "NIST SP 800-61"],
+      "optional": ["ISO 20000", "NIST CSF Recover", "DevOps Practices", "SRE Principles"],
+      "citationFormat": "Framework Name + Practice/Control (e.g., ITIL Incident Management, NIST SP 800-61 Rev. 2 Section 3.1)"
+    },
+    "technicalDepth": {
+      "level": "implementation",
+      "avoidance": ["vendor-specific details that change frequently", "hardcoded values", "organization-specific contact information"],
+      "inclusion": ["operational procedures", "monitoring specifications", "incident response playbooks", "maintenance schedules", "KPI definitions", "runbook instructions"]
+    }
+  },
+  "validation": {
+    "structure": {
+      "requiredSections": ["6-1", "6-2", "6-3", "6-4", "6-5", "6-6"],
+      "sectionOrder": "sequential",
+      "allowSkip": false
+    },
+    "content": {
+      "checks": [
+        {"type": "wordCount", "min": 400, "max": 1300, "appliesTo": "each section"},
+        {"type": "traceability", "minReferences": 2, "appliesTo": "sections 6-1, 6-2, 6-3"},
+        {"type": "framework", "minCitations": 1, "appliesTo": "all sections"}
+      ]
+    },
+    "rationale": {
+      "required": true,
+      "minLength": 100,
+      "purpose": "Explain WHY this operational procedure validates and maintains upstream component implementations"
+    }
+  }
+}

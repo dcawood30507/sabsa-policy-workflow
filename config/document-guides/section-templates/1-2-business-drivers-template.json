@@ -1,0 +1,164 @@
+{
+  "sectionId": "1-2",
+  "layerId": "contextual",
+  "templateVersion": "1.0.0",
+  "title": "Business Drivers",
+  "purpose": "Identifies the regulatory, strategic, operational, and financial drivers that justify and motivate the security policy implementation",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish the business imperative for the policy",
+      "elements": ["policy_justification", "driver_categories", "scope_overview"],
+      "wordCount": {"min": 50, "max": 150},
+      "example": "This policy is driven by converging regulatory mandates, strategic business objectives, operational security findings, and financial risk mitigation requirements. The drivers span compliance obligations (GDPR, SOC 2), market differentiation opportunities, and critical vulnerability remediation needs."
+    },
+    "mainContent": {
+      "subsections": [
+        {
+          "name": "regulatoryCompliance",
+          "title": "Regulatory Compliance Requirements",
+          "requiredPoints": [
+            "Specific regulations (GDPR, SOC 2, PCI DSS, etc.)",
+            "Relevant articles/clauses/requirements",
+            "Compliance deadlines or certification timelines",
+            "Consequences of non-compliance (fines, penalties)"
+          ],
+          "guidingQuestions": [
+            "What regulations mandate this policy?",
+            "What specific clauses or requirements apply?",
+            "When is compliance demonstration required?",
+            "What are the financial/legal consequences of non-compliance?"
+          ],
+          "wordCount": {"min": 150, "max": 300},
+          "example": "**GDPR Article 32 Compliance**: European General Data Protection Regulation mandates appropriate technical and organizational measures, including encryption, to ensure security of personal data processing. Non-compliance risks fines up to 4% of global annual revenue or €20M (whichever is greater). **SOC 2 Type II Certification**: Trust Services Criteria CC6.1 (Logical Access Security) and CC6.7 (Transmission and Disposal) require encryption controls for customer data protection. Certification maintains customer trust and enables enterprise sales opportunities with annual audit fieldwork scheduled for June 2025."
+        },
+        {
+          "name": "strategicObjectives",
+          "title": "Strategic Business Objectives",
+          "requiredPoints": [
+            "Market differentiation or competitive advantage",
+            "Customer trust and brand reputation goals",
+            "Market expansion or new customer acquisition",
+            "Enterprise customer requirements"
+          ],
+          "guidingQuestions": [
+            "How does this policy support strategic goals?",
+            "What competitive advantages does it enable?",
+            "How does it impact customer trust or market position?",
+            "What new markets or customers does it unlock?"
+          ],
+          "wordCount": {"min": 100, "max": 250},
+          "example": "**Customer Trust and Market Differentiation**: Robust encryption controls demonstrate security leadership, enabling competitive advantage in privacy-conscious markets and supporting premium pricing strategies. **Global Market Expansion**: Comprehensive encryption compliance enables entry into regulated markets (EU, healthcare, financial services) without additional security investments. **Enterprise Customer Acquisition**: Fortune 500 prospects require demonstrated encryption capabilities and third-party security certifications for vendor approval processes."
+        },
+        {
+          "name": "operationalDrivers",
+          "title": "Operational Drivers",
+          "requiredPoints": [
+            "Security assessment findings or audit results",
+            "Incident response improvements needed",
+            "Operational efficiency gains",
+            "Risk remediation requirements"
+          ],
+          "guidingQuestions": [
+            "What security findings or incidents drive this policy?",
+            "What operational improvements are needed?",
+            "How does it improve incident response or security operations?",
+            "What vulnerabilities or gaps does it address?"
+          ],
+          "wordCount": {"min": 100, "max": 200},
+          "example": "**Q3 2024 Penetration Testing Findings**: Critical vulnerabilities identified in data-at-rest encryption coverage (23% of repositories unencrypted) and key management controls requiring immediate remediation. **Incident Response Improvements**: Encryption reduces breach notification requirements under various regulations by rendering compromised data unreadable, simplifying incident response and reducing disclosure obligations."
+        },
+        {
+          "name": "financialConsiderations",
+          "title": "Financial Considerations",
+          "requiredPoints": [
+            "Cost avoidance opportunities",
+            "Insurance requirements or premium reductions",
+            "Revenue enablement or protection",
+            "Quantified financial impacts"
+          ],
+          "guidingQuestions": [
+            "What costs does this policy avoid?",
+            "How does it impact insurance requirements or premiums?",
+            "What revenue opportunities does it enable or protect?",
+            "What are the quantified financial benefits?"
+          ],
+          "wordCount": {"min": 100, "max": 200},
+          "example": "**Cyber Insurance Requirements**: Policy renewal contingent on implementing enterprise-grade encryption and key management controls, with potential 15% premium reduction ($180K annually) upon compliance demonstration. **Cost Avoidance**: Prevents potential regulatory fines, breach notification costs (estimated $2.1M per incident), and customer compensation claims. Enables premium pricing for enterprise customers requiring certified security controls."
+        }
+      ]
+    },
+    "conclusion": {
+      "purpose": "Summarize the compelling business case for the policy",
+      "elements": ["driver_synthesis", "urgency_statement", "expected_outcomes"],
+      "wordCount": {"min": 50, "max": 100},
+      "example": "These converging regulatory, strategic, operational, and financial drivers create a compelling business imperative for comprehensive customer PII encryption controls. Immediate action is required to meet Q1 2025 compliance deadlines while enabling strategic market expansion opportunities."
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "ISO 27001",
+      "control": "A.18.1.1",
+      "relevance": "Identification of applicable legislation and contractual requirements"
+    },
+    {
+      "framework": "ISO 27001",
+      "control": "A.18.1.4",
+      "relevance": "Privacy and protection of personally identifiable information"
+    },
+    {
+      "framework": "SOC 2",
+      "control": "Trust Services Criteria CC6.1, CC6.7",
+      "relevance": "Logical access security and data transmission/disposal controls"
+    },
+    {
+      "framework": "NIST CSF",
+      "control": "ID.GV-3",
+      "relevance": "Legal and regulatory requirements regarding cybersecurity are understood and managed"
+    },
+    {
+      "framework": "NIST Privacy Framework",
+      "control": "GV-P",
+      "relevance": "Governance of privacy practices and organizational understanding of legal requirements"
+    }
+  ],
+  "upstreamDependencies": [
+    {
+      "section": "summary.md",
+      "relationship": "derives_from",
+      "rationale": "Business drivers must align with policy summary scope and objectives"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All four subsections present (regulatory, strategic, operational, financial)",
+      "Minimum word count met for each subsection",
+      "All guiding questions addressed",
+      "At least 2 specific regulations cited with article/clause numbers",
+      "At least 2 strategic objectives identified",
+      "Quantified financial impacts included"
+    ],
+    "clarity": [
+      "Regulations cited with specific articles/clauses/requirements",
+      "Financial impacts quantified (dollar amounts, percentages)",
+      "Strategic objectives linked to business outcomes",
+      "Compliance deadlines or milestones specified"
+    ],
+    "traceability": [
+      "References policy summary",
+      "Framework citations present (minimum 3)",
+      "Rationale explains business justification using framework alignment"
+    ],
+    "frameworkAlignment": [
+      "ISO 27001 A.18.1.1 (legal requirements) addressed",
+      "SOC 2 Trust Services Criteria cited where applicable",
+      "NIST CSF Governance (ID.GV) functions referenced",
+      "Industry-specific regulations identified (GDPR, PCI DSS, HIPAA, etc.)"
+    ]
+  },
+  "exampleContent": {
+    "regulatorySection": "**GDPR Article 32 Compliance**: European General Data Protection Regulation mandates 'appropriate technical and organizational measures' including encryption to ensure security of personal data processing. Non-compliance risks fines up to 4% of global annual revenue or €20M (whichever is greater). Compliance demonstration required by March 31, 2025, for annual privacy assessment.\n\n**SOC 2 Type II Certification**: Trust Services Criteria CC6.1 (Logical Access Security) requires encryption controls for customer data at rest and in transit. CC6.7 (Transmission and Disposal) mandates secure data disposal procedures. Certification maintains customer trust and enables enterprise sales opportunities. Independent auditor fieldwork scheduled for June 2025 requires 90-day evidence collection period.",
+    "strategicSection": "**Customer Trust and Market Differentiation**: Robust encryption controls demonstrate security leadership in privacy-conscious markets, enabling competitive advantage and supporting premium pricing strategies (estimated 12-15% price premium for enterprise tier).\n\n**Global Market Expansion**: Comprehensive encryption compliance enables entry into regulated markets (EU financial services, US healthcare sector) without additional security investments, unlocking $45M in addressable market opportunities.\n\n**Enterprise Customer Acquisition**: Fortune 500 prospects require demonstrated encryption capabilities, third-party security certifications, and encryption key management controls for vendor approval. Three high-value prospects ($8M total contract value) currently blocked pending security assessment completion.",
+    "operationalSection": "**Q3 2024 Penetration Testing Findings**: Critical vulnerabilities identified in data-at-rest encryption coverage with 23% of customer PII repositories lacking encryption protection. High-severity findings in key management controls requiring immediate remediation within 90-day SLA.\n\n**Incident Response Improvements**: Encryption reduces breach notification requirements under GDPR Article 33 and state privacy laws by rendering compromised data unreadable, simplifying incident response procedures and reducing regulatory disclosure obligations. Estimated incident response cost reduction: 40% ($320K per incident avoided).",
+    "financialSection": "**Cyber Insurance Requirements**: Policy renewal contingent on implementing enterprise-grade encryption and centralized key management controls. Compliance enables 15% premium reduction ($180K annually) beginning Q3 2025.\n\n**Cost Avoidance**: Prevents potential regulatory fines (GDPR: €20M, CCPA: $7,500 per violation), breach notification costs (estimated $2.1M per incident based on industry benchmarks), and class-action lawsuit settlements (averaging $7.91M per data breach).\n\n**Revenue Enablement**: Enterprise customer requirements for SOC 2 Type II certification and encryption controls currently blocking $12M in sales pipeline. Compliance expected to unlock 65% of blocked opportunities within 6 months of certification."
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "sectionId": "2-3",
+  "layerId": "conceptual",
+  "templateVersion": "1.0.0",
+  "title": "Security Principles",
+  "purpose": "Establishes the guiding architectural principles that govern security design decisions, ensuring consistency, defensibility, and alignment with security objectives throughout implementation",
+  "contentStructure": {
+    "introduction": {
+      "purpose": "Establish the role of security principles in guiding architecture and design decisions",
+      "elements": ["principles_overview", "relationship_to_objectives", "scope_statement"],
+      "wordCount": {"min": 50, "max": 100},
+      "example": "This section establishes **Security Principles** that guide all security design decisions for this policy. Principles provide prescriptive guidance ensuring consistent implementation across all architectural layers while supporting Security Objectives (2-1). Each principle includes a clear statement, rationale explaining WHY it matters, and application guidance describing HOW to apply it. Principles are organized into three categories: **Fundamental Principles** (core security tenets), **Design Principles** (architecture guidance), and **Operational Principles** (ongoing management guidance)."
+    },
+    "fundamentalPrinciples": {
+      "purpose": "Define core security tenets that underpin all design decisions",
+      "elements": ["defense_in_depth", "least_privilege", "separation_of_duties", "fail_secure"],
+      "wordCount": {"min": 120, "max": 250},
+      "guidingQuestions": [
+        "What fundamental security principles apply universally?",
+        "How do fundamental principles support security objectives?",
+        "What rationale justifies each fundamental principle?",
+        "How should fundamental principles be applied?"
+      ],
+      "example": "**Defense in Depth**: Implement multiple layers of security controls to protect customer PII, ensuring no single control failure compromises confidentiality. **Rationale**: Aligns with NIST SP 800-53 defense-in-depth strategy and supports Confidentiality Objectives (2-1) by providing redundant protection. **Application**: Combine encryption-at-rest, encryption-in-transit, access controls, and audit logging to create layered protection. **Least Privilege**: Grant minimum necessary permissions for cryptographic operations, limiting blast radius of credential compromise. **Rationale**: Implements NIST CSF PR.AC-4 and mitigates unauthorized access risks from Risk Context (1-3). **Application**: Use role-based access control with time-limited credentials; separate read-only audit access from write access to encryption keys. **Separation of Duties**: Separate key administration, cryptographic operations, and audit functions to prevent single-person compromise. **Rationale**: Supports SOC 2 CC6.2 requirements from Business Drivers (1-2). **Application**: Require different individuals for key generation, key approval, and audit review roles."
+    },
+    "designPrinciples": {
+      "purpose": "Define architectural principles that guide security service design",
+      "elements": ["zero_trust", "assume_breach", "secure_by_default", "vendor_neutrality"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "What architectural principles guide security design?",
+        "How do design principles ensure robust security architecture?",
+        "What trade-offs do design principles require?",
+        "How do design principles support objectives and services?"
+      ],
+      "example": "**Zero Trust Architecture**: Verify explicitly, use least privilege access, and assume breach for all cryptographic operations. **Rationale**: Aligns with NIST SP 800-207 Zero Trust Architecture and supports Security Objectives (2-1) for continuous verification. **Application**: Implement continuous authentication and authorization for all key access; never trust based on network location. **Assume Breach**: Design security architecture assuming adversaries have compromised perimeter defenses. **Rationale**: Supports Incident Response Services (2-2) by prioritizing detection and response capabilities. **Application**: Implement comprehensive audit logging and anomaly detection to identify compromised credentials quickly. **Secure by Default**: Configure all systems with strongest security settings enabled by default, requiring explicit actions to reduce security posture. **Rationale**: Reduces configuration drift risks identified in Constraints (1-5). **Application**: Enable AES-256 encryption by default; require documented exception process to use weaker controls."
+    },
+    "operationalPrinciples": {
+      "purpose": "Define principles that guide ongoing security operations and maintenance",
+      "elements": ["automation_first", "continuous_validation", "evidence_based", "graceful_degradation"],
+      "wordCount": {"min": 100, "max": 200},
+      "guidingQuestions": [
+        "What principles guide day-to-day security operations?",
+        "How do operational principles reduce risk?",
+        "What principles support compliance and audit?",
+        "How do principles balance security with operational efficiency?"
+      ],
+      "example": "**Automation First**: Automate security controls wherever possible to reduce human error and operational overhead. **Rationale**: Addresses operational constraints from Constraints (1-5) and supports Success Criteria (1-4) for 100% automated key rotation. **Application**: Automate encryption key rotation, compliance validation, and audit log analysis; minimize manual security operations. **Continuous Validation**: Continuously validate encryption coverage and key rotation compliance rather than periodic point-in-time assessments. **Rationale**: Supports Compliance Monitoring Services (2-2) and SOC 2 Type II requirements. **Application**: Implement automated daily scans for unencrypted PII; alert on policy violations within 15 minutes. **Evidence-Based Decision Making**: Base security decisions on measurable evidence (logs, metrics, test results) rather than assumptions. **Rationale**: Supports audit requirements from Business Drivers (1-2) and enables objective risk assessment. **Application**: Maintain comprehensive audit logs for all cryptographic operations; use metrics dashboards to track objective achievement from Security Objectives (2-1)."
+    },
+    "principleConflicts": {
+      "purpose": "Define how to resolve conflicts between competing principles",
+      "elements": ["conflict_scenarios", "resolution_guidance", "escalation_path"],
+      "wordCount": {"min": 50, "max": 100},
+      "guidingQuestions": [
+        "What principle conflicts might arise?",
+        "How should conflicts be resolved?",
+        "What escalation path exists for unresolved conflicts?",
+        "How are trade-offs documented and justified?"
+      ],
+      "example": "**Common Conflicts**: Defense-in-depth (multiple controls) vs. operational efficiency (simplicity); least privilege (restricted access) vs. availability (rapid access for incident response). **Resolution Guidance**: Prioritize principles in order: (1) Fundamental principles (defense-in-depth, least privilege), (2) Design principles (zero trust, secure by default), (3) Operational principles (automation, continuous validation). When conflicts arise between equal-priority principles, escalate to security architecture review board with documented rationale for recommended approach. **Documentation**: All principle trade-off decisions must be documented in design reviews with explicit rationale referencing Security Objectives (2-1) and Risk Context (1-3)."
+    }
+  },
+  "frameworkReferences": [
+    {
+      "framework": "NIST SP 800-53",
+      "control": "SC-7",
+      "relevance": "Defense-in-depth boundary protection"
+    },
+    {
+      "framework": "NIST CSF",
+      "control": "PR.AC-4",
+      "relevance": "Least privilege access control"
+    },
+    {
+      "framework": "NIST SP 800-207",
+      "control": "Zero Trust Architecture",
+      "relevance": "Zero trust design principles"
+    },
+    {
+      "framework": "ISO 27001",
+      "control": "A.6.1.2",
+      "relevance": "Segregation of duties principle"
+    },
+    {
+      "framework": "CIS Controls",
+      "control": "Control 4",
+      "relevance": "Secure configuration management"
+    }
+  ],
+  "qualityChecks": {
+    "completeness": [
+      "All four structural elements present (introduction, fundamental principles, design principles, operational principles, principle conflicts)",
+      "Minimum word count met for each element (400-900 total)",
+      "All guiding questions addressed",
+      "Each principle includes: statement, rationale, application guidance",
+      "At least 3 fundamental principles, 3 design principles, 3 operational principles"
+    ],
+    "clarity": [
+      "Principles stated clearly and prescriptively (imperative statements)",
+      "Rationale explains WHY each principle matters using framework citations",
+      "Application guidance explains HOW to apply each principle in practice",
+      "Clear distinction between fundamental, design, and operational principles",
+      "Conflict resolution guidance provides actionable decision-making framework"
+    ],
+    "traceability": [
+      "References to Section 2-1 (Security Objectives)",
+      "References to upstream sections 1-2 (Business Drivers), 1-3 (Risk Context), 1-5 (Constraints) where relevant",
+      "Framework citations present (minimum 2 from NIST SP 800-53, NIST CSF, ISO 27001, CIS Controls, NIST SP 800-207)",
+      "Rationale for each principle links to security objectives or business drivers",
+      "Relationship types used correctly: supports (objectives), implements (requirements), constrains (design)"
+    ],
+    "frameworkAlignment": [
+      "At least 3 framework citations covering fundamental principles",
+      "Citations use correct format: Framework + Control ID",
+      "Principles align with industry-standard security frameworks"
+    ]
+  },
+  "commonPitfalls": [
+    "Principles too vague or abstract without actionable application guidance",
+    "Missing rationale explaining WHY principle matters",
+    "Principles conflict without resolution guidance",
+    "Mixing principles with specific technologies (should remain technology-agnostic)",
+    "Missing traceability to security objectives or business drivers"
+  ],
+  "examplePrinciples": [
+    {
+      "category": "Fundamental",
+      "principle": "Defense in Depth",
+      "statement": "Implement multiple layers of security controls to protect customer PII",
+      "rationale": "Aligns with NIST SP 800-53 defense-in-depth strategy and supports Confidentiality Objectives (2-1)",
+      "application": "Combine encryption-at-rest, encryption-in-transit, access controls, and audit logging",
+      "upstream": "Supports Security Objectives (2-1) confidentiality goals"
+    },
+    {
+      "category": "Design",
+      "principle": "Zero Trust Architecture",
+      "statement": "Verify explicitly, use least privilege access, and assume breach for all cryptographic operations",
+      "rationale": "Aligns with NIST SP 800-207 and supports continuous verification requirements",
+      "application": "Implement continuous authentication and authorization; never trust based on network location",
+      "upstream": "Implements Security Services (2-2) identity and authentication requirements"
+    },
+    {
+      "category": "Operational",
+      "principle": "Automation First",
+      "statement": "Automate security controls wherever possible to reduce human error",
+      "rationale": "Addresses operational constraints and supports 100% automated key rotation target",
+      "application": "Automate encryption key rotation, compliance validation, and audit log analysis",
+      "upstream": "Supports Success Criteria (1-4) for automation targets"
+    }
+  ]
+}

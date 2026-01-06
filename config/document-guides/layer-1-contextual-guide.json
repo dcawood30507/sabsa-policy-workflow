@@ -1,0 +1,341 @@
+{
+  "layerId": "contextual",
+  "layerName": "Contextual",
+  "layerNumber": 1,
+  "version": "1.0.0",
+  "purpose": "Establishes business context for security policy, identifying business processes, drivers, risks, success criteria, and constraints from the business stakeholder perspective",
+  "formatting": {
+    "fonts": {
+      "headings": {
+        "family": "Arial",
+        "sizes": {
+          "h1": 18,
+          "h2": 14,
+          "h3": 12
+        }
+      },
+      "body": {
+        "family": "Calibri",
+        "size": 11
+      },
+      "code": {
+        "family": "Courier New",
+        "size": 10
+      }
+    },
+    "colors": {
+      "primary": "#1E3A8A",
+      "accent": "#10B981",
+      "headings": {
+        "h1": "#1E3A8A",
+        "h2": "#059669",
+        "h3": "#047857"
+      }
+    },
+    "spacing": {
+      "paragraphBefore": 6,
+      "paragraphAfter": 6,
+      "lineSpacing": 1.15
+    }
+  },
+  "sections": {
+    "1-1": {
+      "id": "1-1",
+      "title": "Business Process Overview",
+      "layout": {
+        "structure": [
+          "introduction",
+          "core_business_process",
+          "stakeholder_identification",
+          "asset_inventory",
+          "current_vs_desired_state"
+        ],
+        "requiredElements": [
+          "processDescription",
+          "stakeholderList",
+          "assetCategorization",
+          "stateComparison"
+        ],
+        "optionalElements": [
+          "processDiagrams",
+          "dataFlowMaps",
+          "organizationalChart"
+        ]
+      },
+      "contentGuidelines": {
+        "tone": "business-focused, non-technical, accessible to executives",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {
+          "min": 400,
+          "max": 800
+        },
+        "requiredTopics": [
+          "What business process does this policy support or protect?",
+          "Who are the key stakeholders (internal and external)?",
+          "What assets (data, systems, people) are in scope?",
+          "What is the current state vs. desired state?"
+        ],
+        "examples": [
+          "This policy governs the **Customer Data Lifecycle Management** process...",
+          "Key stakeholders include Customer Experience Teams, Engineering Teams, Data Protection Officers...",
+          "**Current State**: Inconsistent encryption implementation... **Desired State**: Comprehensive encryption coverage..."
+        ]
+      }
+    },
+    "1-2": {
+      "id": "1-2",
+      "title": "Business Drivers",
+      "layout": {
+        "structure": [
+          "regulatory_compliance",
+          "strategic_objectives",
+          "operational_drivers",
+          "financial_considerations"
+        ],
+        "requiredElements": [
+          "complianceRequirements",
+          "businessObjectives",
+          "operationalNeeds"
+        ],
+        "optionalElements": [
+          "marketConditions",
+          "competitiveFactors",
+          "customerDemands"
+        ]
+      },
+      "contentGuidelines": {
+        "tone": "strategic, persuasive, business-outcome focused",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {
+          "min": 500,
+          "max": 1000
+        },
+        "requiredTopics": [
+          "What regulatory or compliance requirements mandate this policy?",
+          "What strategic business objectives does this policy support?",
+          "What operational drivers necessitate this policy?",
+          "What are the financial implications (cost avoidance, revenue enablement)?"
+        ],
+        "examples": [
+          "**GDPR Article 32 Compliance**: European General Data Protection Regulation mandates appropriate technical measures...",
+          "**SOC 2 Type II Certification**: Trust Services Criteria CC6.1 requires encryption controls for customer data...",
+          "**Q3 2024 Penetration Testing Findings**: Critical vulnerabilities identified requiring immediate remediation..."
+        ]
+      }
+    },
+    "1-3": {
+      "id": "1-3",
+      "title": "Risk Context",
+      "layout": {
+        "structure": [
+          "threat_landscape",
+          "vulnerability_assessment",
+          "risk_appetite",
+          "impact_analysis"
+        ],
+        "requiredElements": [
+          "threatIdentification",
+          "vulnerabilityInventory",
+          "riskToleranceStatement",
+          "impactScenarios"
+        ],
+        "optionalElements": [
+          "threatActorProfiles",
+          "riskHeatMaps",
+          "historicalIncidents"
+        ]
+      },
+      "contentGuidelines": {
+        "tone": "analytical, risk-focused, evidence-based",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {
+          "min": 500,
+          "max": 1000
+        },
+        "requiredTopics": [
+          "What external and internal threats are relevant to this policy?",
+          "What vulnerabilities currently exist?",
+          "What is the organization's risk appetite/tolerance?",
+          "What are the potential impacts if this policy fails?"
+        ],
+        "examples": [
+          "**External Threats**: Advanced Persistent Threats (APTs) targeting customer databases...",
+          "**Data-at-Rest Encryption Gaps**: 23% of customer PII repositories lack encryption protection...",
+          "The organization maintains a **low risk tolerance** for customer PII exposure...",
+          "**Financial Impact**: GDPR fines up to €20M, class-action lawsuits averaging $7.91M per breach..."
+        ]
+      }
+    },
+    "1-4": {
+      "id": "1-4",
+      "title": "Success Criteria",
+      "layout": {
+        "structure": [
+          "compliance_milestones",
+          "technical_indicators",
+          "operational_metrics",
+          "business_outcomes"
+        ],
+        "requiredElements": [
+          "measurableTargets",
+          "timelineBoundMetrics",
+          "performanceIndicators",
+          "businessValueMeasures"
+        ],
+        "optionalElements": [
+          "benchmarkComparisons",
+          "industryStandards",
+          "dashboardDefinitions"
+        ]
+      },
+      "contentGuidelines": {
+        "tone": "precise, measurable, outcome-oriented",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {
+          "min": 400,
+          "max": 900
+        },
+        "requiredTopics": [
+          "What compliance milestones define success?",
+          "What technical metrics will measure implementation effectiveness?",
+          "What operational performance indicators are required?",
+          "What business outcomes validate policy success?"
+        ],
+        "examples": [
+          "**SOC 2 Type II Readiness**: Achieve 100% compliance with Trust Services Criteria CC6.1 and CC6.7 by Q2 2025...",
+          "**Encryption Coverage**: Achieve 100% AES-256 encryption for customer PII at rest...",
+          "**System Availability**: Maintain 99.9% uptime for encryption services...",
+          "**Customer Trust Metrics**: Achieve >90% customer satisfaction scores on security surveys by Q4 2025..."
+        ]
+      }
+    },
+    "1-5": {
+      "id": "1-5",
+      "title": "Constraints & Assumptions",
+      "layout": {
+        "structure": [
+          "budget_constraints",
+          "technology_limitations",
+          "organizational_boundaries",
+          "timeline_assumptions",
+          "regulatory_boundaries"
+        ],
+        "requiredElements": [
+          "budgetLimits",
+          "technicalConstraints",
+          "resourceLimitations",
+          "timelineAssumptions"
+        ],
+        "optionalElements": [
+          "vendorRestrictions",
+          "geographicLimitations",
+          "contractualObligations"
+        ]
+      },
+      "contentGuidelines": {
+        "tone": "realistic, transparent, constraint-aware",
+        "perspective": "third-person",
+        "tense": "present",
+        "lengthRange": {
+          "min": 400,
+          "max": 900
+        },
+        "requiredTopics": [
+          "What budget constraints exist?",
+          "What technology limitations must be addressed?",
+          "What organizational constraints impact implementation?",
+          "What timeline assumptions underpin this policy?",
+          "What regulatory or contractual boundaries apply?"
+        ],
+        "examples": [
+          "**Capital Expenditure Limits**: $750K approved budget for hardware security modules...",
+          "**Legacy System Limitations**: 15% of customer data repositories operate on end-of-life platforms...",
+          "**Staffing Limitations**: Current security team has 2 FTE with cryptographic expertise...",
+          "**Regulatory Deadline**: GDPR compliance demonstration required by March 31, 2025..."
+        ]
+      }
+    }
+  },
+  "contentQuality": {
+    "traceability": {
+      "upstreamReferences": {
+        "required": true,
+        "minimumCount": 0,
+        "format": "Section references must use format: {policy-id}.summary for first layer"
+      }
+    },
+    "frameworkAlignment": {
+      "required": [
+        "NIST Privacy Framework",
+        "ISO 27001"
+      ],
+      "optional": [
+        "NIST CSF",
+        "NIST RMF",
+        "SOC 2 Trust Services Criteria",
+        "GDPR",
+        "CCPA",
+        "PCI DSS"
+      ],
+      "citationFormat": "Framework Name + Clause/Control ID (e.g., ISO 27001 A.18.1.1, NIST CSF ID.GV-3, GDPR Article 32)"
+    },
+    "technicalDepth": {
+      "level": "conceptual",
+      "avoidance": [
+        "vendor names",
+        "specific product features",
+        "implementation code",
+        "technical jargon without explanation"
+      ],
+      "inclusion": [
+        "business terminology",
+        "strategic concepts",
+        "risk management frameworks",
+        "compliance requirements",
+        "business process descriptions"
+      ]
+    }
+  },
+  "validation": {
+    "structure": {
+      "requiredSections": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4",
+        "1-5"
+      ],
+      "sectionOrder": "sequential",
+      "allowSkip": false
+    },
+    "content": {
+      "checks": [
+        {
+          "type": "wordCount",
+          "min": 400,
+          "max": 1000,
+          "appliesTo": "each section"
+        },
+        {
+          "type": "framework",
+          "minCitations": 2,
+          "appliesTo": "each section"
+        },
+        {
+          "type": "traceability",
+          "minReferences": 1,
+          "appliesTo": "all sections"
+        }
+      ]
+    },
+    "rationale": {
+      "required": true,
+      "minLength": 100,
+      "purpose": "Explain WHY this section matters for the policy using framework citations and business justification"
+    }
+  }
+}
