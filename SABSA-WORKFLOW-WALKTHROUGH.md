@@ -1,6 +1,6 @@
 # SABSA Agentic Policy Workflow - Complete Walkthrough
 
-**Version:** 1.0
+**Version:** 1.1
 **Date:** January 6, 2026
 **Status:** Production Documentation
 
@@ -20,7 +20,9 @@
 10. [Role-Based Workflow Views](#10-role-based-workflow-views)
 11. [Integration Configuration Examples](#11-integration-configuration-examples)
 12. [Troubleshooting Guide](#12-troubleshooting-guide)
-13. [Future Enhancements](#13-future-enhancements)
+13. [Threat Intelligence Integration](#13-threat-intelligence-integration)
+14. [Policy Scenario Analysis & What-If Modeling](#14-policy-scenario-analysis--what-if-modeling)
+15. [Future Enhancements](#15-future-enhancements)
 
 ---
 
@@ -2294,9 +2296,1251 @@ jq -r '.sections[] | .rationale_why' policies/POL-2025-004/logical/sections.json
 
 ---
 
-## 13. Future Enhancements
 
-### 13.1 Automated Compliance Validation Dashboard
+## 13. Threat Intelligence Integration
+
+### 13.1 Overview
+
+Threat intelligence integration ensures that the SABSA policy framework remains responsive to evolving security threats. This section documents how threat intelligence flows through all six SABSA layers, from strategic risk assessment to operational incident response.
+
+**Key Objectives:**
+- Transform raw threat intelligence into actionable security controls
+- Maintain explicit traceability from threat → policy → implementation → detection
+- Enable closed-loop threat response with continuous improvement
+- Leverage both external threat feeds and internal security findings
+
+### 13.2 Threat Intelligence Sources
+
+#### External Sources
+
+| Source | Type | Update Frequency | Primary Use |
+|--------|------|------------------|-------------|
+| **MITRE ATT&CK** | Adversary tactics, techniques, procedures (TTPs) | Quarterly | Layer 1 risk context, Layer 2 security objectives |
+| **Verizon DBIR** | Breach statistics, industry trends | Annual | Layer 1 risk quantification |
+| **IBM Cost of Breach** | Financial impact data | Annual | Layer 1 business impact analysis |
+| **CISA KEV** | Known Exploited Vulnerabilities | Weekly | Layer 5 validation checks (Wiz policies) |
+| **Industry ISACs** | Sector-specific threats | Real-time | Layer 1 risk context, Layer 6 incident playbooks |
+| **CVE/NVD** | Common Vulnerabilities and Exposures | Daily | Layer 5 Wiz policy configuration |
+
+#### Internal Sources
+
+| Source | Type | Update Frequency | Primary Use |
+|--------|------|------------------|-------------|
+| **Wiz CNAPP** | Cloud vulnerability scans | Continuous | Layer 5 compliance validation (Section 5-3) |
+| **SIEM Alerts** | Security event correlation | Real-time | Layer 6 incident response triggers |
+| **EDR Findings** | Endpoint threat detection | Real-time | Layer 6 operational playbooks |
+| **CSPM Findings** | Cloud misconfigurations | Continuous | Layer 5 ICS checks |
+| **Penetration Tests** | Identified vulnerabilities | Quarterly | Layer 1 risk updates, Layer 3 policy refinement |
+| **Incident Reports** | Lessons learned | Ad-hoc | Layer 6 runbook updates, Layer 1 risk re-assessment |
+
+### 13.3 Threat Intelligence Flow Through SABSA Layers
+
+```mermaid
+flowchart TD
+    A[Threat Intelligence Sources] --> B[Layer 1: Contextual<br/>Risk Assessment]
+    B --> C[Layer 2: Conceptual<br/>Security Objectives]
+    C --> D[Layer 3: Logical<br/>Security Policies]
+    D --> E[Layer 4: Physical<br/>Implementation Specs]
+    E --> F[Layer 5: Component<br/>Automated Detection]
+    F --> G[Layer 6: Operational<br/>Incident Response]
+
+    G --> H[Security Operations]
+    H --> I[Lessons Learned]
+    I --> A
+
+    style A fill:#FFE4B5
+    style B fill:#87CEEB
+    style C fill:#98FB98
+    style D fill:#DDA0DD
+    style E fill:#F0E68C
+    style F fill:#FFA07A
+    style G fill:#FFB6C1
+    style H fill:#D3D3D3
+    style I fill:#FFD700
+```
+
+**Key Entry Point:** Layer 1, Section 1-3 (Risk Context) is the primary strategic entry point for threat intelligence into the SABSA framework.
+
+### 13.4 Detailed Example: Ransomware via Unencrypted Databases
+
+This example demonstrates complete threat intelligence flow using POL-2025-004 (Customer PII Encryption Policy).
+
+#### Threat Intelligence Input
+
+**Source:** MITRE ATT&CK T1486 (Data Encrypted for Impact) + CISA KEV database
+
+**Threat Profile:**
+- **Threat Actor:** Ransomware groups (LockBit, BlackCat, REvil)
+- **Attack Vector:** Exploit unencrypted database backups or snapshots
+- **Impact:** Data exfiltration + encryption (double extortion)
+- **Prevalence:** 70% of ransomware incidents target databases (Verizon DBIR 2025)
+- **Financial Impact:** $4.45M average cost per incident (IBM Cost of Breach 2025)
+
+#### Layer 1: Contextual (Risk Context - Section 1-3)
+
+**Threat Intelligence Incorporation:**
+
+```json
+{
+  "sectionId": "1-3",
+  "title": "Risk Context",
+  "content": "### 1.3.1 Ransomware Threat Landscape\n\nRecent threat intelligence (MITRE ATT&CK T1486, CISA KEV CVE-2024-12345) indicates a **70% increase in ransomware attacks targeting unencrypted database infrastructure** (Verizon DBIR 2025). Threat actors specifically target:\n\n- **RDS instances without encryption at rest** (AWS, Azure SQL, GCP Cloud SQL)\n- **Database snapshots stored unencrypted** in cloud storage\n- **Backup files lacking encryption** in S3, Azure Blob, GCS\n\n**Financial Impact:** Average ransomware incident cost: **$4.45M** (IBM Cost of Breach 2025), with:\n- $2.1M direct ransom payments\n- $1.8M business disruption costs\n- $550K legal and regulatory fines\n\n**Attack Vectors:**\n1. Exploit CVE-2024-12345 (unpatched PostgreSQL RDS)\n2. Lateral movement to database credentials in plaintext config files\n3. Exfiltrate + encrypt customer PII databases\n4. Demand ransom + threaten GDPR breach disclosure\n\n**Organizational Risk Profile:**\n- Customer PII databases: **High-value target** (20M+ records)\n- Current encryption coverage: **72%** (28% unencrypted legacy systems)\n- Ransomware attack probability: **Medium-High** (industry average: 37% annual)\n- Estimated organizational impact: **$8.2M** (higher than average due to data volume)"
+}
+```
+
+**Traceability:**
+- **Upstream:** External threat intelligence (MITRE ATT&CK, Verizon DBIR, IBM, CISA KEV)
+- **Downstream:** Drives Layer 2 security objectives
+
+#### Layer 2: Conceptual (Security Objectives - Section 2-1)
+
+**Threat-Driven Security Objective:**
+
+```json
+{
+  "sectionId": "2-1",
+  "title": "Security Objectives",
+  "content": "### 2.1.3 Data Confidentiality Against Ransomware\n\n**Objective:** Protect customer PII from ransomware attacks through comprehensive encryption-at-rest coverage.\n\n**Success Criteria:**\n- **100% encryption coverage** for all customer PII databases (eliminate 28% gap)\n- **Zero tolerance** for unencrypted database snapshots or backups\n- **Automated detection** of non-compliant resources within 1 hour of creation\n- **Ransomware resilience:** Encrypted data is unusable even if exfiltrated\n\n**Threat Mitigation:**\n- Addresses MITRE ATT&CK T1486 (Data Encrypted for Impact)\n- Mitigates CVE-2024-12345 exploitation path\n- Reduces ransomware financial impact from $8.2M to <$500K (no data exfiltration value)\n\n**Framework Alignment:**\n- NIST SP 800-53 SC-28 (Protection of Information at Rest)\n- ISO 27001:2022 A.8.24 (Use of Cryptography)\n- SOC 2 CC6.1 (Logical Access Controls - Encryption)"
+}
+```
+
+**Traceability:**
+- **Upstream:** Implements risk from Layer 1, Section 1-3
+- **Relationship:** `implements` POL-2025-004.contextual.1-3
+- **Downstream:** Drives Layer 3 policies
+
+#### Layer 3: Logical (Security Policies - Section 3-1)
+
+**Threat-Informed Policy Statement:**
+
+```json
+{
+  "sectionId": "3-1",
+  "title": "Security Policies",
+  "content": "### 3.1.2 Database Encryption Policy\n\n**Policy Statement:**\n\nAll systems storing customer PII **SHALL** use AES-256 encryption at rest to protect against data exfiltration threats (MITRE ATT&CK T1486).\n\n**Scope:**\n- All RDS instances (AWS RDS, Azure SQL, GCP Cloud SQL)\n- All database snapshots and backups\n- All object storage containing database exports (S3, Azure Blob, GCS)\n\n**Requirements:**\n1. **Encryption Algorithm:** AES-256 (minimum)\n2. **Key Management:** KMS-managed keys with 90-day rotation\n3. **Encryption Enforcement:** Automated detection of unencrypted resources within 1 hour\n4. **Compliance Validation:** Continuous monitoring via Wiz CNAPP\n\n**Exceptions:**\n- None. Zero tolerance for unencrypted customer PII.\n\n**Rationale:**\n- Ransomware threat actors target unencrypted databases (Verizon DBIR: 70% prevalence)\n- Encryption renders exfiltrated data unusable (reduces impact from $8.2M to <$500K)\n- Regulatory requirement: GDPR Article 32 (encryption as appropriate technical measure)"
+}
+```
+
+**Traceability:**
+- **Upstream:** Implements security objective from Layer 2, Section 2-1
+- **Relationship:** `implements` POL-2025-004.conceptual.2-1
+- **Downstream:** Drives Layer 4 implementation specifications
+
+#### Layer 4: Physical (Implementation Specifications - Section 4-1)
+
+**Threat-Focused Implementation:**
+
+```json
+{
+  "sectionId": "4-1",
+  "title": "Control Implementation Specifications",
+  "content": "### 4.1.3 AWS RDS Encryption Implementation\n\n**Control Specification:** RDS-ENC-001\n\n**Implementation:**\n1. **Enable encryption at rest** for all new RDS instances:\n   - Parameter: `--storage-encrypted`\n   - KMS Key: `alias/customer-pii-encryption-key`\n   - Enforce via AWS Organizations Service Control Policy (SCP)\n\n2. **Migrate existing unencrypted instances:**\n   - Create encrypted snapshot from unencrypted instance\n   - Restore snapshot to new encrypted instance\n   - Update application connection strings\n   - Delete unencrypted instance\n   - Timeline: Complete within 30 days\n\n3. **Prevent unencrypted snapshot creation:**\n   - AWS Config rule: `rds-snapshots-encrypted`\n   - Automated remediation: Delete unencrypted snapshots within 1 hour\n\n4. **Backup encryption:**\n   - Automated backups inherit RDS encryption settings\n   - Manual exports to S3 must use SSE-KMS encryption\n\n**Threat Mitigation:**\n- Blocks MITRE ATT&CK T1486 data exfiltration path\n- Encrypted data unusable even if stolen (cryptographic protection)\n- Reduces ransomware leverage (no double extortion threat)\n\n**Technical Standards:**\n- AWS Well-Architected Framework: Security Pillar (SEC03-BP02)\n- CIS AWS Foundations Benchmark: Section 2.3.1"
+}
+```
+
+**Traceability:**
+- **Upstream:** Refines policy from Layer 3, Section 3-1
+- **Relationship:** `refines` POL-2025-004.logical.3-1
+- **Downstream:** Drives Layer 5 tool configurations
+
+#### Layer 5: Component (Automated Detection - Section 5-3)
+
+**Wiz Policy for Threat Detection:**
+
+This is where threat intelligence translates into **automated, continuous compliance validation** using Wiz CNAPP.
+
+```json
+{
+  "sectionId": "5-3",
+  "title": "Validation Tests",
+  "validationChecks": [
+    {
+      "checkId": "RANSOMWARE-DEFENSE-001",
+      "requirement": "Detect unencrypted RDS instances vulnerable to ransomware (MITRE ATT&CK T1486)",
+      "validationType": "automated",
+      "tools": ["wiz", "ics"],
+      "wizPolicy": {
+        "policyName": "RDS Encryption Required - Ransomware Defense",
+        "queryLanguage": "wiz-ql",
+        "query": "cloudResource where type='AWS RDS Instance' and encryptionEnabled=false and tags['DataClassification']='PII'",
+        "severity": "CRITICAL",
+        "remediation": "Enable encryption: aws rds modify-db-instance --db-instance-identifier <id> --storage-encrypted --kms-key-id arn:aws:kms:us-east-1:123456789012:key/customer-pii-key",
+        "complianceFrameworks": [
+          "SOC2-CC6.1",
+          "NIST-800-53-SC-28",
+          "GDPR-Article-32",
+          "MITRE-ATT&CK-T1486"
+        ],
+        "notificationTargets": ["security-ops-slack", "pagerduty-critical"],
+        "autoRemediation": false,
+        "detectionSLA": "1 hour"
+      },
+      "icsCheck": {
+        "checkName": "aws-rds-encryption-at-rest",
+        "cloudProvider": "aws",
+        "service": "rds",
+        "expectedResult": "PASS",
+        "remediationSteps": [
+          "Identify unencrypted RDS instance from check output",
+          "Follow migration procedure from Section 4-1",
+          "Validate encryption with: aws rds describe-db-instances --db-instance-identifier <id> --query 'DBInstances[0].StorageEncrypted'",
+          "Confirm Wiz policy no longer triggers"
+        ]
+      },
+      "jiraEvidenceRequest": {
+        "ticketProject": "COMPLIANCE",
+        "ticketSummary": "Manual validation: Legacy database encryption status",
+        "description": "For on-premises databases not visible to Wiz, provide evidence of encryption status",
+        "evidenceRequired": [
+          "Database configuration export showing encryption settings",
+          "Screenshot of encryption status from database console",
+          "Attestation letter from database administrator"
+        ],
+        "acceptedFormats": ["PDF", "PNG", "TXT"],
+        "collectionFrequency": "quarterly",
+        "responsibleOwner": "Database Team Lead"
+      }
+    }
+  ]
+}
+```
+
+**WizQL Query Explanation:**
+- **`type='AWS RDS Instance'`** — Filter to RDS resources only
+- **`encryptionEnabled=false`** — Detect unencrypted instances
+- **`tags['DataClassification']='PII'`** — High-priority filter (customer PII databases)
+
+**Detection SLA:** 1 hour maximum from resource creation to alert
+
+**Traceability:**
+- **Upstream:** Validates implementation from Layer 4, Section 4-1
+- **Relationship:** `validates` POL-2025-004.physical.4-1
+- **Downstream:** Triggers Layer 6 incident response
+
+#### Layer 6: Operational (Incident Response - Section 6-3)
+
+**Ransomware Incident Playbook:**
+
+```json
+{
+  "sectionId": "6-3",
+  "title": "Incident Response Playbooks",
+  "content": "### 6.3.2 Ransomware Defense - Unencrypted Database Detection\n\n**Playbook ID:** INCIDENT-RANSOMWARE-001\n**Trigger:** Wiz Policy 'RDS Encryption Required - Ransomware Defense' alert\n\n**Severity:** CRITICAL (threat intelligence indicates active exploitation)\n\n**Immediate Actions (within 15 minutes):**\n\n1. **Triage:**\n   - Confirm resource is production and contains customer PII\n   - Check AWS CloudTrail for creation event (identify who created resource)\n   - Assess if resource is already compromised:\n     - Check VPC Flow Logs for unusual data egress\n     - Query GuardDuty for malicious IP connections\n     - Check SIEM for related alerts\n\n2. **Containment:**\n   - **If suspected compromise:** Immediately isolate database:\n     - Remove all ingress security group rules\n     - Disable public accessibility\n     - Rotate database credentials\n     - Alert incident response team (PagerDuty: 'ransomware-response' escalation)\n   - **If no compromise indicators:** Proceed to remediation\n\n3. **Remediation (within 4 hours):**\n   - Follow encryption migration procedure from Section 4-1:\n     - Create encrypted snapshot\n     - Restore to encrypted instance\n     - Update application connection strings\n     - Validate encryption with Wiz re-scan\n   - Document root cause (why was unencrypted instance created?)\n\n4. **Evidence Collection:**\n   - Export Wiz policy violation details to JIRA\n   - Capture CloudTrail logs (resource creation events)\n   - Screenshot Wiz policy status (before/after remediation)\n   - Store evidence in: `s3://compliance-evidence/POL-2025-004/incidents/<date>/`\n\n5. **Post-Incident Review:**\n   - Update threat intelligence (was this a near-miss for T1486?)\n   - Assess if policy needs strengthening (e.g., prevent manual RDS creation)\n   - Update Layer 1 Section 1-3 if risk profile changes\n   - Feed lessons learned back into threat intelligence loop\n\n**Escalation Path:**\n- **Confirmed compromise:** Escalate to CISO + Legal within 30 minutes\n- **Potential GDPR breach:** Initiate 72-hour notification timeline\n- **Ransomware indicators:** Engage external incident response firm\n\n**Success Criteria:**\n- Unencrypted resource encrypted or deleted within 4 hours\n- Zero customer PII exposure confirmed\n- Wiz policy status: COMPLIANT\n- Incident documented in JIRA with full evidence trail"
+}
+```
+
+**Traceability:**
+- **Upstream:** Responds to detection from Layer 5, Section 5-3
+- **Relationship:** `implements` POL-2025-004.component.5-3
+- **Feedback Loop:** Updates Layer 1 Section 1-3 with lessons learned
+
+### 13.5 Closed-Loop Threat Response
+
+The complete closed-loop system ensures continuous improvement:
+
+```mermaid
+flowchart LR
+    A[External Threat Intel<br/>MITRE, CISA, DBIR] --> B[Layer 1: Risk Context<br/>Section 1-3]
+    B --> C[Layer 2: Security Objective<br/>Section 2-1]
+    C --> D[Layer 3: Policy<br/>Section 3-1]
+    D --> E[Layer 4: Implementation<br/>Section 4-1]
+    E --> F[Layer 5: Wiz Policy<br/>Section 5-3]
+    F --> G[Continuous Monitoring<br/>Wiz CNAPP]
+
+    G --> H{Violation<br/>Detected?}
+    H -->|Yes| I[Layer 6: Incident Response<br/>Section 6-3]
+    H -->|No| G
+
+    I --> J[Remediation]
+    J --> K[Post-Incident Review]
+    K --> L[Lessons Learned]
+    L --> M[Update Threat Intel]
+    M --> B
+
+    N[Internal Findings<br/>SIEM, EDR, Pen Tests] --> B
+
+    style A fill:#FFE4B5
+    style B fill:#87CEEB
+    style G fill:#98FB98
+    style H fill:#FF6B6B
+    style I fill:#FFB6C1
+    style L fill:#FFD700
+    style M fill:#FFA07A
+```
+
+**Key Feedback Mechanisms:**
+
+1. **Detection → Incident → Lessons Learned → Risk Update**
+   - Wiz policy violations trigger incidents
+   - Post-incident reviews identify new threats or attack vectors
+   - Layer 1 Risk Context updated with internal findings
+   - Threat intelligence refined based on actual adversary behavior
+
+2. **Compliance Drift Detection**
+   - Wiz continuous monitoring detects policy violations within 1 hour
+   - Automated alerts to security operations
+   - Incident response playbook execution
+   - Remediation tracked in JIRA with evidence
+
+3. **Threat Intelligence Refresh Cycles**
+   - **Daily:** CISA KEV updates → Layer 5 Wiz policy tuning
+   - **Weekly:** SIEM/EDR trend analysis → Layer 6 playbook updates
+   - **Quarterly:** External threat intel review → Layer 1 risk re-assessment
+   - **Annual:** Comprehensive threat model review → Full policy refresh
+
+4. **Automated Feedback via Wiz**
+   - Wiz API integration pushes policy violations to JIRA automatically
+   - Evidence automatically attached (resource configurations, CloudTrail logs)
+   - Compliance status tracked in real-time dashboard
+   - Trend analysis identifies emerging threats (e.g., sudden spike in unencrypted S3 buckets)
+
+### 13.6 Practical Implementation
+
+#### GitHub Actions Workflow: Threat Intelligence Sync
+
+```yaml
+# .github/workflows/sync-threat-intelligence.yml
+name: Sync Threat Intelligence to Layer 1
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Weekly, Monday 8 AM UTC
+  workflow_dispatch:
+
+jobs:
+  fetch-threat-intel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Fetch CISA KEV Updates
+        run: |
+          curl -s https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json \
+            -o threat-intel/cisa-kev-latest.json
+
+      - name: Query Wiz for New Vulnerabilities
+        env:
+          WIZ_CLIENT_ID: ${{ secrets.WIZ_CLIENT_ID }}
+          WIZ_CLIENT_SECRET: ${{ secrets.WIZ_CLIENT_SECRET }}
+        run: |
+          # Authenticate with Wiz API
+          TOKEN=$(curl -s -X POST https://auth.wiz.io/oauth/token \
+            -d "grant_type=client_credentials" \
+            -d "client_id=$WIZ_CLIENT_ID" \
+            -d "client_secret=$WIZ_CLIENT_SECRET" \
+            -d "audience=wiz-api" | jq -r '.access_token')
+
+          # Query for critical vulnerabilities in customer PII systems
+          curl -s -X POST https://api.wiz.io/graphql \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "query": "query { vulnerabilities(first: 100, filterBy: {severity: [CRITICAL], projects: [\"customer-pii\"]}) { nodes { id name cvss description affectedResources { id name type } } } }"
+            }' > threat-intel/wiz-critical-vulns.json
+
+      - name: Analyze Threat Intelligence Changes
+        run: |
+          python scripts/analyze-threat-intel.py \
+            --cisa-kev threat-intel/cisa-kev-latest.json \
+            --wiz-vulns threat-intel/wiz-critical-vulns.json \
+            --policy-id POL-2025-004 \
+            --output threat-intel/analysis-report.md
+
+      - name: Create GitHub Issue if High-Impact Threats Detected
+        if: ${{ steps.analyze.outputs.high_impact == 'true' }}
+        run: |
+          gh issue create \
+            --title "[Threat Intel] High-impact threats detected for POL-2025-004" \
+            --body-file threat-intel/analysis-report.md \
+            --label "threat-intelligence,policy-update-required" \
+            --assignee security-architect-team
+```
+
+#### Wiz Policy Auto-Update Script
+
+```python
+# scripts/update-wiz-policies-from-cisa-kev.py
+import requests
+import json
+
+def fetch_cisa_kev():
+    """Fetch latest CISA Known Exploited Vulnerabilities"""
+    response = requests.get("https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json")
+    return response.json()
+
+def update_wiz_policy(wiz_api_token, policy_id, new_cves):
+    """Update Wiz policy to detect new critical CVEs"""
+
+    # Build WizQL query for new CVEs
+    cve_list = "', '".join(new_cves)
+    query = f"cloudResource where vulnerabilities.cve IN ('{cve_list}') and tags['DataClassification']='PII'"
+
+    # Update Wiz policy via API
+    response = requests.patch(
+        f"https://api.wiz.io/policies/{policy_id}",
+        headers={
+            "Authorization": f"Bearer {wiz_api_token}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "query": query,
+            "severity": "CRITICAL",
+            "description": f"Detect CISA KEV vulnerabilities in customer PII systems (updated {datetime.now()})"
+        }
+    )
+
+    return response.json()
+
+# Usage in GitHub Actions workflow
+if __name__ == "__main__":
+    kev_data = fetch_cisa_kev()
+    recent_cves = [vuln['cveID'] for vuln in kev_data['vulnerabilities']
+                   if vuln['dateAdded'] > (datetime.now() - timedelta(days=7))]
+
+    if recent_cves:
+        print(f"Found {len(recent_cves)} new CISA KEV entries")
+        wiz_token = get_wiz_api_token()
+        result = update_wiz_policy(wiz_token, "POL-2025-004-RANSOMWARE-001", recent_cves)
+        print(f"Updated Wiz policy: {result}")
+```
+
+---
+
+## 14. Policy Scenario Analysis & What-If Modeling
+
+### 14.1 Overview
+
+The Policy Scenario Analysis system enables dry-run modeling of policy changes **before committing** to production. This allows teams to assess the full impact of proposed changes across all six SABSA layers, compare multiple options, and make data-driven decisions.
+
+**Key Capabilities:**
+- Model "what-if" scenarios in isolated Git branches
+- Generate complete 6-layer artifacts for each option
+- Compare impact side-by-side (cost, effort, risk, timeline)
+- Stakeholder approval before production merge
+- Complete audit trail of decision rationale
+
+**Reference Document:** See `POLICY-SCENARIO-ANALYSIS.md` for complete specification.
+
+### 14.2 Branch Strategy for Scenario Analysis
+
+#### Branch Naming Conventions
+
+**Single Scenario Branches:**
+```
+scenario/{policy-id}/{scenario-type}/{description}
+```
+
+Examples:
+- `scenario/POL-2025-004/standard-update/tls-13-migration`
+- `scenario/POL-2025-004/tool-migration/hashicorp-vault`
+- `scenario/POL-2025-004/compliance-change/pci-dss-v4`
+- `scenario/POL-2025-004/architecture-shift/multi-region-encryption`
+
+**Comparison Branches (A/B/C Testing):**
+```
+scenario/{policy-id}/compare/{option-a}-vs-{option-b}
+```
+
+Examples:
+- `scenario/POL-2025-004/compare/aws-kms-vs-hashicorp-vault`
+- `scenario/POL-2025-004/compare/quarterly-rotation-vs-annual`
+- `scenario/POL-2025-004/compare/aes256-vs-aes128-gcm`
+
+#### Scenario Branch Lifecycle
+
+```mermaid
+flowchart TD
+    A[Main Branch<br/>Current Policy v1.0] --> B{Scenario Analysis<br/>Required?}
+
+    B -->|Option 1: TLS 1.3| C[Branch: scenario/.../tls-13]
+    B -->|Option 2: AWS KMS| D[Branch: scenario/.../aws-kms]
+    B -->|Option 3: Vault| E[Branch: scenario/.../vault]
+
+    C --> F[Generate All 6 Layers<br/>for Option 1]
+    D --> G[Generate All 6 Layers<br/>for Option 2]
+    E --> H[Generate All 6 Layers<br/>for Option 3]
+
+    F --> I[Impact Analysis<br/>Automated Script]
+    G --> I
+    H --> I
+
+    I --> J[Comparison Report<br/>Cost/Effort/Risk/Timeline]
+    J --> K{Stakeholder<br/>Decision}
+
+    K -->|Option 1 Selected| L[Merge to Main → v1.1<br/>Archive Options 2 & 3]
+    K -->|Option 2 Selected| M[Merge to Main → v1.1<br/>Archive Options 1 & 3]
+    K -->|None Acceptable| N[Archive All Scenarios<br/>Document Rationale]
+
+    L --> O[Release Tag: v1.1<br/>Publish to SharePoint]
+    M --> O
+
+    N --> P[Update Issue:<br/>No Change Approved]
+
+    style A fill:#90EE90
+    style B fill:#FFE4B5
+    style I fill:#87CEEB
+    style J fill:#FFD700
+    style K fill:#FF6B6B
+    style O fill:#98FB98
+```
+
+### 14.3 Scenario Types with Complete Examples
+
+#### Type 1: Standard Update (TLS 1.2 → TLS 1.3)
+
+**Use Case:** Cryptographic standards evolve; assess impact of migrating from TLS 1.2 to TLS 1.3.
+
+**Scenario Creation:**
+
+```bash
+# Create scenario branch
+git checkout main
+git checkout -b scenario/POL-2025-004/standard-update/tls-13-migration
+
+# Update policy statement in scenario directory
+mkdir -p policies/POL-2025-004/scenarios/tls-13-migration
+cat > policies/POL-2025-004/scenarios/tls-13-migration/policy-statement.md <<EOF
+All customer PII must be encrypted at rest using AES-256 and in transit using
+**TLS 1.3 or higher** (updated from TLS 1.2). Encryption keys must be rotated
+every 90 days and stored in AWS KMS.
+
+**Change Rationale:**
+- TLS 1.3 removes legacy cipher suites vulnerable to downgrade attacks
+- Improved performance (1-RTT handshake vs 2-RTT in TLS 1.2)
+- NIST SP 800-52 Rev. 2 recommends TLS 1.3 as preferred minimum
+EOF
+
+# Trigger scenario generation workflow
+gh workflow run generate-scenario.yml \
+  -f policy-id="POL-2025-004" \
+  -f scenario-name="tls-13-migration" \
+  -f scenario-type="standard-update" \
+  -f base-branch="main"
+```
+
+**Impact Analysis Output:**
+
+| Layer | Changes | Lines Changed | Effort Estimate | Risk Level | Key Changes |
+|-------|---------|---------------|-----------------|------------|-------------|
+| **Layer 1: Contextual** | No changes | 0 | 0 hrs | NONE | Business drivers unchanged |
+| **Layer 2: Conceptual** | No changes | 0 | 0 hrs | NONE | Security objectives unchanged |
+| **Layer 3: Logical** | Minor update | 8 lines | 2 hrs | LOW | Update policy to reference TLS 1.3 |
+| **Layer 4: Physical** | Significant update | 47 lines | 8 hrs | MEDIUM | Cipher suite specifications, load balancer configs |
+| **Layer 5: Component** | Major update | 62 lines | 16 hrs | MEDIUM | 3 Terraform files, 1 Wiz policy, 2 ICS checks |
+| **Layer 6: Operational** | Moderate update | 53 lines | 8 hrs | LOW | 1 runbook (client compatibility), 1 incident playbook |
+| **TOTAL** | **4 of 6 layers** | **170 lines** | **34 hours** | **MEDIUM** | Migration complexity moderate |
+
+**Breaking Changes Analysis:**
+
+⚠️ **Client Compatibility Issues:**
+- **iOS <12.2** — Does not support TLS 1.3 (released March 2019)
+- **Android <10** — Does not support TLS 1.3 (released September 2019)
+- **Java 8** — No native TLS 1.3 support (requires Java 11+)
+- **Legacy IoT devices** — May require firmware updates or replacement
+
+**Estimated Client Impact:**
+- **Mobile apps:** 3% of users on incompatible versions (based on analytics)
+- **API clients:** 12 partner integrations require Java 8 (identified via API logs)
+- **IoT devices:** 8 legacy sensors require firmware updates
+
+**Migration Timeline:**
+
+| Week | Activity | Owner | Status |
+|------|----------|-------|--------|
+| **Week 1** | Notify partners of TLS 1.3 requirement (90-day advance notice) | API Team | Pending |
+| **Week 2** | Update mobile SDKs, test on iOS 12.2+, Android 10+ | Mobile Team | Pending |
+| **Week 3** | Test dual-stack (TLS 1.2 + 1.3) in staging environment | DevOps | Pending |
+| **Week 4** | Deploy dual-stack to production, monitor client versions | SRE | Pending |
+| **Week 5-12** | Monitor adoption, support partner migrations | Support | Pending |
+| **Week 13** | Disable TLS 1.2 if <1% client usage | Security Ops | Pending |
+
+**Cost-Benefit Analysis:**
+
+| Category | TLS 1.2 (Current) | TLS 1.3 (Proposed) | Delta |
+|----------|-------------------|-------------------|-------|
+| **Implementation Cost** | $0 (baseline) | $12,000 (34 hrs × $350/hr) | +$12K |
+| **Performance Improvement** | Baseline | 20% faster handshake | +20% |
+| **Security Posture** | Moderate (vulnerable to downgrade attacks) | High (no legacy ciphers) | Improved |
+| **Compliance** | Meets minimum (TLS 1.2) | Exceeds minimum (TLS 1.3) | Exceeds |
+| **Client Compatibility** | 100% compatible | 97% compatible (3% require updates) | -3% |
+
+**Recommendation:** **APPROVE** with phased migration over 12 weeks. Risk is manageable, security benefit is significant, and client impact is minimal (3% mobile users).
+
+---
+
+#### Type 2: Tool Migration (AWS KMS vs HashiCorp Vault)
+
+**Use Case:** Evaluate replacing AWS KMS with HashiCorp Vault Enterprise for multi-cloud key management.
+
+**Scenario Creation:**
+
+```bash
+# Create comparison branch
+git checkout main
+git checkout -b scenario/POL-2025-004/compare/aws-kms-vs-hashicorp-vault
+
+# Create baseline option (AWS KMS)
+mkdir -p policies/POL-2025-004/scenarios/aws-kms
+cp policies/POL-2025-004/input/policy-statement.md \
+   policies/POL-2025-004/scenarios/aws-kms/
+
+# Create alternative option (HashiCorp Vault)
+mkdir -p policies/POL-2025-004/scenarios/hashicorp-vault
+cat > policies/POL-2025-004/scenarios/hashicorp-vault/policy-statement.md <<EOF
+All customer PII must be encrypted at rest using AES-256. Encryption keys
+managed by **HashiCorp Vault Enterprise** with automatic 90-day rotation,
+stored in multi-cloud environments (AWS, Azure, GCP).
+
+**Change Rationale:**
+- Multi-cloud strategy: Consistent key management across AWS, Azure, GCP
+- Avoid vendor lock-in: Portable key management solution
+- On-premises integration: Vault supports hybrid cloud architectures
+EOF
+
+# Trigger parallel scenario generation
+gh workflow run compare-scenarios.yml \
+  -f policy-id="POL-2025-004" \
+  -f option-a="aws-kms" \
+  -f option-b="hashicorp-vault" \
+  -f base-branch="main"
+```
+
+**Decision Matrix:**
+
+| Criteria | AWS KMS (Baseline) | HashiCorp Vault Enterprise | Winner |
+|----------|-------------------|---------------------------|--------|
+| **Annual Cost** | $12K (1K keys × $1/key/month) | $32K ($5K license + $27K EKS hosting) | AWS KMS ✓ |
+| **Complexity** | Low (fully managed) | High (self-hosted on EKS, 3 pods, HA) | AWS KMS ✓ |
+| **Multi-Cloud Support** | AWS only | AWS, Azure, GCP | Vault ✓ |
+| **On-Premises Integration** | No | Yes | Vault ✓ |
+| **Compliance Certification** | FIPS 140-2 Level 3 | FIPS 140-2 Level 2 | AWS KMS ✓ |
+| **AWS Integration** | Native (IAM, CloudTrail, KMS APIs) | Custom (Vault API, manual IAM policies) | AWS KMS ✓ |
+| **Vendor Lock-In Risk** | High (AWS proprietary) | Low (open-source core, portable) | Vault ✓ |
+| **Time to Implement** | 2-3 weeks | 8-12 weeks | AWS KMS ✓ |
+| **Operational Overhead** | 1 hr/week (minimal) | 8 hrs/week (K8s management, upgrades) | AWS KMS ✓ |
+
+**Impact Comparison:**
+
+| Metric | AWS KMS (Baseline) | HashiCorp Vault | Difference |
+|--------|-------------------|-----------------|------------|
+| **Layers Modified** | 2 layers (minor changes) | 6 layers (major changes) | +4 layers |
+| **Lines Changed** | 87 lines | 1,427 lines | +1,340 lines (+1,540%) |
+| **New Infrastructure** | 0 (uses existing KMS) | EKS cluster (3 pods, 6 vCPUs, 12 GB RAM) | Significant |
+| **Implementation Time** | 2-3 weeks | 8-12 weeks | +6-9 weeks |
+| **Ops Effort (ongoing)** | 1 hr/week | 8 hrs/week | +7 hrs/week |
+| **Annual Cost** | $12K | $32K | +$20K/year (+167%) |
+| **Risk Level** | LOW | HIGH | Vault significantly riskier |
+
+**Detailed Layer Impact:**
+
+**AWS KMS Option:**
+- **Layer 1-2:** No changes (same encryption requirements)
+- **Layer 3:** Minor (reference AWS KMS instead of "key management system")
+- **Layer 4:** Minor (AWS KMS API specifications, no procedural changes)
+- **Layer 5:** Minor (existing Terraform/CloudFormation, no new infrastructure)
+- **Layer 6:** Minor (existing runbooks for KMS key rotation, no new playbooks)
+
+**HashiCorp Vault Option:**
+- **Layer 1:** Updated (add "multi-cloud" and "vendor lock-in" risk considerations)
+- **Layer 2:** Updated (add "portability" security objective)
+- **Layer 3:** Major changes (new policies for Vault access, audit logging, key storage)
+- **Layer 4:** Major changes (Vault deployment architecture, EKS specs, HA procedures)
+- **Layer 5:** Complete rewrite (Terraform for EKS + Vault, Helm charts, init scripts, 15+ new files)
+- **Layer 6:** Complete rewrite (new runbooks for Vault upgrades, unsealing, disaster recovery, backup)
+
+**ROI Analysis (5-Year Total Cost of Ownership):**
+
+| Cost Category | AWS KMS (5 Years) | HashiCorp Vault (5 Years) | Difference |
+|---------------|-------------------|---------------------------|------------|
+| **Licensing** | $60K (managed service) | $25K ($5K/year × 5) | -$35K |
+| **Infrastructure** | $0 (included) | $135K (EKS hosting: $27K/year × 5) | +$135K |
+| **Implementation** | $6K (2 weeks × $3K/week) | $36K (12 weeks × $3K/week) | +$30K |
+| **Operations** | $13K (1 hr/week × $250/hr × 52 weeks × 5 years) | $104K (8 hrs/week × $250/hr × 52 weeks × 5 years) | +$91K |
+| **Training** | $2K (minimal) | $15K (Vault certification, K8s training) | +$13K |
+| **TOTAL (5 years)** | **$81K** | **$315K** | **+$234K (+289%)** |
+
+**Recommendation:**
+
+**STAY WITH AWS KMS** unless one of the following becomes true:
+
+1. **Multi-cloud requirement becomes mandatory** (currently hypothetical, no business requirement)
+2. **On-premises integration required** (no current on-prem infrastructure)
+3. **Key volume exceeds 10,000 keys** (current: 1,000 keys; projected 3-year growth: 3,500 keys)
+
+**Vault Migration Blockers:**
+
+- **Timeline:** 8-12 weeks vs 2-3 weeks (75% longer)
+- **Cost:** +$234K over 5 years (+289% increase)
+- **Complexity:** Requires Kubernetes expertise (current team has minimal K8s experience)
+- **Risk:** High operational overhead (8 hrs/week) with no immediate business benefit
+- **Security:** FIPS 140-2 Level 2 vs Level 3 (compliance downgrade)
+
+**When to Reconsider:**
+
+- Multi-cloud expansion announced (Azure, GCP workloads planned)
+- Acquisition of company with existing Vault deployment
+- Regulatory requirement for on-premises key custody
+
+**Decision:** Archive HashiCorp Vault scenario, document rationale in GitHub Issue, revisit in 12 months if multi-cloud strategy changes.
+
+---
+
+#### Type 3: Compliance Change (PCI DSS v4.0 Update)
+
+**Use Case:** New compliance framework version (PCI DSS v3.2.1 → v4.0) requires additional controls.
+
+**Scenario Creation:**
+
+```bash
+git checkout main
+git checkout -b scenario/POL-2025-004/compliance-change/pci-dss-v4
+
+cat > policies/POL-2025-004/scenarios/pci-dss-v4/policy-statement.md <<EOF
+All payment card data must be encrypted per **PCI DSS v4.0** requirements:
+
+**Existing Requirements (unchanged):**
+- AES-256 encryption at rest
+- 90-day key rotation
+- TLS 1.2+ encryption in transit
+
+**New Requirements (PCI DSS v4.0):**
+- **Multi-factor authentication (MFA) for key access** (Req 8.4.2)
+- **Automated key access logging and alerting** (Req 10.7.2)
+- **Quarterly key access reviews** (Req 3.6.1.3) — previously annual
+EOF
+
+gh workflow run generate-scenario.yml \
+  -f policy-id="POL-2025-004" \
+  -f scenario-name="pci-dss-v4" \
+  -f scenario-type="compliance-change"
+```
+
+**Gap Analysis:**
+
+| PCI DSS v4.0 Requirement | Current Status | Gap Severity | Effort to Close | Target Date |
+|-------------------------|----------------|--------------|-----------------|-------------|
+| **Req 3.5.1.2:** AES-256 encryption | ✅ COMPLIANT | NONE | 0 hrs | N/A |
+| **Req 3.6.1.3:** Quarterly key access reviews | ⚠️ PARTIAL (currently annual) | MEDIUM | 1 week | Q1 2026 |
+| **Req 8.4.2:** MFA for key access | ❌ NOT IMPLEMENTED | HIGH | 2 weeks | Q1 2026 |
+| **Req 10.7.2:** Automated key logging | ✅ IMPLEMENTED (CloudTrail + Splunk) | NONE | 0 hrs | N/A |
+| **Req 10.7.3:** Key access alerting | ⚠️ PARTIAL (manual review, no alerts) | MEDIUM | 1 week | Q1 2026 |
+
+**Changes Required by Layer:**
+
+**Layer 1: Contextual (Section 1-1)**
+- **Change:** Add PCI DSS v4.0 compliance requirement to business context
+- **Diff:** +12 lines
+- **Effort:** 1 hour
+
+**Layer 3: Logical (Section 3-1)**
+- **Change:** Add MFA requirement to encryption key access policy
+  - **New Policy Statement:** "Multi-factor authentication SHALL be required for all KMS key operations (encrypt, decrypt, generate data key)"
+- **Diff:** +23 lines
+- **Effort:** 2 hours
+
+**Layer 4: Physical (Section 4-2)**
+- **Change:** Update IAM procedures to enforce MFA for KMS access
+  - **Procedure:** Enable MFA for IAM roles with `kms:*` permissions
+  - **Procedure:** Configure quarterly key access review cadence (down from annual)
+- **Diff:** +15 lines
+- **Effort:** 4 hours
+
+**Layer 5: Component (Section 5-1, 5-3)**
+- **Change A:** Modify IAM policy to require MFA condition
+  ```json
+  {
+    "Effect": "Allow",
+    "Action": "kms:*",
+    "Resource": "*",
+    "Condition": {
+      "Bool": {"aws:MultiFactorAuthPresent": "true"}
+    }
+  }
+  ```
+- **Change B:** Add Wiz policy to detect KMS access without MFA
+  - **Policy Name:** "KMS Access Requires MFA (PCI DSS v4.0)"
+  - **WizQL Query:** `cloudResource where type='AWS IAM Role' and policy.actions='kms:*' and policy.conditions.mfa=false`
+- **Diff:** +26 lines (Terraform) + 1 new Wiz policy
+- **Effort:** 16 hours (implementation + testing)
+
+**Layer 6: Operational (Section 6-2)**
+- **Change:** Update access review frequency from annual to quarterly
+  - **Runbook:** "Quarterly KMS Key Access Review" (new schedule)
+  - **Automation:** Add quarterly JIRA ticket auto-creation
+- **Diff:** +4 lines
+- **Effort:** 8 hours (runbook update + automation script)
+
+**Total Effort:** 3-4 weeks to full PCI DSS v4.0 compliance
+
+**Cost-Benefit Analysis:**
+
+| Category | Cost | Benefit |
+|----------|------|---------|
+| **Implementation Effort** | 31 hours × $350/hr = $10,850 | Maintain PCI DSS certification (required for payment processing) |
+| **Ongoing Operational Cost** | +2 hrs/quarter for reviews = $2,000/year | Avoid $25K-$100K fines for non-compliance |
+| **Risk Reduction** | N/A | Prevent unauthorized key access (reduces breach risk by 40%) |
+
+**Recommendation:** **APPROVE** — PCI DSS v4.0 compliance is mandatory for payment card processing. Implementation cost ($10,850) is far less than non-compliance penalties ($25K-$100K per assessment cycle).
+
+**Timeline:**
+- **Deadline:** June 30, 2026 (PCI DSS v4.0 enforcement date)
+- **Buffer:** 3 months (allows time for QSA audit before deadline)
+- **Start Date:** February 1, 2026
+
+---
+
+### 14.4 Automated Impact Analysis
+
+#### Impact Metrics Structure
+
+The `scripts/analyze-scenario-impact.js` script automatically calculates:
+
+```javascript
+const impactMetrics = {
+  // Quantitative metrics
+  layersModified: {
+    count: 4,
+    list: ["Layer 3: Logical", "Layer 4: Physical", "Layer 5: Component", "Layer 6: Operational"],
+    unchanged: ["Layer 1: Contextual", "Layer 2: Conceptual"]
+  },
+
+  linesChanged: {
+    added: 215,
+    deleted: 52,
+    modified: 120,
+    total: 387
+  },
+
+  artifactsAffected: {
+    configurations: 12,      // Terraform files, IAM policies, KMS configs
+    procedures: 3,           // Security procedures updated
+    tests: 8,                // New validation tests (Wiz policies, ICS checks)
+    runbooks: 2              // Operational runbooks
+  },
+
+  effortEstimation: {
+    implementation: 32,      // hours (development + testing)
+    testing: 16,             // hours (staging + production validation)
+    documentation: 8,        // hours (update all 6 layer docs)
+    training: 6,             // hours (ops team training on new runbooks)
+    total: 62                // hours (converted to weeks: 62 / 40 = 1.5 weeks)
+  },
+
+  riskAssessment: {
+    technicalRisk: 'MEDIUM',        // Breaking changes, client compatibility
+    operationalRisk: 'LOW',         // Runbook complexity, team readiness
+    complianceRisk: 'LOW',          // Framework alignment maintained
+    financialRisk: 'LOW',           // Cost impact manageable
+    overall: 'MEDIUM'               // Highest of all risk categories
+  },
+
+  costImpact: {
+    infrastructure: 18000,   // annual (new EKS cluster, Vault license)
+    labor: 12000,            // one-time (62 hrs × $194/hr blended rate)
+    tooling: 5000,           // one-time (Wiz policy upgrades, ICS licenses)
+    training: 3000,          // one-time (team certifications)
+    total: 38000             // total first-year cost
+  },
+
+  timeline: {
+    implementation: "2-3 weeks",
+    testing: "1 week",
+    production_deployment: "1 week",
+    total: "4-5 weeks"
+  },
+
+  // Compliance impact
+  complianceFrameworks: {
+    NIST_SP_800_53: "SC-28 compliance maintained",
+    ISO_27001: "A.8.24 compliance maintained",
+    SOC2: "CC6.1 compliance maintained",
+    PCI_DSS_v4: "NEW: Req 8.4.2 and 10.7.3 compliance achieved"
+  }
+};
+```
+
+#### Visual Impact Dashboard
+
+```mermaid
+graph TD
+    L1[Layer 1: Contextual<br/>0 changes<br/>✅ NONE] --> L2[Layer 2: Conceptual<br/>Minor: +12 lines<br/>⚠️ LOW]
+    L2 --> L3[Layer 3: Logical<br/>Moderate: +47 lines<br/>🔶 MEDIUM]
+    L3 --> L4[Layer 4: Physical<br/>Major: +89 lines<br/>🔴 HIGH]
+    L4 --> L5[Layer 5: Component<br/>Major: +142 lines<br/>🔴 HIGH]
+    L5 --> L6[Layer 6: Operational<br/>Moderate: +53 lines<br/>🔶 MEDIUM]
+
+    style L1 fill:#90EE90
+    style L2 fill:#FFE4B5
+    style L3 fill:#FFA500
+    style L4 fill:#FF6347
+    style L5 fill:#FF6347
+    style L6 fill:#FFA500
+```
+
+**Change Legend:**
+- 🟢 **NONE:** 0 lines changed
+- 🟡 **LOW:** 1-20 lines changed
+- 🟠 **MEDIUM:** 21-60 lines changed
+- 🔴 **HIGH:** 61+ lines changed
+
+---
+
+### 14.5 Workflow Integration
+
+#### Complete Scenario Analysis Workflow
+
+```mermaid
+flowchart TD
+    A[Policy Change Proposed] --> B[Create Scenario Branch]
+    B --> C[Update Policy Statement<br/>in Scenario Directory]
+    C --> D[Trigger Scenario Workflow<br/>generate-scenario.yml]
+
+    D --> E[Generate ALL 6 Layers<br/>in Parallel]
+    E --> F[Layer 1: Contextual]
+    E --> G[Layer 2: Conceptual]
+    E --> H[Layer 3: Logical]
+    E --> I[Layer 4: Physical]
+    E --> J[Layer 5: Component]
+    E --> K[Layer 6: Operational]
+
+    F --> L[Impact Analysis Script<br/>analyze-scenario-impact.js]
+    G --> L
+    H --> L
+    I --> L
+    J --> L
+    K --> L
+
+    L --> M[Generate Comparison Report<br/>impact-report.md]
+    M --> N[Create GitHub Issue<br/>Tag: scenario-analysis]
+
+    N --> O{Stakeholder<br/>Review}
+    O -->|Approve| P[Merge Scenario to Main<br/>Archive Other Options]
+    O -->|Request Changes| Q[Revision Workflow<br/>Update Scenario Branch]
+    O -->|Reject All| R[Archive All Scenarios<br/>Document Rationale]
+
+    Q --> E
+
+    P --> S[Create JIRA Implementation Tickets<br/>Track Deployment]
+    R --> T[Close GitHub Issue<br/>Status: No Change Approved]
+
+    style A fill:#FFE4B5
+    style L fill:#87CEEB
+    style M fill:#FFD700
+    style O fill:#FF6B6B
+    style P fill:#98FB98
+    style S fill:#90EE90
+```
+
+#### GitHub Actions Workflow Example
+
+```yaml
+# .github/workflows/generate-scenario.yml
+name: Generate Policy Scenario
+
+on:
+  workflow_dispatch:
+    inputs:
+      policy-id:
+        description: 'Policy ID (e.g., POL-2025-004)'
+        required: true
+      scenario-name:
+        description: 'Scenario name (e.g., tls-13-migration)'
+        required: true
+      scenario-type:
+        description: 'Scenario type'
+        required: true
+        type: choice
+        options:
+          - standard-update
+          - tool-migration
+          - compliance-change
+          - architecture-shift
+
+jobs:
+  generate-all-layers:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        layer: [contextual, conceptual, logical, physical, component, operational]
+    steps:
+      - name: Checkout Scenario Branch
+        uses: actions/checkout@v3
+        with:
+          ref: scenario/${{ inputs.policy-id }}/${{ inputs.scenario-type }}/${{ inputs.scenario-name }}
+
+      - name: Generate Layer Artifacts
+        uses: ./.github/actions/call-claude
+        with:
+          policy-id: ${{ inputs.policy-id }}
+          layer: ${{ matrix.layer }}
+          scenario-name: ${{ inputs.scenario-name }}
+
+      - name: Commit Layer Artifacts
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add policies/${{ inputs.policy-id }}/scenarios/${{ inputs.scenario-name }}/${{ matrix.layer }}/
+          git commit -m "[${{ inputs.policy-id }}] Scenario ${{ inputs.scenario-name }}: Generate ${{ matrix.layer }} layer"
+          git push
+
+  analyze-impact:
+    needs: generate-all-layers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Scenario Branch
+        uses: actions/checkout@v3
+        with:
+          ref: scenario/${{ inputs.policy-id }}/${{ inputs.scenario-type }}/${{ inputs.scenario-name }}
+
+      - name: Run Impact Analysis Script
+        run: |
+          node scripts/analyze-scenario-impact.js \
+            --policy-id "${{ inputs.policy-id }}" \
+            --scenario-name "${{ inputs.scenario-name }}" \
+            --base-branch "main" \
+            --output "scenarios/${{ inputs.scenario-name }}/impact-report.md"
+
+      - name: Create GitHub Issue for Stakeholder Review
+        run: |
+          gh issue create \
+            --title "[${{ inputs.policy-id }}] Scenario Analysis: ${{ inputs.scenario-name }}" \
+            --body-file "scenarios/${{ inputs.scenario-name }}/impact-report.md" \
+            --label "scenario-analysis,${{ inputs.scenario-type }}" \
+            --assignee policy-review-team
+```
+
+#### JIRA Integration for Decision Tracking
+
+```yaml
+# .github/workflows/jira-scenario-tracking.yml
+- name: Create JIRA Epic for Scenario Implementation
+  if: ${{ github.event.issue.state == 'closed' && contains(github.event.issue.labels.*.name, 'scenario-approved') }}
+  env:
+    JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+  run: |
+    SCENARIO_NAME="${{ github.event.issue.title }}"
+
+    # Create JIRA Epic
+    EPIC_KEY=$(curl -X POST https://your-domain.atlassian.net/rest/api/3/issue \
+      -H "Authorization: Bearer $JIRA_API_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "fields": {
+          "project": {"key": "POLICY"},
+          "summary": "'"$SCENARIO_NAME"'",
+          "issuetype": {"name": "Epic"},
+          "description": "Implementation of approved scenario: '"$SCENARIO_NAME"'. See GitHub Issue #'"${{ github.event.issue.number }}"' for full impact analysis.",
+          "labels": ["policy-implementation", "scenario-analysis"]
+        }
+      }' | jq -r '.key')
+
+    # Create JIRA tasks for each layer
+    for LAYER in contextual conceptual logical physical component operational; do
+      curl -X POST https://your-domain.atlassian.net/rest/api/3/issue \
+        -H "Authorization: Bearer $JIRA_API_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "fields": {
+            "project": {"key": "POLICY"},
+            "summary": "Update Layer: '"$LAYER"' for scenario '"$SCENARIO_NAME"'",
+            "issuetype": {"name": "Task"},
+            "parent": {"key": "'"$EPIC_KEY"'"},
+            "assignee": {"accountId": "auto-assign-based-on-layer"}
+          }
+        }'
+    done
+
+    # Link GitHub Issue to JIRA Epic
+    gh issue comment ${{ github.event.issue.number }} --body "JIRA Epic created: [$EPIC_KEY](https://your-domain.atlassian.net/browse/$EPIC_KEY)"
+```
+
+---
+
+### 14.6 Archive Strategy for Non-Selected Scenarios
+
+When a scenario is **not selected** for production, proper archival ensures decision rationale is preserved:
+
+#### Archive Process
+
+```bash
+# Archive rejected scenario
+git checkout main
+git branch -m scenario/POL-2025-004/tool-migration/hashicorp-vault \
+           archive/POL-2025-004/rejected-hashicorp-vault-$(date +%Y%m%d)
+
+# Add rationale document
+cat > archive/POL-2025-004/rejected-hashicorp-vault-20260106/DECISION-RATIONALE.md <<EOF
+# Decision Rationale: HashiCorp Vault Migration Rejected
+
+**Date:** January 6, 2026
+**Decision Maker:** CTO + Security Architect Team
+**GitHub Issue:** #456
+
+## Summary
+The HashiCorp Vault migration scenario was rejected in favor of maintaining AWS KMS.
+
+## Key Factors
+1. **Cost:** Vault total cost of ownership is +289% higher over 5 years ($315K vs $81K)
+2. **Complexity:** Requires Kubernetes expertise not present in current team
+3. **Timeline:** 8-12 weeks vs 2-3 weeks for AWS KMS improvements
+4. **Business Need:** Multi-cloud requirement is hypothetical; no confirmed roadmap
+
+## Conditions for Reconsideration
+- Multi-cloud expansion announced (Azure or GCP workloads planned)
+- Acquisition with existing Vault infrastructure
+- Key volume exceeds 10,000 keys (current: 1,000 keys)
+
+## Audit Trail
+- GitHub Issue: https://github.com/org/repo/issues/456
+- Impact Analysis: archive/POL-2025-004/rejected-hashicorp-vault-20260106/impact-report.md
+- Comparison Report: archive/POL-2025-004/rejected-hashicorp-vault-20260106/comparison.md
+EOF
+
+# Commit archive to main branch
+git checkout main
+git add archive/POL-2025-004/rejected-hashicorp-vault-20260106/
+git commit -m "[POL-2025-004] Archive rejected scenario: HashiCorp Vault (rationale documented)"
+git push origin main
+
+# Delete scenario branch
+git push origin --delete scenario/POL-2025-004/tool-migration/hashicorp-vault
+```
+
+#### Archive Structure
+
+```
+archive/
+└── POL-2025-004/
+    ├── rejected-hashicorp-vault-20260106/
+    │   ├── DECISION-RATIONALE.md          # Why rejected
+    │   ├── impact-report.md                # Full impact analysis
+    │   ├── comparison.md                   # AWS KMS vs Vault comparison
+    │   ├── contextual/sections.json        # All 6 layers preserved
+    │   ├── conceptual/sections.json
+    │   ├── logical/sections.json
+    │   ├── physical/sections.json
+    │   ├── component/sections.json
+    │   └── operational/sections.json
+    └── rejected-aes128-20260115/
+        └── DECISION-RATIONALE.md           # Different rejected scenario
+```
+
+**Audit Benefits:**
+- Complete history of all considered options
+- Decision rationale preserved for future audits
+- Searchable archive for similar future decisions
+- Demonstrates due diligence for compliance reviews
+
+---
+
+### 14.7 Decision Support Template
+
+When presenting scenarios to stakeholders, use this template:
+
+```markdown
+# Policy Scenario Decision Brief
+
+**Policy ID:** POL-2025-004
+**Scenario:** TLS 1.3 Migration vs Maintain TLS 1.2
+**Decision Required By:** February 1, 2026
+**Stakeholders:** CTO, CISO, Infrastructure Director
+
+---
+
+## Executive Summary
+
+We evaluated two options for TLS encryption standards:
+
+| Option | Cost | Timeline | Risk | Compliance | Recommendation |
+|--------|------|----------|------|------------|----------------|
+| **Option A: Maintain TLS 1.2** | $0 | 0 weeks | LOW | Meets minimum | REJECT |
+| **Option B: Migrate to TLS 1.3** | $12K | 4-5 weeks | MEDIUM | Exceeds minimum | **APPROVE** |
+
+**Recommendation:** Approve Option B (TLS 1.3 migration) for improved security posture and future-proofing.
+
+---
+
+## Detailed Comparison
+
+### Option A: Maintain TLS 1.2 (Status Quo)
+
+**Pros:**
+- Zero implementation cost
+- No client compatibility issues
+- No timeline impact
+
+**Cons:**
+- Vulnerable to downgrade attacks (POODLE, BEAST)
+- Does not meet NIST SP 800-52 Rev. 2 preferred standard
+- Slower handshake performance (2-RTT vs 1-RTT)
+
+**Risk:** MEDIUM (security vulnerabilities remain unaddressed)
+
+---
+
+### Option B: Migrate to TLS 1.3 (Proposed)
+
+**Pros:**
+- Removes legacy cipher suites (improved security)
+- 20% faster handshake performance
+- Meets NIST SP 800-52 Rev. 2 preferred standard
+- Future-proof (industry standard for next 5+ years)
+
+**Cons:**
+- 3% client compatibility impact (iOS <12.2, Android <10)
+- $12K implementation cost
+- 4-5 week timeline
+
+**Risk:** MEDIUM (client compatibility, but manageable with phased rollout)
+
+---
+
+## Financial Analysis
+
+| Category | Option A (TLS 1.2) | Option B (TLS 1.3) | Delta |
+|----------|-------------------|--------------------|-------|
+| **Implementation** | $0 | $12,000 | +$12K |
+| **Performance Benefit** | $0 | $8,000/year (reduced latency) | +$8K/year |
+| **Security Incident Risk** | $50K/year (downgrade attack risk) | $5K/year (minimal risk) | -$45K/year |
+| **5-Year NPV** | -$250K (security risk) | +$28K (net benefit) | +$278K |
+
+**ROI:** 233% over 5 years
+
+---
+
+## Recommendation
+
+**APPROVE Option B: TLS 1.3 Migration**
+
+**Rationale:**
+1. Security benefit outweighs implementation cost (45% risk reduction)
+2. Positive 5-year ROI (+$278K net benefit)
+3. Client compatibility impact is minimal (3% users, manageable)
+4. Aligns with NIST SP 800-52 Rev. 2 preferred standard
+
+**Next Steps:**
+1. Approve scenario merge to main branch
+2. Create JIRA implementation epic
+3. Notify API partners (90-day advance notice)
+4. Begin phased rollout (weeks 1-4)
+
+---
+
+## Decision
+
+- [ ] **APPROVE** Option B (TLS 1.3 migration)
+- [ ] **REJECT** Option B (maintain TLS 1.2)
+- [ ] **REQUEST MORE INFORMATION** (specify below)
+
+**Decision Maker Signature:** ___________________
+**Date:** ___________________
+```
+
+---
+## 15. Future Enhancements
+
+### 15.1 Automated Compliance Validation Dashboard
 
 **Objective:** Real-time dashboard showing compliance status for all policies
 
@@ -2330,7 +3574,7 @@ Deployment: CloudFront + S3 (static hosting)
 +----------------------------------------------------------+
 ```
 
-### 13.2 Real-Time Policy Search in SharePoint
+### 15.2 Real-Time Policy Search in SharePoint
 
 **Objective:** Full-text search across all published policies
 
@@ -2346,7 +3590,7 @@ Index: Full-text index on all published documents
 Query: Keyword search with filters
 ```
 
-### 13.3 Email Notifications for Review Assignments
+### 15.3 Email Notifications for Review Assignments
 
 **Objective:** Proactive notifications to reviewers when layers are ready
 
@@ -2378,7 +3622,7 @@ Query: Keyword search with filters
       Please review at your earliest convenience.
 ```
 
-### 13.4 Integration with MS Teams for Approvals
+### 15.4 Integration with MS Teams for Approvals
 
 **Objective:** Review and approve layers directly in MS Teams
 
@@ -2429,7 +3673,7 @@ Actions: Teams button clicks → GitHub API (approve/request changes)
 }
 ```
 
-### 13.5 AI-Powered Evidence Validation
+### 15.5 AI-Powered Evidence Validation
 
 **Objective:** Use Claude to validate uploaded evidence against requirements
 
